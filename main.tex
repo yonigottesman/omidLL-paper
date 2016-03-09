@@ -1,0 +1,425 @@
+%=========================================================================
+%  LaTeX definitions
+%=========================================================================
+
+%%%     definining margins
+%\newcommand{\CLASSINPUToutersidemargin}{0.64in} %redefining margins; from about 0.68 to 0.64 > 0.625; see also package "changepage"
+
+%%%     more margins:
+%\newcommand{\CLASSINPUTtoptextmargin}{1in}
+%\newcommand{\CLASSINPUTbottomtextmargin}{0.75in}
+%\newcommand{\CLASSINPUTinnersidemargin}{0.75in}
+%\newcommand{\CLASSINPUToutersidemargin}{0.75in}
+
+%========================
+%  Tech. Report  vs. Conference
+%========================
+
+%the definitions help switch between the two: \Conf{Due to space limits...} \TR{Here is the full proof}
+
+% to produce the conference paper comment the \conffalse uncomment the \conftrue
+\newif\ifconf
+%\conffalse
+\conftrue
+
+% to include comments in the generated pdf comment the \commfalse and uncomment \commtrue
+\newif\ifcomm
+\commtrue
+%\commfalse
+
+% to produce the blind paper version comment the \conffalse uncomment the \conftrue
+\newif\ifblind
+%\blindfalse
+\blindtrue
+
+\ifconf
+    %%Conference version?
+    \newcommand{\Conf}[1]{#1}
+    \newcommand{\TR}[1]{}
+    \newcommand{\Journal}[1]{}  %enable for journal only
+    \newcommand{\OnlyTR}[1]{}   %enable for TR only, disable for journal
+\else
+    %%%%%TR/Journal version?
+    \newcommand{\Conf}[1]{}
+    \newcommand{\TR}[1]{#1}
+    \newcommand{\Journal}[1]{}  %enable for journal only
+    \newcommand{\OnlyTR}[1]{#1}   %enable for TR only, disable for journal
+\fi
+
+%========================
+%   Paper Format
+%========================
+%%%% IEEE
+%\Conf{
+%%\documentclass[letterpaper, 10pt, conference]{ieeeconf}
+%    \documentclass[conference]{IEEEtran}
+%}
+%\TR{
+%    \documentclass[journal]{IEEEtran}
+%}
+
+%%% ACM
+\Conf{
+\documentclass{vldb} 
+}
+\TR{
+\documentclass[letterpaper,conference]{vldb}
+}
+
+
+%%% INFOCOM addition: http://www.ieee-infocom.org/2009/paper-layout.htm
+%\makeatletter
+%\def\ps@headings{%
+%\def\@oddhead{\mbox{}\scriptsize\rightmark \hfil \thepage}%
+%\def\@evenhead{\scriptsize\thepage \hfil\leftmark\mbox{}}%
+%\def\@oddfoot{}%
+%\def\@evenfoot{}}
+%\makeatother
+%\pagestyle{headings}
+
+%========================
+%  Packages
+%========================
+
+\usepackage{graphicx}
+    %\usepackage[dvips]{graphicx}
+    %%\usepackage[pdftex]{graphicx} %if pdftex
+%\usepackage{amsmath}
+%\usepackage[cmex10]{amsmath} %ACM conflict with next package
+\usepackage{amssymb}
+%\usepackage{amsthm}  %<---- for a different "look" in theorems (theorem word in bold, etc.) %ACM conflict with proof definition?
+%\usepackage{subfigure}
+\usepackage[tight,footnotesize]{subfigure}
+\usepackage{cite}
+\usepackage{url}
+%\usepackage{cases}
+%\usepackage{color}
+%\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+%\usepackage{algorithm}
+%\usepackage{algpseudocode}
+\usepackage{times}
+%\usepackage{showkeys} %[notref]{showkeys}
+%\usepackage{epsfig}
+%\usepackage{graphics}
+%\usepackage{float}
+%\usepackage{paralist}
+%\usepackage{verbatim}
+\usepackage{todonotes}
+%\usepackage{authblk}
+\usepackage[normalem]{ulem} %strikethrough: \sout{Hello World}
+\usepackage{lastpage} %for number of pages
+\usepackage{xspace}
+\usepackage{multirow}
+\usepackage{balance}
+%========================
+%  Defining theorem types
+%========================
+
+\newtheorem{theorem}{Theorem}%[section]    -> example: \begin{theorem}   ... \end{theorem}
+\newtheorem{theorem*}{Theorem}
+\newtheorem{definition}{Definition}%[section] -> example: \begin{definition} [$B_{h}$ Sequence] \label{def:B} ..... \end{definition}
+\newtheorem{proposition}{Proposition}%[section]
+\newtheorem{property}{Property} %\newtheorem{property}[theorem]{Property}
+\newtheorem{lemma}{Lemma}%[section]
+\newtheorem{example}{Example}%[section]         -> \begin{example} Consider the query from Example~\ref{exp:query}. Then... \end{example}
+\newtheorem{Obs}{Observation}%[section]
+\newtheorem{corollary}{Corollary}
+\newtheorem{conjecture}{Conjecture}
+
+%%\newtheorem{theor2}{Theorem \cite[Theorem 1.4, Exp. 1.7]{bigqueues}}[theor1]
+%%\newenvironment{theor2}{\emph{}}{\addtocounter{\thetheor1}}
+%%\newenvironment{theor2}{\refstepcounter{theor1}\emph{Theorem \arabic{theor1}~\cite[Theorem 1.4, Exp. 1.7]{bigqueues}:}}{}
+
+%%% Proofs -- if not defined:
+%\newcommand{\qedbox}{\vbox{\hrule\hbox{\vrule\squarebox{.667em}\vrule}\hrule}}
+%\newcommand{\qed}{\nopagebreak\mbox{}\hfill\qedbox\smallskip}
+%\newcommand{\sq}{\hbox{\rlap{$\sqcap$}$\sqcup$}}
+%\newcommand{\qed}{\hspace*{\fill}\sq}  %empty square
+%\newcommand{\qed}{\hfill \mbox{\raggedright \rule{.07in}{.1in}}}
+%\newenvironment{proof}{\noindent {\bf Proof.}\ }{\qed\par\vskip 4mm\par}
+%\newenvironment{proofof}[1]{\bigskip \noindent {\bf Proof of #1:}\quad }{\qed\par\vskip 4mm\par}
+%\newenvironment{proofsketch}[1]{\smallskip {\em \quad Proof sketch: \quad}}{\qed\par\vskip 4mm\par}
+%\newenvironment{proof-outline}{\noindent{\bf Proof Outline}\hspace*{1em}}{\qed\bigskip\\}
+
+%========================
+%  Defining comments
+%========================
+
+\ifcomm
+    % (1) comments in bold
+    \newcommand{\A}[1]{\textbf{[#1]}}       %Comments -> in bold
+
+    % (2) comments in footnote
+    \newcommand{\F}[1]{\footnote {\color{red} [#1]}}
+
+    % (3) comments in rectangle
+    \newcounter{commentNumberAB}
+    \setcounter{commentNumberAB}{0}
+    \newcommand{\AB}[1]{\addtocounter{commentNumberAB}{1} \todo[inline]{\textbf{(AB.\arabic{commentNumberAB})} #1}}
+
+
+
+\else
+    \newcommand{\AB}[1]{}
+\fi
+
+% (3) change marks
+\usepackage[normalem]{ulem}
+\newcommand{\add}[1]{\textcolor{red}{EZ: \textbf{#1}}}
+\newcommand{\del}[1]{\textcolor{red}{EZ: \textbf{\sout{#1}}}}
+
+% (4) remove (hide) stuff
+\newcommand{\remove}[1]{}
+
+
+%========================
+%  Defining operators
+%========================
+
+%%% Shortcuts: quoting equations etc.
+%\newcommand{\eqref}[1]{Equation~(\ref{#1})}        % example: "We use the
+% result from \eq{eq:iterated} to obtain..."
+\newcommand{\thmref}[1]{Theorem~\ref{#1}}
+\newcommand{\lemref}[1]{Lemma~\ref{#1}}
+\newcommand{\deref}[1]{Definition~\ref{#1}}
+\newcommand{\exref}[1]{Example~\ref{#1}}
+\newcommand{\secref}[1]{Sect.~\ref{#1}}
+\newcommand{\figref}[1]{Fig.~\ref{#1}}
+\newcommand{\tabref}[1]{Table~\ref{#1}}
+\newcommand{\appref}[1]{Appendix~\ref{#1}}
+
+%%%% Shortcut to start a proof
+%\newcommand{\bp}{\begin{IEEEproof}}     %IEEE formats: \begin{IEEEproof} ; \begin{IEEEproof}[Proof of Theorem \ref{thm:my}]; else: \begin{proof}
+%\newcommand{\bpo}{ \begin{IEEEproof}[Proof Outline] }
+%\newcommand{\ep}{\end{IEEEproof}}       %\newcommand{\ep}{\QED \end{proof}}
+
+%%% Shortcut to start an equation
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+
+%%% Definining scheme names & text
+\newcommand{\OPT}{\text{\textsc{opt}}}
+\newcommand{\scheme}{{\langle a,d,c,h\rangle}}
+\newcommand{\fpr}{{false positive rate }}   % be careful: "the \fpr of the scheme" works fine, but "it has a good \fpr, and" doesn't (bad space before comma); so we use the next line; check also "\fpr\"
+\newcommand{\fprNS}{{false positive rate}} %see above: "it has a good \fprNS, and"
+
+%%% Variables for figures
+\newcommand{\tinygraphsize}{0.22} %alternating
+\newcommand{\graphsizeA}{0.25}  %3 parallel subfigures <=0.31
+\newcommand{\graphsizeB}{0.31}  %3 parallel subfigures <=0.31
+\newcommand{\smallergraphsize}{0.24}  %4 parallel subfigures
+\newcommand{\smallgraphsize}{0.35}
+\newcommand{\figurewidth}{\columnwidth}
+
+\newcommand\MyIncludeGraphics[2][]{% needs packages: \usepackage{graphicx}\usepackage{todonotes}
+    \IfFileExists{#2}{%
+        \includegraphics[#1]{#2}%
+    }{%
+        \missingfigure[figwidth=2.0cm]{}%{{\small Missing #2}}%
+    }%
+}%
+
+\newcommand{\T}[1]{\noindent\textbf{#1}} %paragraph title
+\newcommand{\U}[1]{\noindent\textit{#1}} %paragraph sub-title
+
+%========================
+%  Math
+%========================
+
+\newcommand{\para}[1]{\left( #1 \right)}        %Shortcuts in equations for parentheses
+\newcommand{\brac}[1]{\left\{ #1 \right\}}
+\newcommand{\set}[1]{\left\{#1\right\}}         %same as \brac
+\newcommand{\sbrac}[1]{\left[ #1 \right]}
+\newcommand{\floor}[1]{\left\lfloor #1 \right\rfloor}%\newcommand{\floor}[1]{\lfloor #1 \rfloor}
+\newcommand{\ceil}[1]{\left\lceil #1 \right\rceil} %\newcommand{\ceil}[1]{\lceil #1 \rceil}
+\newcommand{\norm}[1]{\left\Vert#1\right\Vert}
+\newcommand{\abs}[1]{\left\vert#1\right\vert}
+\newcommand{\reals}{\mathbb{R}}
+\newcommand{\rationals}{\mathbb{Q}}
+\newcommand{\integers}{\mathbb{Z}}
+\newcommand{\naturals}{\mathbb{N}}
+\newcommand{\eps}{\varepsilon}
+\newcommand{\To}{\longrightarrow}
+\newcommand{\partialderiv}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\calS}{{\mathcal{S}}} %defining a set
+
+%========================
+%  New Variable Macros
+%========================
+\newcommand{\newVar}[2]{\newcommand{#1}{\ensuremath{#2}\xspace}}
+
+%========================
+%  Define Variables
+%========================
+\newVar{\redmin}{\mbox{RED}_{\mbox{min}}}
+\newVar{\redmax}{\mbox{RED}_{\mbox{max}}}
+\newVar{\redprob}{\mbox{RED}_{\mbox{prob}}}
+\newVar{\redburst}{\mbox{RED}_{\mbox{burst}}}
+\newVar{\redlimit}{\mbox{RED}_{\mbox{limit}}}
+
+%%% Defining argmax, Var, etc.
+\DeclareMathOperator*{\argmax}{arg\,max}  % \argmax_x f(x) %also: \newcommand{\argmax}{\operatornamewithlimits{argmax}}
+\DeclareMathOperator{\Var}{Var}     % Variance
+\newcommand{\E}{\mathbb{E}}  %\newcommand{\E}{\text{E}} , \newcommand{\E}{\text{\textbf{E}}}       % Expected value
+\newcommand{\eqtri}{\stackrel{\triangle}{=}}    %definition equality
+\newcommand{\p}[1]{\Pr \para{#1}}  % Probability
+%\renewcommand{\choose}[2]{\genfrac{(}{)}{0pt}{}{#1}{#2}}
+
+\newcommand{\DL}{D_L}
+\newcommand{\alg}{Alg}
+\newcommand{\opt}{OPT
+\newcommand{\w}{{\tilde{w}}}}
+\DeclareMathOperator{\onoff}{ON-OFF}
+
+\newcommand*{\Scale}[2][4]{\scalebox{#1}{$#2$}}%
+\newcommand{\sm}[1]{\Scale[0.9] {#1}}  %reduce math size
+
+
+\newcommand{\fs}{\mbox{\textit{fs}} }
+\newcommand{\eff}{\mbox{\textit{eff}} }
+\newcommand{\ssthresh}{\mbox{\textit{ssthresh}} }
+
+\newcommand{\gst}{\mbox{\textit{gst}} }
+\newcommand{\rcv}{\mbox{\textit{rcv}} }
+\newcommand{\vcc}{\mbox{\textit{vcc}} }
+
+%%% Addition to play with the bib file (1)
+%%for citations; et al., etc.
+%\makeatletter
+%\def\bstctlcite{\@ifnextchar[{\@bstctlcite}{\@bstctlcite[@auxout]}}
+%\def\@bstctlcite[#1]#2{\@bsphack
+%\@for\@citeb:=#2\do{%
+%\edef\@citeb{\expandafter\@firstofone\@citeb}%
+%\if@filesw\immediate\write\csname
+%#1\endcsname{\string\citation{\@citeb}}\fi}%
+%\@esphack}
+%\makeatother
+%%
+
+\begin{document}
+
+\title{Speeding up Transaction Processing System using Local Transactions}
+\numberofauthors{3}
+\author{
+\alignauthor
+Idit Keidar\\
+	\affaddr{Technion -- I.I.T}\\
+	\email{idish@ee.technion.ac.il}
+\alignauthor
+Edward Bortnikov\\
+	\affaddr{Yahoo Research}\\
+\alignauthor
+Eshcar Hilel\\
+	\affaddr{Yahoo Research}\\
+	\email{eshcar@yahoo-inc.com}
+\and %
+\alignauthor
+Ohad Shacham\\
+	\affaddr{Yahoo Research}\\
+ 	\email{ohads@yahoo-inc.com}
+ \alignauthor
+ Aran Bergman\\
+ 	\affaddr{Technion -- I.I.T}\\
+	\email{aranb@technion.ac.il}
+}
+
+
+%%% author names and affiliations
+%%% use a multiple column layout for up to three different
+%%% affiliations
+%%\author{\IEEEauthorblockN{%\large
+%%Great Student and Isaac Keslassy}
+%%%\IEEEauthorblockA{Dept. of Electrical Engineering\\
+%%%Technion\\% - Israel Institute of Technology\\
+%%%Haifa 32000, Israel\\
+%%\IEEEauthorblockA{Technion\\
+%%\{gs@tx,isaac@ee\}.technion.ac.il }} %{\tt isaac@ee.techion.ac.il}
+%
+%\Conf{
+%\author{
+%\IEEEauthorblockN{\large Grad Student and Isaac Keslassy}
+%\IEEEauthorblockA{
+%Technion\\
+%{\small \tt \{grad@tx, isaac@ee\}.technion.ac.il}}
+%%\IEEEauthorblockN{Grad Student}
+%%\IEEEauthorblockA{
+%%Technion\\
+%%{\small \tt grad@tx.techion.ac.il}}
+%%\and
+%%\IEEEauthorblockN{Isaac Keslassy}
+%%\IEEEauthorblockA{
+%%Technion\\
+%%{\small \tt isaac@ee.techion.ac.il}}
+%}
+%}
+%\TR{\author{\IEEEauthorblockN{\large Grad Student and Isaac Keslassy}}}
+
+%%% This option goes with package authblk
+%\author[1]{Grad Student}
+%\author[1]{Isaac Keslassy}
+%\author[2]{Company Engineer}
+%\affil[1]{Technion, {\small \tt \{grad@tx, isaac@ee\}.technion.ac.il}}
+%\affil[2]{Company, {\small \tt \{engineer\}@company.com}}
+
+
+% For TR, remove for journal:
+\OnlyTR{\markboth{Technical Report TR??-??, Technion, Israel}{}}
+
+% make the title area
+\maketitle
+
+%For ACM formats
+\sloppy
+
+%=========================================================================
+%  Abstract
+%=========================================================================
+
+\begin{abstract}
+
+\end{abstract}
+
+%\MyIncludeGraphics{fake.png}
+
+\section{Introduction} \label{sec:intro}
+
+\section{Background, Motivation and Applicability}% and resulting benefits}
+\label{sec:background}
+
+\section{Model and Notations}
+
+\section{Adding Local Transactions}
+
+\section{Evaluation}
+
+\section{Related Work}
+
+
+\section{Conclusion}
+
+\ifblind
+\else
+\section{Acknowledgments}
+
+\fi
+
+\bibliographystyle{abbrv}
+\bibliography{mybib}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Appendix
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\newpage
+
+\begin{appendix}
+	
+	\section{Notations and definitions} \label{sec:app1}
+
+
+\end{appendix}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\end{document}

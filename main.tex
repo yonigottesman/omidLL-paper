@@ -60,7 +60,7 @@
 
 %%% ACM
 \Conf{
-\documentclass{vldb} 
+\documentclass[singlecolumn]{vldb} 
 }
 \TR{
 \documentclass[letterpaper,conference]{vldb}
@@ -140,6 +140,11 @@
 %\newenvironment{proofof}[1]{\bigskip \noindent {\bf Proof of #1:}\quad }{\qed\par\vskip 4mm\par}
 %\newenvironment{proofsketch}[1]{\smallskip {\em \quad Proof sketch: \quad}}{\qed\par\vskip 4mm\par}
 %\newenvironment{proof-outline}{\noindent{\bf Proof Outline}\hspace*{1em}}{\qed\bigskip\\}
+
+%======================================
+%  Defining code related macros
+%======================================
+\newcommand{\code}[1]{\texttt{#1}}
 
 %========================
 %  Defining comments
@@ -242,7 +247,7 @@
 \newcommand{\To}{\longrightarrow}
 \newcommand{\partialderiv}[2]{\frac{\partial #1}{\partial #2}}
 \newcommand{\calS}{{\mathcal{S}}} %defining a set
-\newcommand{\tuple}[1]{\langle #1 \rangle}
+\newcommand{\tuple}[1]{\ensuremath{\langle \mbox{#1} \rangle}}
 
 %========================
 %  New Variable Macros
@@ -252,8 +257,12 @@
 %========================
 %  Define Variables
 %========================
-\newVar{\redmin}{\mbox{RED}_{\mbox{min}}}
-
+\newVar{\rkeys}{\mbox{r\textunderscore keys}}
+\newVar{\rkey}{\mbox{r\textunderscore key}}
+\newVar{\rversion}{\mbox{r\textunderscore version}}
+\newVar{\wkey}{\mbox{w\textunderscore key}}
+\newVar{\wversion}{\mbox{w\textunderscore version}}
+\newVar{\robjs}{\mbox{r\textunderscore objs}}
 
 %%% Defining argmax, Var, etc.
 \DeclareMathOperator*{\argmax}{arg\,max}  % \argmax_x f(x) %also: \newcommand{\argmax}{\operatornamewithlimits{argmax}}
@@ -377,11 +386,11 @@ TBD
 \section{Introduction} \label{sec:intro}
 Popular production systems such as Percolator, Omid, and Tephra, support
 transactions over sharded data using centralized “timestamp oracles”, also
-called transaction managers (TMs) . The TMs provide a global version clock (GVC)
-[?] and sometimes additional functionalities such as conflict detection and
+called \emph{transaction managers} (TMs) . The TMs provide a \emph{global
+version clock} (GVC) [?] and sometimes additional functionalities such as conflict detection and
 tracking of committed transactions[?]. The main motivation behind systems that
-use a single TM is providing support for global transactions, i.e., ones that
-span multiple regions (also called nodes, shards, domains, or partitions).
+use a single TM is providing support for \emph{global transactions}, i.e., ones
+that span multiple regions (also called nodes, shards, domains, or partitions).
 Hence, central coordination is an inherent part of their design. This is in
 contrast with federated systems, where transactions are by default local, i.e.,
 access a single region, and protocols like two phase commit are used to ensure
@@ -403,7 +412,7 @@ transactions, and enhance it with optimized support for specific types of local
 transactions. Our main goal is to expedite short single-object transactions,
 which are popular in production Web workloads [?].
 
-We focus here on systems supporting snapshot isolation (SI) [?], which is
+We focus here on systems supporting \emph{snapshot isolation} (SI) [?], which is
 popular in real-world systems [?] and amenable to scalable implementations [?].
 The transaction semantics for local transactions are the same as for global
 ones, and in particular, a local transaction can be performed using the usual
@@ -436,39 +445,40 @@ We now describe the data model and API of the underlying data store.
 
 \subsection{Objects}
 \begin{enumerate}
-\item We assume object granularity; with HBase and BigTable this refers to a
-row.
+\item We assume \emph{object} granularity; with HBase and BigTable this refers
+to a row.
 Later we discuss cell granularity.
-Objects are associated with keys.
+Objects are associated with \emph{keys}.
 \item Object values are associated with externally-provided monotonically
-increasing version numbers. Multiple versions associated with the same key may co-exist.
+increasing \emph{version numbers}. Multiple versions associated with the same
+key may co-exist.
 \item Thus, an object is a tuple \tuple{key,\tuple{version,value}+}, where value
 can be structured to consist of multiple columns.
 \end{enumerate}
 
 The data is \emph{partitioned} (sharded). Each object belongs to one region
-(node, partition, shard, domain). Local transactions are ones that access a single
-region.
+(node, partition, shard, domain). \emph{Local transactions} are ones that access
+a single region.
 
 \subsection{API}
 \begin{itemize}
-\item <version,value> read(key) atomically returns the value with the highest
-version associated with key along with the version.
+\item \code{\tuple{version,value} read(key)} atomically returns the value with
+the highest version associated with key along with the version.
 \item The API further allows traversing (reading) earlier versions of the same
 key in descending order.
-\item write(key,value,version) atomically creates or updates the version: If the
-provided version number is smaller than the key’s latest stored version, the
-update fails. if the version already exists, its value is updated; otherwise, a
-new version is added. Garbage collection of obsolete versions is a separate
+\item \code{write(key,value,version)} atomically creates or updates the version:
+\sout{If the provided version number is smaller than the key’s latest stored
+version, the update fails.} if the version already exists, its value is updated;
+otherwise, a new version is added. Garbage collection of obsolete versions is a separate
 process.
-\item Additionally, data stores often provide means to atomically read and
-update an object; (e.g., HBase exports CheckAndMutate operations, which is internally
-implemented using a RW lock, whereas Bigtable supports row transactions). We
+\item Additionally, data stores often provide means to \emph{atomically read and
+update} an object; (e.g., HBase exports CheckAndMutate operations, which is
+internally implemented using a RW lock, whereas Bigtable supports row transactions). We
 will extend this capability below in order to implement certain atomic
 operations at the data store level.
 \end{itemize}
 
-Transactions:
+\subsection{Transactions}
  Transactions may span multiple regions, and atomically commit or abort. The
  system supports transactions with SI semantics. Intuitively, SI ensures that
  the information a transaction reads from the data store does not mix old and
@@ -481,8 +491,327 @@ Transactions:
  and (3) a transaction commits only if no updates it has made conflict with any
  concurrent updates made since that snapshot.
 
-\section{Adding Local Transactions}
+\section{Arcitecture and Design}
+The TM provides a monotonically increasing GVC, which is used to produce
+versions. An artifact of this is that object version numbers are monotonically
+increasing system-wide.
 
+Transactions indicate their intention to write to an object; this is done using
+a dedicated column (part of the value in our data model), which keeps logical
+(application-level) locks in some implementations (Percolator) and tentative
+updates in others (Omid). While write intentions differ across implementations,
+we assume that the following generic functions are provided:
+
+\code{boolean writeIntent(key)} returns true if the latest version associated
+with key has a write indication.
+
+\code{boolean writeIntent(key, version)} returns true if version has a write
+indication.
+
+Note: in certain implementations (like a virtual lock per key used in
+Percolator), the write-intent of all versions associated with the same key is
+the same, whereas in other cases (like Omid, which uses tentative versions), a
+new version may have a write intent while an older one does not.
+
+A transaction goes through the following phases:
+\begin{enumerate}
+  \item{Begin} -- For SI, a transaction obtains a global read-version number
+  when it starts. It also obtains a unique monotonically increasing transaction id.
+  The two can be combined (i.e., the read-version can be the same as the
+  transaction id).
+  \item{Collect reads and indicate write intention} -- (either jointly or
+  collect first and then write).\\ \emph{Collect} means reading object values
+  and versions; each object atomically. Only versions committed with timestamps
+  smaller or equal to the transaction’s read-version are read. Encountered write
+  indications by uncommitted transactions are dealt with differently in
+  different systems, e.g., Percolator waits for the indication to be lifted,
+  Omid ignores uncommitted versions and checks for conflicts this may induce at
+  commit time, and Distributed-Commit Omid forces the transaction with the write
+  indication to abort. Collect occurs during the transaction (encounter time).\\
+  \emph{Indicating write intention} changes the objects’ write intention columns
+  to indicate a transaction attempting to write them is under way. The value the
+  transaction intends to write is added with a new version. In Omid, this
+  version is the transaction’s id. Each object is updated atomically. This can
+  occur either at encounter time or at commit time, in which case it occurs as
+  the first phase of the commit. \\
+  \emph{Validation/conflict detection} - For SI, need
+  to check for write-write conflicts only. This step checks write intentions as well as version numbers.
+  \item{Commit} --  in one atomic step to a designated \emph{commit entry}. May
+  fail and abort instead. (Omid - commit table entry, Percolator - lock of first written key).
+  \item{Clean-up} -- changes the write intentions of the transaction to
+  persistent writes in case of commit, and removes them in case of abort. This
+  phase occurs after the transaction is persistently committed or aborted, in
+  order to reduce the overhead of future transactions and garbage collect
+  obsolete information. Note that whenever a transaction encounters a write
+  indication in the collect phase it must access the commit entry in order to
+  check the transaction’s commit status. Once the clean-up phase is over, future
+  transactions no longer incur this overhead for keys updated by the terminated
+  transaction.
+\end{enumerate}
+
+\section{Adding Local Transactions}
+We now explain our support for local transactions with SI semantics in the
+context of a system as described in Section 2 above. We first define the API and
+semantics of local transactions (Section 3.1) and then continue to describe our
+solution, which consists of two parts. First, in Section 3.2, we enhance the
+underlying data store with support for per-region local version clocks and an
+API to manipulate this clock jointly with objects stored at that region. This
+entails a minor modification to version management in the TM. Second, we add
+client-side support for local transactions, as explained in Section 3.3.
+
+\subsection{Local Transactions API and Semantics}
+There are two distinctive characteristics of local transactions. First, they
+must access a single region. Second, in contrast to regular transactions, they
+cannot dynamically evolve, but rather must be provided in their entirety with a
+single API-call. Local transactions APIs are prefixed with LTX. The simplest
+examples are singleton transactions, i.e., transactions that perform a single
+read operation via LTXread(key) or a single update via LTXwrite(key, value). A
+more elaborate example is LTXMRSW(\wkey, \rkeys, f), which atomically reads
+values associated  with a list of \rkeys and updates the value associated with
+\wkey according to some function f of the read values. Note that this API
+applies only in case \wkey and all \rkeys reside in the same region. In case
+they do not, the call fails, and the transaction may be restarted as a regular
+transaction.
+
+The semantics for ordering local transactions relative to regular ones are
+weaker than SI in that they do not guarantee real-time order over all regular
+and local transactions together. Specifically, a regular transaction overlapping
+two local transactions that access different regions may observe the updates of
+the second and miss an update by the first. For example, assume objects x and y
+are managed in two different regions, then real-time order can be violated as
+follows:
+{\small
+\begin{verbatim}
+x=0; y=0
+
+  read(x)->0                        read(y)->1
+|---------------------------------------------|
+            write(x,1)      write (y,1) 
+         |-------------|  |-------------|
+\end{verbatim}}
+
+The system still enforces a total order on all committed transactions, so that
+(1) regular transactions (though not local ones) are ordered according to their
+commit times; (2) each transaction sees a consistent snapshot of the database
+reflecting a sequence of transactions that includes all those committed prior to
+its start time plus any number of concurrent local transactions; and (3) a
+transaction commits only if no updates it has made conflict with any concurrent
+updates made since that snapshot.
+
+\subsection{Data Store Extensions}
+We add some functionality to a region, to be used exclusively by our client-side
+extensions given in Section 3.3 below. The key mechanism used to support local
+transactions is a local version clock (LVC) per region. Like the GVC, LVCs are
+also monotonically increasing. Each region (domain, partition, shard) has its
+own LVC. In Section 3.2.1 we describe this local clock’s API and its impact on
+the GVC. We then proceed to present the extension of the data store API for
+accessing objects together with the LVC in Section 3.2.2.
+
+\subsubsection{Local version clock}
+Each region’s LVC is loosely synchronized with the GVC. The idea is to use the
+region’s LVC for ordering local transactions in any given region, and allow
+local transactions to progress in different regions independently. Note that it
+is safe to do so because no global order needs to be enforced among transactions
+that access disjoint sets of objects.
+
+Multi-region transactions, in turn, continue to obtain their versions from the
+GVC. Therefore, whenever a multi-region transaction t accesses a given region,
+we have to synchronize that region’s LVC with the GVC in order to ensure that
+the version obtained by t exceeds those obtained by earlier completed
+transactions within the region, and that later transaction within that region
+will obtain higher versions than t’s.
+
+To support such loose synchronization, the GVC now advances at a coarse
+granularity of epochs. This can be implemented, for example, by choosing some
+epoch size $2^l$, and keeping the l least significant bits of the GVC padded
+with zeros. In other words, every increment of the GVC increases its value by
+$2^l$.
+The LVC obtains the epoch (n-l most-significant bits for an n-bit GVC) from the
+GVC, and proceeds to assign timestamps within the designated epoch (by
+incrementing the least significant bits).
+
+The LVC has a single component, LVC.current, and it supports the following API:
+
+\code{LVC.skip(epoch)} - atomically set LVC.current to max(epoch, LVC.current) .
+
+\code{LVC.fetchAndIncrement()} - atomically increment LVC.current and return new
+value.
+For simplicity, we assume that the LVC is used so it does not overrun the epoch
+and does not wrap around within the epoch. That is, fetchAndIncrement is called
+less than $2^l$ times in each epoch.
+
+\code{LVC.get()} - return LVC.current.
+
+By incrementing the GVC, a multi-region transaction essentially initiates a new
+epoch, and obtains a timestamp exceeding all those of older local transactions.
+In addition, multi-region transactions enforce the synchronization of the LVC
+with respect to the GVC using the skip operation. Specifically, whenever a
+transaction in a new epoch accesses (for either read or write intention
+indication) an object in a region whose LVC is still in an older epoch, it
+invokes that region’s LVC.skip so it will not lag behind the transaction’s
+read-timestamp obtained from the GVC. Thus, new local transactions that will
+begin later in the region will have higher timestamps, as needed.
+
+Note that transaction commits do not alter the LVC; the LVC only reflects
+transactions’ read-timestamps obtained when they  begin.
+
+Note also that as long as a running transaction does not access a given region,
+further updates can occur by local transactions in that region, and these
+updates can be reflected in the transaction’s snapshot in case it later reads
+these objects. Thus, unlike with regular transactions, which satisfy real-time
+order, a transaction’s snapshot may reflect changes that occur after it
+commences.  This may also lead to violation of real-time order in the commit
+order of singletons, as in the example below:
+{\scriptsize
+\begin{verbatim}
+Region 1, LVC=0     LVC=10
+Region 2, LVC=0                      LVC=10
+GVC = 10                                             GVC=12
+
+    read-ts=10 read(x)->0            read(y)->1  commit
+               x.skip(10)            y.skip(10)
+|--------------------------------------------------------|
+
+                      write(x,1)     write (y,1) 
+                    |-----------|  |------------|
+
+\end{verbatim}}
+
+Here, x is written with LVC=10 and later y is written with its LVC=0. The
+concurrent transaction’s snapshot time is 10, which includes the update of x and
+not that of y. The same scenario does not occur with two local transactions
+accessing the same region, since once the LVC is incremented, not further
+updates in the same region can occur with older LVC values.
+
+\subsubsection{Accessing data and the LVC together}
+In order to allow local transactions to execute with a single data store access,
+we extend the data store to support functions that access data objects and the
+LVC together. Thus, a local transaction can increment LVC, obtain a version, and
+write with this version, all in one round-trip to the local data store.
+
+We further enforce atomic access to the data and the LVC. This is important in
+order to avoid races between obtaining a version from the LVC and updating the
+data. For example, if the updates of the LVC and the data were separate, the
+following scenario could have arisen:
+\begin{itemize}
+  \item Local transaction l1 plans to update object A and obtains LVC value 2
+  \item Multi-region transaction t1 obtains read version 2
+  \item Local transaction l2 obtains LVC value 3 and updates object B
+  \item Multi-region transaction t2 obtains read version 3
+  \item t2 reads the old version of A (since it had not been written by l1 yet)
+  and the new version of  B
+  \item l1 writes A with 2 and completes
+  \item t2 reads the new version of A and the old version of  B
+\end{itemize}
+Here, SI is violated.
+
+In addition, the new functions must take care not to breach the the atomicity of
+concurrent transactions. To this end, they rely on the write intention indications.
+
+The new functions are:
+\begin{enumerate}
+  \item \code{boolean mutate(key, value)} atomically increments the region’s LVC
+  and creates a new version for key associated with the new LVC value. The
+  operation fails if the latest version of the object has a write intention
+  indication. The pseudo-code for this operation is as follows:
+\begin{verbatim}
+atomically {
+  if (writeIntent(key)) then return false
+  version <- LVC.fetchAndIncrement()
+  add <version, value> to key
+  return true
+}
+\end{verbatim}
+  \item \code{boolean validateAndMutate(\wkey, \wversion, value, [<\rkey,
+  \rversion>*])}, where \robjs is an optional parameter.
+Atomically validates that the provided versions of \wkey and \rkeys (if
+applicable)  are equal to the highest ones in the data store and mutates the
+object associated with \wkey and the LVC as mutate does. Returns true if the
+validation is successful, otherwise returns false and does not perform the
+mutation. The pseudo-code for this operation is as follows:
+{\tiny
+\begin{verbatim}
+atomically {
+  if (writeIntent(key)) then return false
+  if (latest version of w_key != w_version) then return false
+  forall (r_key, r_version) {
+    if (latest version of r_key != r_version) then return false
+  }
+  version <- LVC.fetchAndIncrement()
+  add <version, value> to w_key
+  return true
+}
+\end{verbatim}} 
+Note that the version numbers provided with the object parameters correspond to
+old versions; they are used for validation, and are not stored with the new
+version. The new version is produced using the LVC.
+\item \code{< array of <version,value>, ts> collect(keys)}.   
+Returns a consistent snapshot of keys. In particular, it selects a ts, which is the region’s LVC at some point during its execution, and returns the version with the highest version that does not have a write intention indication associated with each key up to this ts. In pseudo-code:
+{\tiny
+\begin{verbatim}
+ts <- LVC.get()
+foreach key in keys {
+S = {<key, version, value> in data store | !writeIntent(key, version, value) ^
+version <= ts} add argmax_S (version) to snapshot
+}
+return snapshot
+\end{verbatim}}
+\end{enumerate}
+
+\subsection{Client-Side Support for Local Transactions}
+We support a restricted set of local transactions, focusing on short ones that
+frequently occur in production. Recall that short transactions benefit most from
+our optimizations since for them, the overhead of accessing the TM once or twice
+per transaction is significant.
+
+Local transactions forgo the standard API including begin and commit operations,
+and instead invoke a single function for executing the entire transaction. The
+new API functions for local transactions are prefixed with \verb|LTX_|.
+
+The most basic type of short local transaction we support is a singleton, i.e.,
+a transaction consisting of a single read or write operation. Singletons are
+implemented directly using the new functions in the underlying data store, as
+follows:
+
+\begin{verbatim}
+LTX_read(key) 
+  return collect(key).array
+
+LTX_write(key, value)
+  return mutate(key, value)
+\end{verbatim}
+The read operation can be trivially extended to a scan:
+
+\begin{verbatim}
+LTX_scan(keys)
+  return collect(keys).array
+\end{verbatim}
+
+The next type of local transaction is a single-key read-and-write, SRW. It is
+parametrized by some compute function f that generates the new value from the
+old one.
+{\small
+\begin{verbatim}
+LTX_SRW(key, f)
+<version, value> <- read(key)
+  new_val <- f(value)	// client side
+  return validateAndMutate(key, version, new_val) 
+\end{verbatim}}
+
+Because \verb|LTX_SRW| does not perform the update to the data store atomically
+with the read, it needs to validate the mutate operation to ensure that the object
+has not been updated since its latest version was read at the beginning of the
+operation. If the validation fails, the transaction can be retried, either the
+same way or using a regular transaction.
+
+We next  extend the above operation to read from multiple objects and update one:
+{\scriptsize
+\begin{verbatim}
+LTX_MRSW(w_key, r_keys, f)  // keys is a non-empty list 
+  <r_snapshot, version> <- collect(keys)
+  new_val <- f(r_snapshot)		// client side
+  return validateAndMutate(w_key, version, new_val, r_snapshot)
+\end{verbatim}}
 
 \section{Evaluation}
 

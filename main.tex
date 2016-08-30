@@ -242,6 +242,7 @@
 \newcommand{\To}{\longrightarrow}
 \newcommand{\partialderiv}[2]{\frac{\partial #1}{\partial #2}}
 \newcommand{\calS}{{\mathcal{S}}} %defining a set
+\newcommand{\tuple}[1]{\langle #1 \rangle}
 
 %========================
 %  New Variable Macros
@@ -252,10 +253,7 @@
 %  Define Variables
 %========================
 \newVar{\redmin}{\mbox{RED}_{\mbox{min}}}
-\newVar{\redmax}{\mbox{RED}_{\mbox{max}}}
-\newVar{\redprob}{\mbox{RED}_{\mbox{prob}}}
-\newVar{\redburst}{\mbox{RED}_{\mbox{burst}}}
-\newVar{\redlimit}{\mbox{RED}_{\mbox{limit}}}
+
 
 %%% Defining argmax, Var, etc.
 \DeclareMathOperator*{\argmax}{arg\,max}  % \argmax_x f(x) %also: \newcommand{\argmax}{\operatornamewithlimits{argmax}}
@@ -275,13 +273,7 @@
 \newcommand{\sm}[1]{\Scale[0.9] {#1}}  %reduce math size
 
 
-\newcommand{\fs}{\mbox{\textit{fs}} }
-\newcommand{\eff}{\mbox{\textit{eff}} }
-\newcommand{\ssthresh}{\mbox{\textit{ssthresh}} }
 
-\newcommand{\gst}{\mbox{\textit{gst}} }
-\newcommand{\rcv}{\mbox{\textit{rcv}} }
-\newcommand{\vcc}{\mbox{\textit{vcc}} }
 
 %%% Addition to play with the bib file (1)
 %%for citations; et al., etc.
@@ -377,25 +369,129 @@ Ohad Shacham\\
 %=========================================================================
 
 \begin{abstract}
-
+TBD
 \end{abstract}
 
 %\MyIncludeGraphics{fake.png}
 
 \section{Introduction} \label{sec:intro}
+Popular production systems such as Percolator, Omid, and Tephra, support
+transactions over sharded data using centralized “timestamp oracles”, also
+called transaction managers (TMs) . The TMs provide a global version clock (GVC)
+[?] and sometimes additional functionalities such as conflict detection and
+tracking of committed transactions[?]. The main motivation behind systems that
+use a single TM is providing support for global transactions, i.e., ones that
+span multiple regions (also called nodes, shards, domains, or partitions).
+Hence, central coordination is an inherent part of their design. This is in
+contrast with federated systems, where transactions are by default local, i.e.,
+access a single region, and protocols like two phase commit are used to ensure
+atomicity of global transactions.
+
+Using a centralized TM introduces a tradeoff: while transactions spanning
+multiple regions are greatly facilitated and expedited using this design, local
+transactions incur a performance penalty. This penalty is particularly
+significant for short transactions, where the overhead of accessing the TM once
+(to read the GVC) or twice (also in order to commit) per transaction is not
+amortized across many operations. Typical Web workloads include both long
+multi-region transactions and short local transactions, including ones
+consisting of a single object read, write or read-modify-write.
+
+In this work we mitigate the above tradeoff by offering a “fast path” for short
+local transactions, without a significant impact on multi-region ones while
+maintaining correctness. We consider a single-TM system that supports global
+transactions, and enhance it with optimized support for specific types of local
+transactions. Our main goal is to expedite short single-object transactions,
+which are popular in production Web workloads [?].
+
+We focus here on systems supporting snapshot isolation (SI) [?], which is
+popular in real-world systems [?] and amenable to scalable implementations [?].
+The transaction semantics for local transactions are the same as for global
+ones, and in particular, a local transaction can be performed using the usual
+transaction mechanism, (which accesses the TM), with no change in semantics.
+
+We implement our solution in Omid [?], an open source transaction processing
+engine for key-value stores. Omid is database-neutral, while its open-sourced
+implementation uses HBase. Our solution consists of two main parts - extensions
+to the underlying key-value store, which we implement in HBase, and client-side
+extensions to the transaction library, which we implement in Omid’s client
+library. In addition, our implementation slightly modifies Omid’s TM to be
+compatible with the changes to HBase.
+ 
+Section 2 presents the context of this work, by outlining the data model,
+transactional service, and design of existing single-TM systems we improve on.
+Section 3 describes our support for local transactions in such systems. Section
+4 presents our implementation and its evaluation. We review related work in
+Section 5 and conclude with Section 6.
 
 \section{Background, Motivation and Applicability}% and resulting benefits}
 \label{sec:background}
+We consider a database system that spans multiple regions and supports global
+(multi-region) transactions with SI semantics using a single TM. Data is stored
+in an underlying NOSQL key-value store, such as HBase, BigTable,  MongoDB, or
+RocksDB. Clients access the data store directly, and partake in transaction
+coordination using the assistance of the TM.
 
 \section{Model and Notations}
+We now describe the data model and API of the underlying data store.
+
+\subsection{Objects}
+\begin{enumerate}
+\item We assume object granularity; with HBase and BigTable this refers to a
+row.
+Later we discuss cell granularity.
+Objects are associated with keys.
+\item Object values are associated with externally-provided monotonically
+increasing version numbers. Multiple versions associated with the same key may co-exist.
+\item Thus, an object is a tuple \tuple{key,\tuple{version,value}+}, where value
+can be structured to consist of multiple columns.
+\end{enumerate}
+
+The data is \emph{partitioned} (sharded). Each object belongs to one region
+(node, partition, shard, domain). Local transactions are ones that access a single
+region.
+
+\subsection{API}
+\begin{itemize}
+\item <version,value> read(key) atomically returns the value with the highest
+version associated with key along with the version.
+\item The API further allows traversing (reading) earlier versions of the same
+key in descending order.
+\item write(key,value,version) atomically creates or updates the version: If the
+provided version number is smaller than the key’s latest stored version, the
+update fails. if the version already exists, its value is updated; otherwise, a
+new version is added. Garbage collection of obsolete versions is a separate
+process.
+\item Additionally, data stores often provide means to atomically read and
+update an object; (e.g., HBase exports CheckAndMutate operations, which is internally
+implemented using a RW lock, whereas Bigtable supports row transactions). We
+will extend this capability below in order to implement certain atomic
+operations at the data store level.
+\end{itemize}
+
+Transactions:
+ Transactions may span multiple regions, and atomically commit or abort. The
+ system supports transactions with SI semantics. Intuitively, SI ensures that
+ the information a transaction reads from the data store does not mix old and
+ new values. For example, if a task updates the values of two objects, then no
+ concurrent transaction may observe the old value of one of these objects and
+ the new value of the other. More precisely, SI enforces a total order on all
+ committed transactions so that (1) transactions are ordered according to their
+ commit times, (2) each transaction sees a consistent snapshot of the database
+ reflecting exactly those transactions that committed prior to its start time;
+ and (3) a transaction commits only if no updates it has made conflict with any
+ concurrent updates made since that snapshot.
 
 \section{Adding Local Transactions}
 
+
 \section{Evaluation}
+
 
 \section{Related Work}
 
+
 \section{Conclusion}
+
 
 \ifblind
 \else

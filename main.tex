@@ -1,373 +1,61 @@
-%=========================================================================
-%  LaTeX definitions
-%=========================================================================
-
-%%%     definining margins
-%\newcommand{\CLASSINPUToutersidemargin}{0.64in} %redefining margins; from about 0.68 to 0.64 > 0.625; see also package "changepage"
-
-%%%     more margins:
-%\newcommand{\CLASSINPUTtoptextmargin}{1in}
-%\newcommand{\CLASSINPUTbottomtextmargin}{0.75in}
-%\newcommand{\CLASSINPUTinnersidemargin}{0.75in}
-%\newcommand{\CLASSINPUToutersidemargin}{0.75in}
-
-%========================
-%  Tech. Report  vs. Conference
-%========================
-
-%the definitions help switch between the two: \Conf{Due to space limits...} \TR{Here is the full proof}
-
-% to produce the conference paper comment the \conffalse uncomment the \conftrue
-\newif\ifconf
-%\conffalse
-\conftrue
-
-% to include comments in the generated pdf comment the \commfalse and uncomment \commtrue
-\newif\ifcomm
-\commtrue
-%\commfalse
-
-% to produce the blind paper version comment the \conffalse uncomment the \conftrue
-\newif\ifblind
-%\blindfalse
-\blindtrue
-
-\ifconf
-    %%Conference version?
-    \newcommand{\Conf}[1]{#1}
-    \newcommand{\TR}[1]{}
-    \newcommand{\Journal}[1]{}  %enable for journal only
-    \newcommand{\OnlyTR}[1]{}   %enable for TR only, disable for journal
-\else
-    %%%%%TR/Journal version?
-    \newcommand{\Conf}[1]{}
-    \newcommand{\TR}[1]{#1}
-    \newcommand{\Journal}[1]{}  %enable for journal only
-    \newcommand{\OnlyTR}[1]{#1}   %enable for TR only, disable for journal
-\fi
-
-%========================
-%   Paper Format
-%========================
-%%%% IEEE
-%\Conf{
-%%\documentclass[letterpaper, 10pt, conference]{ieeeconf}
-%    \documentclass[conference]{IEEEtran}
-%}
-%\TR{
-%    \documentclass[journal]{IEEEtran}
-%}
-
-%%% ACM
-\Conf{
-\documentclass[singlecolumn]{vldb} 
-}
-\TR{
-\documentclass[letterpaper,conference]{vldb}
-}
-
-
-%%% INFOCOM addition: http://www.ieee-infocom.org/2009/paper-layout.htm
-%\makeatletter
-%\def\ps@headings{%
-%\def\@oddhead{\mbox{}\scriptsize\rightmark \hfil \thepage}%
-%\def\@evenhead{\scriptsize\thepage \hfil\leftmark\mbox{}}%
-%\def\@oddfoot{}%
-%\def\@evenfoot{}}
-%\makeatother
-%\pagestyle{headings}
+\documentclass[preprint,10pt]{sigplanconf} 
 
 %========================
 %  Packages
 %========================
 
 \usepackage{graphicx}
-    %\usepackage[dvips]{graphicx}
-    %%\usepackage[pdftex]{graphicx} %if pdftex
 %\usepackage{amsmath}
-%\usepackage[cmex10]{amsmath} %ACM conflict with next package
 \usepackage{amssymb}
 %\usepackage{amsthm}  %<---- for a different "look" in theorems (theorem word in bold, etc.) %ACM conflict with proof definition?
 %\usepackage{subfigure}
 \usepackage[tight,footnotesize]{subfigure}
 \usepackage{cite}
 \usepackage{url}
-%\usepackage{cases}
 %\usepackage{color}
-%\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
 %\usepackage{algorithm}
 %\usepackage{algpseudocode}
 \usepackage{times}
-%\usepackage{showkeys} %[notref]{showkeys}
-%\usepackage{epsfig}
-%\usepackage{graphics}
-%\usepackage{float}
-%\usepackage{paralist}
-%\usepackage{verbatim}
+
 \usepackage{todonotes}
-%\usepackage{authblk}
 \usepackage[normalem]{ulem} %strikethrough: \sout{Hello World}
 \usepackage{lastpage} %for number of pages
 \usepackage{xspace}
 \usepackage{multirow}
 \usepackage{balance}
-%========================
-%  Defining theorem types
-%========================
 
-\newtheorem{theorem}{Theorem}%[section]    -> example: \begin{theorem}   ... \end{theorem}
-\newtheorem{theorem*}{Theorem}
-\newtheorem{definition}{Definition}%[section] -> example: \begin{definition} [$B_{h}$ Sequence] \label{def:B} ..... \end{definition}
-\newtheorem{proposition}{Proposition}%[section]
-\newtheorem{property}{Property} %\newtheorem{property}[theorem]{Property}
-\newtheorem{lemma}{Lemma}%[section]
-\newtheorem{example}{Example}%[section]         -> \begin{example} Consider the query from Example~\ref{exp:query}. Then... \end{example}
-\newtheorem{Obs}{Observation}%[section]
-\newtheorem{corollary}{Corollary}
-\newtheorem{conjecture}{Conjecture}
-
-%%\newtheorem{theor2}{Theorem \cite[Theorem 1.4, Exp. 1.7]{bigqueues}}[theor1]
-%%\newenvironment{theor2}{\emph{}}{\addtocounter{\thetheor1}}
-%%\newenvironment{theor2}{\refstepcounter{theor1}\emph{Theorem \arabic{theor1}~\cite[Theorem 1.4, Exp. 1.7]{bigqueues}:}}{}
-
-%%% Proofs -- if not defined:
-%\newcommand{\qedbox}{\vbox{\hrule\hbox{\vrule\squarebox{.667em}\vrule}\hrule}}
-%\newcommand{\qed}{\nopagebreak\mbox{}\hfill\qedbox\smallskip}
-%\newcommand{\sq}{\hbox{\rlap{$\sqcap$}$\sqcup$}}
-%\newcommand{\qed}{\hspace*{\fill}\sq}  %empty square
-%\newcommand{\qed}{\hfill \mbox{\raggedright \rule{.07in}{.1in}}}
-%\newenvironment{proof}{\noindent {\bf Proof.}\ }{\qed\par\vskip 4mm\par}
-%\newenvironment{proofof}[1]{\bigskip \noindent {\bf Proof of #1:}\quad }{\qed\par\vskip 4mm\par}
-%\newenvironment{proofsketch}[1]{\smallskip {\em \quad Proof sketch: \quad}}{\qed\par\vskip 4mm\par}
-%\newenvironment{proof-outline}{\noindent{\bf Proof Outline}\hspace*{1em}}{\qed\bigskip\\}
-
-%======================================
-%  Defining code related macros
-%======================================
-\newcommand{\code}[1]{\texttt{#1}}
+\input{macros}
 
 %========================
-%  Defining comments
-%========================
-
-\ifcomm
-    % (1) comments in bold
-    \newcommand{\A}[1]{\textbf{[#1]}}       %Comments -> in bold
-
-    % (2) comments in footnote
-    \newcommand{\F}[1]{\footnote {\color{red} [#1]}}
-
-    % (3) comments in rectangle
-    \newcounter{commentNumberAB}
-    \setcounter{commentNumberAB}{0}
-    \newcommand{\AB}[1]{\addtocounter{commentNumberAB}{1} \todo[inline]{\textbf{(AB.\arabic{commentNumberAB})} #1}}
-
-
-
-\else
-    \newcommand{\AB}[1]{}
-\fi
-
-% (3) change marks
-\usepackage[normalem]{ulem}
-\newcommand{\add}[1]{\textcolor{red}{EZ: \textbf{#1}}}
-\newcommand{\del}[1]{\textcolor{red}{EZ: \textbf{\sout{#1}}}}
-
-% (4) remove (hide) stuff
-\newcommand{\remove}[1]{}
-
-
-%========================
-%  Defining operators
-%========================
-
-%%% Shortcuts: quoting equations etc.
-%\newcommand{\eqref}[1]{Equation~(\ref{#1})}        % example: "We use the
-% result from \eq{eq:iterated} to obtain..."
-\newcommand{\thmref}[1]{Theorem~\ref{#1}}
-\newcommand{\lemref}[1]{Lemma~\ref{#1}}
-\newcommand{\deref}[1]{Definition~\ref{#1}}
-\newcommand{\exref}[1]{Example~\ref{#1}}
-\newcommand{\secref}[1]{Sect.~\ref{#1}}
-\newcommand{\figref}[1]{Fig.~\ref{#1}}
-\newcommand{\tabref}[1]{Table~\ref{#1}}
-\newcommand{\appref}[1]{Appendix~\ref{#1}}
-
-%%%% Shortcut to start a proof
-%\newcommand{\bp}{\begin{IEEEproof}}     %IEEE formats: \begin{IEEEproof} ; \begin{IEEEproof}[Proof of Theorem \ref{thm:my}]; else: \begin{proof}
-%\newcommand{\bpo}{ \begin{IEEEproof}[Proof Outline] }
-%\newcommand{\ep}{\end{IEEEproof}}       %\newcommand{\ep}{\QED \end{proof}}
-
-%%% Shortcut to start an equation
-\newcommand{\be}{\begin{equation}}
-\newcommand{\ee}{\end{equation}}
-
-%%% Definining scheme names & text
-\newcommand{\OPT}{\text{\textsc{opt}}}
-\newcommand{\scheme}{{\langle a,d,c,h\rangle}}
-\newcommand{\fpr}{{false positive rate }}   % be careful: "the \fpr of the scheme" works fine, but "it has a good \fpr, and" doesn't (bad space before comma); so we use the next line; check also "\fpr\"
-\newcommand{\fprNS}{{false positive rate}} %see above: "it has a good \fprNS, and"
-
-%%% Variables for figures
-\newcommand{\tinygraphsize}{0.22} %alternating
-\newcommand{\graphsizeA}{0.25}  %3 parallel subfigures <=0.31
-\newcommand{\graphsizeB}{0.31}  %3 parallel subfigures <=0.31
-\newcommand{\smallergraphsize}{0.24}  %4 parallel subfigures
-\newcommand{\smallgraphsize}{0.35}
-\newcommand{\figurewidth}{\columnwidth}
-
-\newcommand\MyIncludeGraphics[2][]{% needs packages: \usepackage{graphicx}\usepackage{todonotes}
-    \IfFileExists{#2}{%
-        \includegraphics[#1]{#2}%
-    }{%
-        \missingfigure[figwidth=2.0cm]{}%{{\small Missing #2}}%
-    }%
-}%
-
-\newcommand{\T}[1]{\noindent\textbf{#1}} %paragraph title
-\newcommand{\U}[1]{\noindent\textit{#1}} %paragraph sub-title
-
-%========================
-%  Math
-%========================
-
-\newcommand{\para}[1]{\left( #1 \right)}        %Shortcuts in equations for parentheses
-\newcommand{\brac}[1]{\left\{ #1 \right\}}
-\newcommand{\set}[1]{\left\{#1\right\}}         %same as \brac
-\newcommand{\sbrac}[1]{\left[ #1 \right]}
-\newcommand{\floor}[1]{\left\lfloor #1 \right\rfloor}%\newcommand{\floor}[1]{\lfloor #1 \rfloor}
-\newcommand{\ceil}[1]{\left\lceil #1 \right\rceil} %\newcommand{\ceil}[1]{\lceil #1 \rceil}
-\newcommand{\norm}[1]{\left\Vert#1\right\Vert}
-\newcommand{\abs}[1]{\left\vert#1\right\vert}
-\newcommand{\reals}{\mathbb{R}}
-\newcommand{\rationals}{\mathbb{Q}}
-\newcommand{\integers}{\mathbb{Z}}
-\newcommand{\naturals}{\mathbb{N}}
-\newcommand{\eps}{\varepsilon}
-\newcommand{\To}{\longrightarrow}
-\newcommand{\partialderiv}[2]{\frac{\partial #1}{\partial #2}}
-\newcommand{\calS}{{\mathcal{S}}} %defining a set
-\newcommand{\tuple}[1]{\ensuremath{\langle \mbox{#1} \rangle}}
-
-%========================
-%  New Variable Macros
-%========================
-\newcommand{\newVar}[2]{\newcommand{#1}{\ensuremath{#2}\xspace}}
-
-%========================
-%  Define Variables
-%========================
-\newVar{\rkeys}{\mbox{r\textunderscore keys}}
-\newVar{\rkey}{\mbox{r\textunderscore key}}
-\newVar{\rversion}{\mbox{r\textunderscore version}}
-\newVar{\wkey}{\mbox{w\textunderscore key}}
-\newVar{\wversion}{\mbox{w\textunderscore version}}
-\newVar{\robjs}{\mbox{r\textunderscore objs}}
-
-%%% Defining argmax, Var, etc.
-\DeclareMathOperator*{\argmax}{arg\,max}  % \argmax_x f(x) %also: \newcommand{\argmax}{\operatornamewithlimits{argmax}}
-\DeclareMathOperator{\Var}{Var}     % Variance
-\newcommand{\E}{\mathbb{E}}  %\newcommand{\E}{\text{E}} , \newcommand{\E}{\text{\textbf{E}}}       % Expected value
-\newcommand{\eqtri}{\stackrel{\triangle}{=}}    %definition equality
-\newcommand{\p}[1]{\Pr \para{#1}}  % Probability
-%\renewcommand{\choose}[2]{\genfrac{(}{)}{0pt}{}{#1}{#2}}
-
-\newcommand{\DL}{D_L}
-\newcommand{\alg}{Alg}
-\newcommand{\opt}{OPT
-\newcommand{\w}{{\tilde{w}}}}
-\DeclareMathOperator{\onoff}{ON-OFF}
-
-\newcommand*{\Scale}[2][4]{\scalebox{#1}{$#2$}}%
-\newcommand{\sm}[1]{\Scale[0.9] {#1}}  %reduce math size
-
-
-
-
-%%% Addition to play with the bib file (1)
-%%for citations; et al., etc.
-%\makeatletter
-%\def\bstctlcite{\@ifnextchar[{\@bstctlcite}{\@bstctlcite[@auxout]}}
-%\def\@bstctlcite[#1]#2{\@bsphack
-%\@for\@citeb:=#2\do{%
-%\edef\@citeb{\expandafter\@firstofone\@citeb}%
-%\if@filesw\immediate\write\csname
-%#1\endcsname{\string\citation{\@citeb}}\fi}%
-%\@esphack}
-%\makeatother
-%%
-
 \begin{document}
 
-\title{Speeding up Transaction Processing System using Local Transactions}
-\numberofauthors{3}
-\author{
-\alignauthor
-Idit Keidar\\
-	\affaddr{Technion -- I.I.T}\\
-	\email{idish@ee.technion.ac.il}
-\alignauthor
+\title{Fast Local Transactions in Distributed Data Stores}
+
+\authorinfo{
+\remove{
+ Aran Bergman\\
+ 	\affaddr{Technion -- I.I.T}\\
+	\email{aranb@technion.ac.il}
+\and %
 Edward Bortnikov\\
 	\affaddr{Yahoo Research}\\
 	\email{ebortnik@yahoo-inc.com}
-\alignauthor
+\and %
 Eshcar Hilel\\
 	\affaddr{Yahoo Research}\\
 	\email{eshcar@yahoo-inc.com}
 \and %
-\alignauthor
+Idit Keidar\\
+	\affaddr{Technion -- I.I.T}\\
+	\email{idish@ee.technion.ac.il}
+\and %
 Ohad Shacham\\
 	\affaddr{Yahoo Research}\\
  	\email{ohads@yahoo-inc.com}
- \alignauthor
- Aran Bergman\\
- 	\affaddr{Technion -- I.I.T}\\
-	\email{aranb@technion.ac.il}
+ 
+}
 }
 
-
-%%% author names and affiliations
-%%% use a multiple column layout for up to three different
-%%% affiliations
-%%\author{\IEEEauthorblockN{%\large
-%%Great Student and Isaac Keslassy}
-%%%\IEEEauthorblockA{Dept. of Electrical Engineering\\
-%%%Technion\\% - Israel Institute of Technology\\
-%%%Haifa 32000, Israel\\
-%%\IEEEauthorblockA{Technion\\
-%%\{gs@tx,isaac@ee\}.technion.ac.il }} %{\tt isaac@ee.techion.ac.il}
-%
-%\Conf{
-%\author{
-%\IEEEauthorblockN{\large Grad Student and Isaac Keslassy}
-%\IEEEauthorblockA{
-%Technion\\
-%{\small \tt \{grad@tx, isaac@ee\}.technion.ac.il}}
-%%\IEEEauthorblockN{Grad Student}
-%%\IEEEauthorblockA{
-%%Technion\\
-%%{\small \tt grad@tx.techion.ac.il}}
-%%\and
-%%\IEEEauthorblockN{Isaac Keslassy}
-%%\IEEEauthorblockA{
-%%Technion\\
-%%{\small \tt isaac@ee.techion.ac.il}}
-%}
-%}
-%\TR{\author{\IEEEauthorblockN{\large Grad Student and Isaac Keslassy}}}
-
-%%% This option goes with package authblk
-%\author[1]{Grad Student}
-%\author[1]{Isaac Keslassy}
-%\author[2]{Company Engineer}
-%\affil[1]{Technion, {\small \tt \{grad@tx, isaac@ee\}.technion.ac.il}}
-%\affil[2]{Company, {\small \tt \{engineer\}@company.com}}
-
-
-% For TR, remove for journal:
-\OnlyTR{\markboth{Technical Report TR??-??, Technion, Israel}{}}
-
-% make the title area
 \maketitle
 
 %For ACM formats
@@ -381,452 +69,36 @@ Ohad Shacham\\
 TBD
 \end{abstract}
 
-%\MyIncludeGraphics{fake.png}
+%========================
 
 \section{Introduction} \label{sec:intro}
-Popular production systems such as Percolator, Omid, and Tephra, support
-transactions over sharded data using centralized “timestamp oracles”, also
-called \emph{transaction managers} (TMs) . The TMs provide a \emph{global
-version clock} (GVC) [?] and sometimes additional functionalities such as conflict detection and
-tracking of committed transactions[?]. The main motivation behind systems that
-use a single TM is providing support for \emph{global transactions}, i.e., ones
-that span multiple regions (also called nodes, shards, domains, or partitions).
-Hence, central coordination is an inherent part of their design. This is in
-contrast with federated systems, where transactions are by default local, i.e.,
-access a single region, and protocols like two phase commit are used to ensure
-atomicity of global transactions.
+\input{intro}
 
-Using a centralized TM introduces a tradeoff: while transactions spanning
-multiple regions are greatly facilitated and expedited using this design, local
-transactions incur a performance penalty. This penalty is particularly
-significant for short transactions, where the overhead of accessing the TM once
-(to read the GVC) or twice (also in order to commit) per transaction is not
-amortized across many operations. Typical Web workloads include both long
-multi-region transactions and short local transactions, including ones
-consisting of a single object read, write or read-modify-write.
+The remainder of this paper is organized as follows:
+Section~\ref{sec:context}  gives the context of this work by defining the common properties of TPSs that can benefit from our approach. 
+Section~\ref{sec:alg} describes our support for local transactions in such systems. 
+Section~\ref{sec:eval} presents our implementation and its evaluation. 
+We review related work in Section ~\ref{sec:related} and conclude with Section ~\ref{sec:conclusions}.
 
-In this work we mitigate the above tradeoff by offering a “fast path” for short
-local transactions, without a significant impact on multi-region ones while
-maintaining correctness. We consider a single-TM system that supports global
-transactions, and enhance it with optimized support for specific types of local
-transactions. Our main goal is to expedite short single-object transactions,
-which are popular in production Web workloads [?].
+\section{Context and Applicability} \label{sec:context}
+\input{context}
 
-We focus here on systems supporting \emph{snapshot isolation} (SI) [?], which is
-popular in real-world systems [?] and amenable to scalable implementations [?].
-The transaction semantics for local transactions are the same as for global
-ones, and in particular, a local transaction can be performed using the usual
-transaction mechanism, (which accesses the TM), with no change in semantics.
+\section{Adding Local Transactions} \label{sec:alg}
+\input{algorithm}
 
-We implement our solution in Omid [?], an open source transaction processing
-engine for key-value stores. Omid is database-neutral, while its open-sourced
-implementation uses HBase. Our solution consists of two main parts - extensions
-to the underlying key-value store, which we implement in HBase, and client-side
-extensions to the transaction library, which we implement in Omid’s client
-library. In addition, our implementation slightly modifies Omid’s TM to be
-compatible with the changes to HBase.
- 
-Section 2 presents the context of this work, by outlining the data model,
-transactional service, and design of existing single-TM systems we improve on.
-Section 3 describes our support for local transactions in such systems. Section
-4 presents our implementation and its evaluation. We review related work in
-Section 5 and conclude with Section 6.
-
-\section{Background, Motivation and Applicability}% and resulting benefits}
-\label{sec:background}
-We consider a database system that spans multiple regions and supports global
-(multi-region) transactions with SI semantics using a single TM. Data is stored
-in an underlying NOSQL key-value store, such as HBase, BigTable,  MongoDB, or
-RocksDB. Clients access the data store directly, and partake in transaction
-coordination using the assistance of the TM.
-
-\section{Model and Notations}
-We now describe the data model and API of the underlying data store.
-
-\subsection{Objects}
-\begin{enumerate}
-\item We assume \emph{object} granularity; with HBase and BigTable this refers
-to a row.
-Later we discuss cell granularity.
-Objects are associated with \emph{keys}.
-\item Object values are associated with externally-provided monotonically
-increasing \emph{version numbers}. Multiple versions associated with the same
-key may co-exist.
-\item Thus, an object is a tuple \tuple{key,\tuple{version,value}+}, where value
-can be structured to consist of multiple columns.
-\end{enumerate}
-
-The data is \emph{partitioned} (sharded). Each object belongs to one region
-(node, partition, shard, domain). \emph{Local transactions} are ones that access
-a single region.
-
-\subsection{API}
-\begin{itemize}
-\item \code{\tuple{version,value} read(key)} atomically returns the value with
-the highest version associated with key along with the version.
-\item The API further allows traversing (reading) earlier versions of the same
-key in descending order.
-\item \code{write(key,value,version)} atomically creates or updates the version:
-\sout{If the provided version number is smaller than the key’s latest stored
-version, the update fails.} if the version already exists, its value is updated;
-otherwise, a new version is added. Garbage collection of obsolete versions is a separate
-process.
-\item Additionally, data stores often provide means to \emph{atomically read and
-update} an object; (e.g., HBase exports CheckAndMutate operations, which is
-internally implemented using a RW lock, whereas Bigtable supports row transactions). We
-will extend this capability below in order to implement certain atomic
-operations at the data store level.
-\end{itemize}
-
-\subsection{Transactions}
- Transactions may span multiple regions, and atomically commit or abort. The
- system supports transactions with SI semantics. Intuitively, SI ensures that
- the information a transaction reads from the data store does not mix old and
- new values. For example, if a task updates the values of two objects, then no
- concurrent transaction may observe the old value of one of these objects and
- the new value of the other. More precisely, SI enforces a total order on all
- committed transactions so that (1) transactions are ordered according to their
- commit times, (2) each transaction sees a consistent snapshot of the database
- reflecting exactly those transactions that committed prior to its start time;
- and (3) a transaction commits only if no updates it has made conflict with any
- concurrent updates made since that snapshot.
-
-\section{Arcitecture and Design}
-The TM provides a monotonically increasing GVC, which is used to produce
-versions. An artifact of this is that object version numbers are monotonically
-increasing system-wide.
-
-Transactions indicate their intention to write to an object; this is done using
-a dedicated column (part of the value in our data model), which keeps logical
-(application-level) locks in some implementations (Percolator) and tentative
-updates in others (Omid). While write intentions differ across implementations,
-we assume that the following generic functions are provided:
-
-\code{boolean writeIntent(key)} returns true if the latest version associated
-with key has a write indication.
-
-\code{boolean writeIntent(key, version)} returns true if version has a write
-indication.
-
-Note: in certain implementations (like a virtual lock per key used in
-Percolator), the write-intent of all versions associated with the same key is
-the same, whereas in other cases (like Omid, which uses tentative versions), a
-new version may have a write intent while an older one does not.
-
-A transaction goes through the following phases:
-\begin{enumerate}
-  \item{Begin} -- For SI, a transaction obtains a global read-version number
-  when it starts. It also obtains a unique monotonically increasing transaction id.
-  The two can be combined (i.e., the read-version can be the same as the
-  transaction id).
-  \item{Collect reads and indicate write intention} -- (either jointly or
-  collect first and then write).\\ \emph{Collect} means reading object values
-  and versions; each object atomically. Only versions committed with timestamps
-  smaller or equal to the transaction’s read-version are read. Encountered write
-  indications by uncommitted transactions are dealt with differently in
-  different systems, e.g., Percolator waits for the indication to be lifted,
-  Omid ignores uncommitted versions and checks for conflicts this may induce at
-  commit time, and Distributed-Commit Omid forces the transaction with the write
-  indication to abort. Collect occurs during the transaction (encounter time).\\
-  \emph{Indicating write intention} changes the objects’ write intention columns
-  to indicate a transaction attempting to write them is under way. The value the
-  transaction intends to write is added with a new version. In Omid, this
-  version is the transaction’s id. Each object is updated atomically. This can
-  occur either at encounter time or at commit time, in which case it occurs as
-  the first phase of the commit. \\
-  \emph{Validation/conflict detection} - For SI, need
-  to check for write-write conflicts only. This step checks write intentions as well as version numbers.
-  \item{Commit} --  in one atomic step to a designated \emph{commit entry}. May
-  fail and abort instead. (Omid - commit table entry, Percolator - lock of first written key).
-  \item{Clean-up} -- changes the write intentions of the transaction to
-  persistent writes in case of commit, and removes them in case of abort. This
-  phase occurs after the transaction is persistently committed or aborted, in
-  order to reduce the overhead of future transactions and garbage collect
-  obsolete information. Note that whenever a transaction encounters a write
-  indication in the collect phase it must access the commit entry in order to
-  check the transaction’s commit status. Once the clean-up phase is over, future
-  transactions no longer incur this overhead for keys updated by the terminated
-  transaction.
-\end{enumerate}
-
-\section{Adding Local Transactions}
-We now explain our support for local transactions with SI semantics in the
-context of a system as described in Section 2 above. We first define the API and
-semantics of local transactions (Section 3.1) and then continue to describe our
-solution, which consists of two parts. First, in Section 3.2, we enhance the
-underlying data store with support for per-region local version clocks and an
-API to manipulate this clock jointly with objects stored at that region. This
-entails a minor modification to version management in the TM. Second, we add
-client-side support for local transactions, as explained in Section 3.3.
-
-\subsection{Local Transactions API and Semantics}
-There are two distinctive characteristics of local transactions. First, they
-must access a single region. Second, in contrast to regular transactions, they
-cannot dynamically evolve, but rather must be provided in their entirety with a
-single API-call. Local transactions APIs are prefixed with LTX. The simplest
-examples are singleton transactions, i.e., transactions that perform a single
-read operation via LTXread(key) or a single update via LTXwrite(key, value). A
-more elaborate example is LTXMRSW(\wkey, \rkeys, f), which atomically reads
-values associated  with a list of \rkeys and updates the value associated with
-\wkey according to some function f of the read values. Note that this API
-applies only in case \wkey and all \rkeys reside in the same region. In case
-they do not, the call fails, and the transaction may be restarted as a regular
-transaction.
-
-The semantics for ordering local transactions relative to regular ones are
-weaker than SI in that they do not guarantee real-time order over all regular
-and local transactions together. Specifically, a regular transaction overlapping
-two local transactions that access different regions may observe the updates of
-the second and miss an update by the first. For example, assume objects x and y
-are managed in two different regions, then real-time order can be violated as
-follows:
-{\small
-\begin{verbatim}
-x=0; y=0
-
-  read(x)->0                        read(y)->1
-|---------------------------------------------|
-            write(x,1)      write (y,1) 
-         |-------------|  |-------------|
-\end{verbatim}}
-
-The system still enforces a total order on all committed transactions, so that
-(1) regular transactions (though not local ones) are ordered according to their
-commit times; (2) each transaction sees a consistent snapshot of the database
-reflecting a sequence of transactions that includes all those committed prior to
-its start time plus any number of concurrent local transactions; and (3) a
-transaction commits only if no updates it has made conflict with any concurrent
-updates made since that snapshot.
-
-\subsection{Data Store Extensions}
-We add some functionality to a region, to be used exclusively by our client-side
-extensions given in Section 3.3 below. The key mechanism used to support local
-transactions is a local version clock (LVC) per region. Like the GVC, LVCs are
-also monotonically increasing. Each region (domain, partition, shard) has its
-own LVC. In Section 3.2.1 we describe this local clock’s API and its impact on
-the GVC. We then proceed to present the extension of the data store API for
-accessing objects together with the LVC in Section 3.2.2.
-
-\subsubsection{Local version clock}
-Each region’s LVC is loosely synchronized with the GVC. The idea is to use the
-region’s LVC for ordering local transactions in any given region, and allow
-local transactions to progress in different regions independently. Note that it
-is safe to do so because no global order needs to be enforced among transactions
-that access disjoint sets of objects.
-
-Multi-region transactions, in turn, continue to obtain their versions from the
-GVC. Therefore, whenever a multi-region transaction t accesses a given region,
-we have to synchronize that region’s LVC with the GVC in order to ensure that
-the version obtained by t exceeds those obtained by earlier completed
-transactions within the region, and that later transaction within that region
-will obtain higher versions than t’s.
-
-To support such loose synchronization, the GVC now advances at a coarse
-granularity of epochs. This can be implemented, for example, by choosing some
-epoch size $2^l$, and keeping the l least significant bits of the GVC padded
-with zeros. In other words, every increment of the GVC increases its value by
-$2^l$.
-The LVC obtains the epoch (n-l most-significant bits for an n-bit GVC) from the
-GVC, and proceeds to assign timestamps within the designated epoch (by
-incrementing the least significant bits).
-
-The LVC has a single component, LVC.current, and it supports the following API:
-
-\code{LVC.skip(epoch)} - atomically set LVC.current to max(epoch, LVC.current) .
-
-\code{LVC.fetchAndIncrement()} - atomically increment LVC.current and return new
-value.
-For simplicity, we assume that the LVC is used so it does not overrun the epoch
-and does not wrap around within the epoch. That is, fetchAndIncrement is called
-less than $2^l$ times in each epoch.
-
-\code{LVC.get()} - return LVC.current.
-
-By incrementing the GVC, a multi-region transaction essentially initiates a new
-epoch, and obtains a timestamp exceeding all those of older local transactions.
-In addition, multi-region transactions enforce the synchronization of the LVC
-with respect to the GVC using the skip operation. Specifically, whenever a
-transaction in a new epoch accesses (for either read or write intention
-indication) an object in a region whose LVC is still in an older epoch, it
-invokes that region’s LVC.skip so it will not lag behind the transaction’s
-read-timestamp obtained from the GVC. Thus, new local transactions that will
-begin later in the region will have higher timestamps, as needed.
-
-Note that transaction commits do not alter the LVC; the LVC only reflects
-transactions’ read-timestamps obtained when they  begin.
-
-Note also that as long as a running transaction does not access a given region,
-further updates can occur by local transactions in that region, and these
-updates can be reflected in the transaction’s snapshot in case it later reads
-these objects. Thus, unlike with regular transactions, which satisfy real-time
-order, a transaction’s snapshot may reflect changes that occur after it
-commences.  This may also lead to violation of real-time order in the commit
-order of singletons, as in the example below:
-{\scriptsize
-\begin{verbatim}
-Region 1, LVC=0     LVC=10
-Region 2, LVC=0                      LVC=10
-GVC = 10                                             GVC=12
-
-    read-ts=10 read(x)->0            read(y)->1  commit
-               x.skip(10)            y.skip(10)
-|--------------------------------------------------------|
-
-                      write(x,1)     write (y,1) 
-                    |-----------|  |------------|
-
-\end{verbatim}}
-
-Here, x is written with LVC=10 and later y is written with its LVC=0. The
-concurrent transaction’s snapshot time is 10, which includes the update of x and
-not that of y. The same scenario does not occur with two local transactions
-accessing the same region, since once the LVC is incremented, not further
-updates in the same region can occur with older LVC values.
-
-\subsubsection{Accessing data and the LVC together}
-In order to allow local transactions to execute with a single data store access,
-we extend the data store to support functions that access data objects and the
-LVC together. Thus, a local transaction can increment LVC, obtain a version, and
-write with this version, all in one round-trip to the local data store.
-
-We further enforce atomic access to the data and the LVC. This is important in
-order to avoid races between obtaining a version from the LVC and updating the
-data. For example, if the updates of the LVC and the data were separate, the
-following scenario could have arisen:
-\begin{itemize}
-  \item Local transaction l1 plans to update object A and obtains LVC value 2
-  \item Multi-region transaction t1 obtains read version 2
-  \item Local transaction l2 obtains LVC value 3 and updates object B
-  \item Multi-region transaction t2 obtains read version 3
-  \item t2 reads the old version of A (since it had not been written by l1 yet)
-  and the new version of  B
-  \item l1 writes A with 2 and completes
-  \item t2 reads the new version of A and the old version of  B
-\end{itemize}
-Here, SI is violated.
-
-In addition, the new functions must take care not to breach the the atomicity of
-concurrent transactions. To this end, they rely on the write intention indications.
-
-The new functions are:
-\begin{enumerate}
-  \item \code{boolean mutate(key, value)} atomically increments the region’s LVC
-  and creates a new version for key associated with the new LVC value. The
-  operation fails if the latest version of the object has a write intention
-  indication. The pseudo-code for this operation is as follows:
-\begin{verbatim}
-atomically {
-  if (writeIntent(key)) then return false
-  version <- LVC.fetchAndIncrement()
-  add <version, value> to key
-  return true
-}
-\end{verbatim}
-  \item \code{boolean validateAndMutate(\wkey, \wversion, value, [<\rkey,
-  \rversion>*])}, where \robjs is an optional parameter.
-Atomically validates that the provided versions of \wkey and \rkeys (if
-applicable)  are equal to the highest ones in the data store and mutates the
-object associated with \wkey and the LVC as mutate does. Returns true if the
-validation is successful, otherwise returns false and does not perform the
-mutation. The pseudo-code for this operation is as follows:
-{\tiny
-\begin{verbatim}
-atomically {
-  if (writeIntent(key)) then return false
-  if (latest version of w_key != w_version) then return false
-  forall (r_key, r_version) {
-    if (latest version of r_key != r_version) then return false
-  }
-  version <- LVC.fetchAndIncrement()
-  add <version, value> to w_key
-  return true
-}
-\end{verbatim}} 
-Note that the version numbers provided with the object parameters correspond to
-old versions; they are used for validation, and are not stored with the new
-version. The new version is produced using the LVC.
-\item \code{< array of <version,value>, ts> collect(keys)}.   
-Returns a consistent snapshot of keys. In particular, it selects a ts, which is the region’s LVC at some point during its execution, and returns the version with the highest version that does not have a write intention indication associated with each key up to this ts. In pseudo-code:
-{\tiny
-\begin{verbatim}
-ts <- LVC.get()
-foreach key in keys {
-S = {<key, version, value> in data store | !writeIntent(key, version, value) ^
-version <= ts} add argmax_S (version) to snapshot
-}
-return snapshot
-\end{verbatim}}
-\end{enumerate}
-
-\subsection{Client-Side Support for Local Transactions}
-We support a restricted set of local transactions, focusing on short ones that
-frequently occur in production. Recall that short transactions benefit most from
-our optimizations since for them, the overhead of accessing the TM once or twice
-per transaction is significant.
-
-Local transactions forgo the standard API including begin and commit operations,
-and instead invoke a single function for executing the entire transaction. The
-new API functions for local transactions are prefixed with \verb|LTX_|.
-
-The most basic type of short local transaction we support is a singleton, i.e.,
-a transaction consisting of a single read or write operation. Singletons are
-implemented directly using the new functions in the underlying data store, as
-follows:
-
-\begin{verbatim}
-LTX_read(key) 
-  return collect(key).array
-
-LTX_write(key, value)
-  return mutate(key, value)
-\end{verbatim}
-The read operation can be trivially extended to a scan:
-
-\begin{verbatim}
-LTX_scan(keys)
-  return collect(keys).array
-\end{verbatim}
-
-The next type of local transaction is a single-key read-and-write, SRW. It is
-parametrized by some compute function f that generates the new value from the
-old one.
-{\small
-\begin{verbatim}
-LTX_SRW(key, f)
-<version, value> <- read(key)
-  new_val <- f(value)	// client side
-  return validateAndMutate(key, version, new_val) 
-\end{verbatim}}
-
-Because \verb|LTX_SRW| does not perform the update to the data store atomically
-with the read, it needs to validate the mutate operation to ensure that the object
-has not been updated since its latest version was read at the beginning of the
-operation. If the validation fails, the transaction can be retried, either the
-same way or using a regular transaction.
-
-We next  extend the above operation to read from multiple objects and update one:
-{\scriptsize
-\begin{verbatim}
-LTX_MRSW(w_key, r_keys, f)  // keys is a non-empty list 
-  <r_snapshot, version> <- collect(keys)
-  new_val <- f(r_snapshot)		// client side
-  return validateAndMutate(w_key, version, new_val, r_snapshot)
-\end{verbatim}}
-
-\section{Evaluation}
+\section{Evaluation} \label{sec:eval}
 
 
-\section{Related Work}
+\section{Related Work} \label{sec:related}
 
 
-\section{Conclusion}
+\section{Conclusion} \label{sec:conclusions}
 
 
-\ifblind
-\else
-\section{Acknowledgments}
 
-\fi
+%\subsection*{Acknowledgments}
+
+
 
 \bibliographystyle{abbrv}
 \bibliography{mybib}

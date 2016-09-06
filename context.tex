@@ -2,48 +2,49 @@
 This section outlines the general characteristics of transaction processing systems that can benefit from our 
 suggested ``fast-path'' for handling short local transactions. 
 We consider a TPS  that spans multiple regions (sometimes called nodes, domains, or shards) and supports global
-(multi-region) transactions. Data is stored in an underlying NOSQL key-value store, such as HBase, BigTable,  or
-RocksDB. Clients access the data store directly, and partake in transaction
+(multi-region) transactions. Data is stored in an underlying NOSQL key-value store, 
+such as HBase~\cite{hbase}, BigTable~\cite{bigtable-osdi06},  or
+RocksDB~\cite{rocksdb}. Clients access the data store directly, and partake in transaction
 coordination, possibly using the assistance of a TM.
 
-We first describe the data model and API of the underlying data store (Sections~\ref{ssec:data-model}
-and~\ref{ssec:api}, respectively). We then proceed to define  the transaction semantics provided by the TPS
+We first describe the data model and API of the underlying data store (Sections~\ref{ssec:data-model}).
+%and~\ref{ssec:api}, respectively). 
+We then proceed to define  the transaction semantics provided by the TPS
 (Section~\ref{ssec:transactions}). Finally, we overview a generic schema for managing global transactions 
 (and conflict resultion), which is used in the TPSs we target (Section~\ref{ssec:global-transactions}).
-TPSs that adhere to this schema include Percolator, Omid, Tephra, and CockroachDB.
-\idit{Need to check about the cockroach.}
+TPSs that adhere to this schema include Percolator~\cite{Percolator2010}, Omid~\cite{OmidICDE2014}, Tephra~\cite{tephra}, and CockroachDB~\cite{cockroach}.
+%\idit{Need to check about the cockroach.}
 
-\subsection{Objects}
+\subsection{Data store}
 \label{ssec:data-model}
 
-We assume \emph{object} granularity; with HBase and BigTable this refers to a row.
-Objects are identified by unique \emph{keys}.  
+The underlying data store holds  \emph{objects}  identified by unique \emph{keys}; with HBase and BigTable this refers to rows.
 We consider multi-versioned obejcts, where object values are associated with \emph{version numbers}, and
 multiple versions associated with the same key may co-exist in the data store.
 Thus, at any given time, an object holds a tuple \tuple{key,\tuple{version,value}+}, where value
 can be structured to consist of multiple columns.
-We further assume that version numbers can be externally-provided by put operations to the data store.
+We further assume that a write operation can specify the version number it writes to.
 %monotonically increasing ??
 
 The data is \emph{partitioned} (or sharded). Each object belongs to one region
 (node, partition, shard, domain). \emph{Local transactions} are ones that access
 a single region.
 
-\subsection{API} \label{ssec:api}
+\paragraph{API} 
 
-We assume that the underlying data store provides the following API:
+The underlying data store provides the following API:
 \begin{description}
 \item [\code{\tuple{version,value} read(key)}] -- atomically returns the value with
 the highest version associated with key along with its version.
 \item The API further allows traversing (reading) earlier versions of the same
 key in descending order.
 \item [\code{write(key,value,version)}] -- atomically creates or updates the version:
-\sout{If the provided version number is smaller than the key's latest stored
-version, the update fails.} if the version already exists, its value is updated;
+\remove{If the provided version number is smaller than the key's latest stored version, the update fails.} 
+if the version already exists, its value is updated;
 otherwise, a new version is added. Garbage collection of obsolete versions is a separate
 process.
 \item [Read-modify-write] --  data stores often provide means to atomically read and
-update an object; (e.g., HBase exports CheckAndMutate operations, which are 
+update an object, (e.g., HBase exports CheckAndMutate operations, which are 
 internally implemented using a RW lock, whereas BigTable supports row transactions). We
 will extend this capability below in order to implement certain atomic
 operations at the data store level.
@@ -51,72 +52,105 @@ operations at the data store level.
 
 \subsection{Transaction semantics} \label{ssec:transactions}
 
- Transactions may span multiple regions, and atomically commit or abort. The
- system supports transactions with SI semantics. Intuitively, SI ensures that
- the information a transaction reads from the data store does not mix old and
- new values. For example, if a task updates the values of two objects, then no
- concurrent transaction may observe the old value of one of these objects and
- the new value of the other. More precisely, SI enforces a total order on all
- committed transactions so that (1) transactions are ordered according to their
- commit times, (2) each transaction sees a consistent snapshot of the database
- reflecting exactly those transactions that committed prior to its start time;
- and (3) a transaction commits only if no updates it has made conflict with any
- concurrent updates made since that snapshot.
+A \emph{transaction} is a sequence of read and write operations on different objects that ensures the so-called ACID properties:
+\emph{atomicity} (all-or-nothing execution), \emph{consistency} (preserving each object's semantics), 
+\emph{isolation} (in that concurrent transactions do not see each other's partial updates), and 
+\emph{durability} (whereby updates survive crashes).
+
+Different isolation levels can be considered for the third property. We consider systems providing  
+snapshot isolation~\cite{DBLP:conf/sigmod/BerensonBGMOO95}, 
+which is provided by popular database technologies such as Oracle, PostgreSQL, and SQL Server.
+
+Intuitively, SI ensures that the information a transaction retrieves from the database 
+does not mix old and new values. For example, if a task updates the values of two stocks, then no other transaction may observe the old value of one of these stocks and the new value of the other. 
+%
+More precisely, SI enforces a total order on committed transactions according to their commit times so that 
+\begin{enumerate}
+    \setlength{\itemsep}{0pt}
+    \setlength{\parskip}{0pt}
+    \setlength{\parsep}{2pt}  
+\item
+each transaction's read operations see a consistent snapshot of the database reflecting write operations by
+ exactly those transactions that committed prior to the transaction's start time; and 
+\item
+ a transaction commits only if none of the items it updates has been modified since that snapshot.
+ \end{enumerate}
+Thus, under SI, two concurrent transactions conflict only if they both \emph{update} the same item.  
+In contrast, under serializability, a transaction that updates an item also conflicts with transactions that \emph{read} that item. Snapshot isolation is thus amenable to implementations (using multi-versioned concurrency control) that 
+allow more concurrency than serializable ones, and hence scale better.
+
+TPSs allow programmers to  delineate transactions via the begin and commit APIs: 
+the sequence of read and write operations a client invokes between begin and  commit pertains to one transaction.
+Following a commit call, the transaction may successfully \emph{commit}, whereby all of its operations take effect;
+in case of conflicts, (i.e., when two concurrent transactions attempt to update the same item), the transaction may
+\emph{abort}, in which case none of its changes take effect. An abort may also be initiated by the programmer, e.g., 
+on encountering an error. Applications typically retry a transaction upon (either type of) abort. 
+Global transactions may span multiple regions, and atomically commit or abort on all. 
 
 \subsection{Global transaction flow} \label{ssec:global-transactions}
 
-The TM provides a monotonically increasing GVC, which is used to produce
-versions. An artifact of this is that object version numbers are monotonically
-increasing system-wide.
+A TPS's API is offered by a client library, which accesses the data directly in the data store, and 
+performs coordination actions to begin, commit, or abort transactions. 
+
+The TPSs we consider all rely on versions for coordination: when a transaction begins it obtains a \emph{tentative version}, which 
+it uses (1) to determine what version of each key to read; and (2) as the version of data items it writes.   
+In Percolator, Omid, and Tephra, as well as our implementation in this paper, timestamps are provided by a monotonically
+increasing \emph{global version  clock (GVC)}. CockroachDB instead provides the beginning transaction with the local clock of
+one of the regions (called node therein), which is closely synchronized relative to other regions and furthermore ensures causality.
 
 Transactions indicate their intention to write to an object; this is done using
 a dedicated column (part of the value in our data model), which keeps logical
 (application-level) locks in some implementations (Percolator) and tentative
-updates in others (Omid 2, CockroachDB). 
-While write intentions differ across implementations,
-we assume that the following generic function is  provided:
-
-\code{boolean hasWriteIntent(key, version)} returns true if the specified version of key has a write intent indication; if version is left blank, the 
+updates in others (e.g., the new version of Omid~\cite{Omid-blog}, and CockroachDB). 
+While write intentions differ across implementations, we assume that the following generic boolean function is  provided:
+\begin{description}
+\item[\code{hasWriteIntent(key, version)}] returns true if the specified version of key has a write intent indication; if version is not provided, the 
 latest version associated with key is checked.
+\end{description}
 
-Note: in certain implementations (like a virtual lock per key used in
-Percolator), the write-intent of all versions associated with the same key is
-the same, whereas in other cases (like Omid, which uses tentative versions), a
+Note: in certain implementations (like the virtual lock per-key used in Percolator), the write-intent of all versions associated 
+with the same key is the same, whereas in other cases (like Omid, which uses tentative versions), a
 new version may have a write intent while an older one does not.
 
 A transaction goes through the following phases:
 \begin{enumerate}
-  \item{Begin} -- For SI, a transaction obtains a global read-version number
-  when it starts. It also obtains a unique monotonically increasing transaction id.
-  The two can be combined (i.e., the read-version can be the same as the
-  transaction id).
-  \item{Collect reads and indicate write intention} -- (either jointly or
-  collect first and then write).\\ \emph{Collect} means reading object values
-  and versions; each object atomically. Only versions committed with timestamps
-  smaller or equal to the transaction's read-version are read. Encountered write
-  indications by uncommitted transactions are dealt with differently in
-  different systems, e.g., Percolator waits for the indication to be lifted,
-  Omid ignores uncommitted versions and checks for conflicts this may induce at
-  commit time, and Distributed-Commit Omid forces the transaction with the write
-  indication to abort. Collect occurs during the transaction (encounter time).\\
-  \emph{Indicating write intention} changes the objects' write intention columns
-  to indicate a transaction attempting to write them is under way. The value the
-  transaction intends to write is added with a new version. In Omid, this
-  version is the transaction's id. Each object is updated atomically. This can
-  occur either at encounter time or at commit time, in which case it occurs as
-  the first phase of the commit. \\
-  \emph{Validation/conflict detection} - For SI, need
-  to check for write-write conflicts only. This step checks write intentions as well as version numbers.
-  \item{Commit} --  in one atomic step to a designated \emph{commit entry}. May
-  fail and abort instead. (Omid - commit table entry, Percolator - lock of first written key).
+  \item{Begin} -- A transaction obtains a tentative version number when it starts. 
+  It also obtains a unique transaction id.
+  The two can be combined (i.e., the tentative version can be the same as the  transaction id).
+  \item{Collect reads and indicate write intention} -- (either jointly or  collect first and then write).
+  	\begin{itemize}
+  		\item  \emph{Collect} means reading object values  and versions; each object atomically. 
+  		Only versions committed with timestamps  smaller or equal to the transaction's tentative version are read. 
+  		Encountered write indications by uncommitted transactions are dealt with differently in different systems, e.g., Percolator 
+  		waits for the indication to be lifted, Omid ignores uncommitted versions and checks for conflicts this may induce at
+  		commit time, and CockroachDB forces the transaction with the write indication to either commit with a higher version 
+  		than its own tentative version, or abort. Similarly, the solution we implement in this paper forces the transaction with the write 
+  		indication to abort. 
+  		Collect occurs during the transaction (encounter time).
+  		\item \emph{Indicating write intention} changes the objects' write intention columns
+  		to indicate a transaction attempting to write them is under way. The value the
+  		transaction intends to write is added with a new version. In Omid, this
+  		version is the transaction's id. Each object is updated atomically. This can
+  		occur either at encounter time or at commit time, in which case it occurs as the first phase of the commit. 
+  	\end{itemize}
+  \item{Validation/conflict detection} -- Before a transaction can commit, it must check that it does not conflict with any 
+  concurrent transactions.  For SI, we need to check for write-write conflicts only. 
+  This step checks write intentions as well as version numbers. It is performed differently in different systems.
+  \item{Commit} --  In case validation succeeds, the transaction may be committed 
+  in one atomic step to a designated \emph{commit entry}, which can reside in a global table (like the Commit Table of 
+  the new version of Omid and the Transaction Table of CockroachDB) or alongside the first  key written by 
+  the transaction (as in Percolator and the implementation in this paper).  Note that a commit attempt may
+  fail and abort instead. 
   \item{Clean-up} -- changes the write intentions of the transaction to
   persistent writes in case of commit, and removes them in case of abort. This
   phase occurs after the transaction is persistently committed or aborted, in
   order to reduce the overhead of future transactions and garbage collect
-  obsolete information. Note that whenever a transaction encounters a write
+  obsolete information. 
+  \remove{Note that whenever a transaction encounters a write
   indication in the collect phase it must access the commit entry in order to
   check the transaction's commit status. Once the clean-up phase is over, future
   transactions no longer incur this overhead for keys updated by the terminated
-  transaction.
+  transaction.}
 \end{enumerate}
 
+ 

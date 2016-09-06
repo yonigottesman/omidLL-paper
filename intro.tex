@@ -1,53 +1,46 @@
 
+NOSQL key-value stores such as BigTable, HBase, and RocksDB have increased in popularity over the past few years, and are now very widely deployed. Yet in many installations, the single-key access offered by these data stores is insufficient; developers are increasingly need 
+to execute \emph{ACID} (atomic, consistent, isolated, and durable) \emph{transactions} that access multiple keys.
+This need has been recently addressed by a number of popular production \emph{transaction processing systems (TPSs)} 
+such as  Percolator~\cite{Percolator2010}, Omid~\cite{OmidICDE2014}, Tephra~\cite{tephra}, and CockroachDB~\cite{cockroach}, 
+which offer transactions on top of  BigTable~\cite{bigtable-osdi06}, HBase~\cite{hbase}, HBase, and RocksDB~\cite{rocksdb}, resp. 
+The underlying NOSQL stores are typically distributed  over multiple \emph{regions} (sometimes called nodes, shards, domains, or partitions).
+The main purpose of a TPS is to support \emph{global transactions}, i.e., ones that span multiple regions.
 
-Popular production \emph{transaction processing systems (TPSs)} 
-such as Percolator, Omid, Tephra, and CockroachDB 
-support transactions over data that resides in distributed NOSQL key-value stores such 
-as BigTable, HBase, and RocksDB. 
-While such NOSQL stores are typically widely distributed, the aim of TPSs is to 
-support  \emph{global transactions}, i.e., ones
-that span multiple \emph{regions} (sometimes called nodes, shards, domains, or partitions).
+TPS design is typically optimized for global transactions, and they typically employ some centralized component to facilitate their coordination. 
+For example, Omid and Tephra use a centralized \emph{Transaction Manager (TM)} 
+(also called \emph{Transaction Status Oracle (TSO)}) for (1) allocating global timestamps; (2) conflict detection; 
+and (3) tracking committed transactions in a global table, 
+whereas  Percolator uses a centralized timestamp oracle for the first 
+and CockroachDB uses a global \emph{Transaction Table (TT)} for the last. 
+Common to all these systems is the use of globally-meaningful timestamps, either provided by the centralized TM (Omid, Tephra) or oracle (Percolator), or maintained using a causality-enforcing clock synchronization protocol (in CockroachDB).
+Note that these are different from federated systems, where transactions are by default local, i.e.,
+access a single region, and lock-based (blocking) protocols like two phase commit are used to ensure atomicity of global transactions.
 
-
-\idit{Reword below: it's not about centralized TM, it's about adding a transaction tier above the data tier.}
-
-
-%using centralized timestamp oracles, also called \emph{transaction managers} (TMs) . 
-TMs provide a \emph{global
-version clock} (GVC) [?] and sometimes additional functionalities such as conflict detection and
-tracking of committed transactions[?]. 
-Hence, central coordination is an inherent part of their design. This is in
-contrast with federated systems, where transactions are by default local, i.e.,
-access a single region, and protocols like two phase commit are used to ensure
-atomicity of global transactions.
-
-Using a centralized TM introduces a tradeoff: while transactions spanning
+Optimizing for global transactions introduces a tradeoff: while transactions spanning
 multiple regions are greatly facilitated and expedited using this design, local
 transactions incur a performance penalty. This penalty is particularly
-significant for short transactions, where the overhead of accessing the TM once
-(to read the GVC) or twice (also in order to commit) per transaction is not
-amortized across many operations. Typical Web workloads include both long
+significant for short transactions, where the overhead of accessing 
+a centralized entity for obtaining a timestamp, logging the transaction in a common table, or detecting conflicts 
+is not amortized across many operations. Typical web workloads include both long
 multi-region transactions and short local transactions, including ones
-consisting of a single object read, write or read-modify-write.
+consisting of a single object read, write, or read-modify-write.
 
-In this work we mitigate the above tradeoff by offering a fast path for short
-local transactions, without a significant impact on multi-region ones while
-maintaining correctness. We consider a single-TM system that supports global
+In this work we mitigate the above tradeoff by offering a \emph{fast path} for short
+local transactions, without a significant impact on multi-region ones, while
+maintaining correctness. We consider a TPS that supports global
 transactions, and enhance it with optimized support for specific types of local
 transactions. Our main goal is to expedite short single-object transactions,
-which are popular in production Web workloads [?].
+which are popular in production web workloads~\cite{sieve}.
+%
+We focus here on systems supporting \emph{snapshot isolation} (SI)~\cite{DBLP:conf/sigmod/BerensonBGMOO95}, which is
+popular in real-world systems  and amenable to scalable implementations.
+Our local transactions can be performed using the usual
+transaction mechanism, with no change in semantics.
 
-We focus here on systems supporting \emph{snapshot isolation} (SI) [?], which is
-popular in real-world systems [?] and amenable to scalable implementations [?].
-The transaction semantics for local transactions are the same as for global
-ones, and in particular, a local transaction can be performed using the usual
-transaction mechanism, (which accesses the TM), with no change in semantics.
-
-We implement our solution in Omid [?], an open source transaction processing
-engine for key-value stores. Omid is database-neutral, while its open-sourced
-implementation uses HBase. Our solution consists of two main parts - extensions
-to the underlying key-value store, which we implement in HBase, and client-side
-extensions to the transaction library, which we implement in Omid�s client
-library. In addition, our implementation slightly modifies Omid�s TM to be
-compatible with the changes to HBase.
+We implement our solution in a variant of Omid~\cite{Omid-git}, an open source transaction processing engine for HBase. 
+Our solution consists of two main parts -- extensions to the underlying key-value store, which we implement in HBase, and client-side
+extensions to the transaction library, which we implement in Omid's client library. 
+In addition, our implementation slightly modifies Omid's TM to be compatible with the changes to HBase.
+ 
  

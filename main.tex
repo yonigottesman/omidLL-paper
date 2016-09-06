@@ -10,11 +10,11 @@
 %\usepackage{amsthm}  %<---- for a different "look" in theorems (theorem word in bold, etc.) %ACM conflict with proof definition?
 %\usepackage{subfigure}
 \usepackage[tight,footnotesize]{subfigure}
-\usepackage{cite}
+%\usepackage{cite}
 \usepackage{url}
 %\usepackage{color}
-%\usepackage{algorithm}
-%\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
 \usepackage{times}
 
 \usepackage{todonotes}
@@ -77,14 +77,18 @@ TBD
 The remainder of this paper is organized as follows:
 Section~\ref{sec:context}  gives the context of this work by defining the common properties of TPSs that can benefit from our approach. 
 Section~\ref{sec:alg} describes our support for local transactions in such systems. 
-Section~\ref{sec:eval} presents our implementation and its evaluation. 
+Sections~\ref{sec:impl} and~\ref{sec:eval} present our implementation and its evaluation. 
 We review related work in Section ~\ref{sec:related} and conclude with Section ~\ref{sec:conclusions}.
 
 \section{Context and Applicability} \label{sec:context}
 \input{context}
 
-\section{Adding Local Transactions} \label{sec:alg}
+\section{Fast-Path Local Transactions} \label{sec:alg}
 \input{algorithm}
+
+\section{Implementation} \label{sec:impl}
+
+\idit{Todo: discuss our variant of Omid (LL) and then how we added local transactions.}
 
 \section{Evaluation} \label{sec:eval}
 
@@ -100,8 +104,8 @@ We review related work in Section ~\ref{sec:related} and conclude with Section ~
 
 
 
-\bibliographystyle{abbrv}
-\bibliography{mybib}
+\bibliographystyle{acm}
+\bibliography{refs}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

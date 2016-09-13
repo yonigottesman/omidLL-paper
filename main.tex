@@ -4,15 +4,12 @@
 %  Packages
 %========================
 
-\usepackage{graphicx}
+\usepackage{graphicx,url,color}
 %\usepackage{amsmath}
 \usepackage{amssymb}
 %\usepackage{amsthm}  %<---- for a different "look" in theorems (theorem word in bold, etc.) %ACM conflict with proof definition?
 %\usepackage{subfigure}
-\usepackage[tight,footnotesize]{subfigure}
-%\usepackage{cite}
-\usepackage{url}
-%\usepackage{color}
+%\usepackage[tight,footnotesize]{subfigure}
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}
 \usepackage{times}
@@ -75,26 +72,41 @@ TBD
 \input{intro}
 
 The remainder of this paper is organized as follows:
-Section~\ref{sec:context}  gives the context of this work by defining the common properties of TPSs that can benefit from our approach. 
-Section~\ref{sec:alg} describes our support for local transactions in such systems. 
-Sections~\ref{sec:impl} and~\ref{sec:eval} present our implementation and its evaluation. 
+We begin by providing the context for this work -- we define TPS API and semantics in Section~\ref{sec:api} and
+then  survey TPS implementation design space, highlighting the common properties of TPSs that can benefit from our approach. 
+We proceed to define the extended API and semantics of the fast-path service we offer in Section~\ref{sec:api}.
+Section~\ref{sec:alg} then describes our algorithm for supporting fast-path local transactions.  
+Section~\ref{sec:impl} presents \sys, our low latency transaction processing system,
+and~\ref{sec:eval} presents its evaluation. 
 We review related work in Section ~\ref{sec:related} and conclude with Section ~\ref{sec:conclusions}.
+
+\section{Transaction API and Semantics} \label{sec:api}
+\input{api}
 
 \section{Context and Applicability} \label{sec:context}
 \input{context}
 
-\section{Fast-Path Local Transactions} \label{sec:alg}
+\section{API and Semantics for Fast-Path Local Transactions} \label{sec:new-api}
+\input{new-api}
+
+\section{Algorithm for Fast-Path Local Transactions} \label{sec:alg}
 \input{algorithm}
 
-\section{Implementation} \label{sec:impl}
+\Idit{Todo: add the validation in regular transaction writes}
 
-\idit{Todo: discuss our variant of Omid (LL) and then how we added local transactions.}
+\section{Low-latency Transactions with \sys} \label{sec:impl}
+
+\subsection{\sys\ regular transaction processing}
+
+\subsection{local transactions in \sys\ and HBase}
 
 \section{Evaluation} \label{sec:eval}
 
+\Idit{Compare the following: Omid 2, regular transactions in \sys, local transactions in \sys, HBase.}
+
+\Idit{Add graph showing cost of RMW (validation) in regular transaction write.}
 
 \section{Related Work} \label{sec:related}
-
 
 \section{Conclusion} \label{sec:conclusions}
 

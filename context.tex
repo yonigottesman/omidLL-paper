@@ -1,93 +1,23 @@
 
 This section outlines the general characteristics of transaction processing systems that can benefit from our 
 suggested ``fast-path'' for handling short local transactions. 
-We consider a TPS  that spans multiple regions (sometimes called nodes, domains, or shards) and supports global
-(multi-region) transactions. Data is stored in an underlying NOSQL key-value store, 
-such as HBase~\cite{hbase}, BigTable~\cite{bigtable-osdi06},  or
-RocksDB~\cite{rocksdb}. Clients access the data store directly, and partake in transaction
-coordination, possibly using the assistance of a TM.
-
-We first describe the data model and API of the underlying data store (Sections~\ref{ssec:data-model}).
-%and~\ref{ssec:api}, respectively). 
-We then proceed to define  the transaction semantics provided by the TPS
-(Section~\ref{ssec:transactions}). Finally, we overview a generic schema for managing global transactions 
+We we overview a generic schema for managing global transactions 
 (and conflict resultion), which is used in the TPSs we target (Section~\ref{ssec:global-transactions}).
 TPSs that adhere to this schema include Percolator~\cite{Percolator2010}, Omid~\cite{OmidICDE2014}, Tephra~\cite{tephra}, and CockroachDB~\cite{cockroach}.
-%\idit{Need to check about the cockroach.}
 
-\subsection{Data store}
-\label{ssec:data-model}
+When a transaction begins, it obtains a read timestamp (for its consistent snapshot) and unique transaction id.
+In most cases, this is done using a centralized entity (sometimes called timestamp oracle or transaction manager). 
+In CockroachDB, the timestamp is based on a local clock that is ``close to'' real-time and preserves causality of access 
+across regions. Commit-time conflict detection can use a centralized transaction manager as in Omid~\cite{OmidICDE2014,omid-blog} and Tephra~\cite{tephra}, or rely on a two-phase commit protocol where the written records are first 
+locked, then validated, and then committed. 
 
-The underlying data store holds  \emph{objects}  identified by unique \emph{keys}; with HBase and BigTable this refers to rows.
-We consider multi-versioned obejcts, where object values are associated with \emph{version numbers}, and
-multiple versions associated with the same key may co-exist in the data store.
-Thus, at any given time, an object holds a tuple \tuple{key,\tuple{version,value}+}, where value
-can be structured to consist of multiple columns.
-We further assume that a write operation can specify the version number it writes to.
-%monotonically increasing ??
+A read operation retrieves the latest version that does not exceed the transaction's read timestamp. 
+Different resolution policies are used for resolving pending write intents. For example, the first version of Omid~\cite{OmidICDE2014}
+resolves them using data on past commits that the client obtains at begin time, 
+whereas CockroachDB and the new version of Omid~\cite{omid-blog} have the read refer to a centralized transaction table (also called commit table).  Percolator, on the other hand, waits for the transaction that wrote the intent to complete, and when timing out on it, forces it to abort. 
+In some solutions writes check for conflicts before declaring their intents~\cite{cockroach}, whereas in others, 
+conflict detection is deferred to commit time. 
 
-The data is \emph{partitioned} (or sharded). Each object belongs to one region
-(node, partition, shard, domain). \emph{Local transactions} are ones that access
-a single region.
-
-\paragraph{API} 
-
-The underlying data store provides the following API:
-\begin{description}
-\item [\code{\tuple{version,value} read(key)}] -- atomically returns the value with
-the highest version associated with key along with its version.
-\item The API further allows traversing (reading) earlier versions of the same
-key in descending order.
-\item [\code{write(key,value,version)}] -- atomically creates or updates the version:
-\remove{If the provided version number is smaller than the key's latest stored version, the update fails.} 
-if the version already exists, its value is updated;
-otherwise, a new version is added. Garbage collection of obsolete versions is a separate
-process.
-\item [Read-modify-write] --  data stores often provide means to atomically read and
-update an object, (e.g., HBase exports CheckAndMutate operations, which are 
-internally implemented using a RW lock, whereas BigTable supports row transactions). We
-will extend this capability below in order to implement certain atomic
-operations at the data store level.
-\end{description}
-
-\subsection{Transaction semantics} \label{ssec:transactions}
-
-A \emph{transaction} is a sequence of read and write operations on different objects that ensures the so-called ACID properties:
-\emph{atomicity} (all-or-nothing execution), \emph{consistency} (preserving each object's semantics), 
-\emph{isolation} (in that concurrent transactions do not see each other's partial updates), and 
-\emph{durability} (whereby updates survive crashes).
-
-Different isolation levels can be considered for the third property. We consider systems providing  
-snapshot isolation~\cite{DBLP:conf/sigmod/BerensonBGMOO95}, 
-which is provided by popular database technologies such as Oracle, PostgreSQL, and SQL Server.
-
-Intuitively, SI ensures that the information a transaction retrieves from the database 
-does not mix old and new values. For example, if a task updates the values of two stocks, then no other transaction may observe the old value of one of these stocks and the new value of the other. 
-%
-More precisely, SI enforces a total order on committed transactions according to their commit times so that 
-\begin{enumerate}
-    \setlength{\itemsep}{0pt}
-    \setlength{\parskip}{0pt}
-    \setlength{\parsep}{2pt}  
-\item
-each transaction's read operations see a consistent snapshot of the database reflecting write operations by
- exactly those transactions that committed prior to the transaction's start time; and 
-\item
- a transaction commits only if none of the items it updates has been modified since that snapshot.
- \end{enumerate}
-Thus, under SI, two concurrent transactions conflict only if they both \emph{update} the same item.  
-In contrast, under serializability, a transaction that updates an item also conflicts with transactions that \emph{read} that item. Snapshot isolation is thus amenable to implementations (using multi-versioned concurrency control) that 
-allow more concurrency than serializable ones, and hence scale better.
-
-TPSs allow programmers to  delineate transactions via the begin and commit APIs: 
-the sequence of read and write operations a client invokes between begin and  commit pertains to one transaction.
-Following a commit call, the transaction may successfully \emph{commit}, whereby all of its operations take effect;
-in case of conflicts, (i.e., when two concurrent transactions attempt to update the same item), the transaction may
-\emph{abort}, in which case none of its changes take effect. An abort may also be initiated by the programmer, e.g., 
-on encountering an error. Applications typically retry a transaction upon (either type of) abort. 
-Global transactions may span multiple regions, and atomically commit or abort on all. 
-
-\subsection{Global transaction flow} \label{ssec:global-transactions}
 
 A TPS's API is offered by a client library, which accesses the data directly in the data store, and 
 performs coordination actions to begin, commit, or abort transactions. 
@@ -101,7 +31,7 @@ one of the regions (called node therein), which is closely synchronized relative
 Transactions indicate their intention to write to an object; this is done using
 a dedicated column (part of the value in our data model), which keeps logical
 (application-level) locks in some implementations (Percolator) and tentative
-updates in others (e.g., the new version of Omid~\cite{Omid-blog}, and CockroachDB). 
+updates in others (e.g., the new version of Omid~\cite{omid-blog}, and CockroachDB). 
 While write intentions differ across implementations, we assume that the following generic boolean function is  provided:
 \begin{description}
 \item[\code{hasWriteIntent(key, version)}] returns true if the specified version of key has a write intent indication; if version is not provided, the 

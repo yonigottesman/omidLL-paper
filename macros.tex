@@ -29,10 +29,12 @@
 \newcommand{\add}[1]{\textcolor{red}{EZ: \textbf{#1}}}
 \newcommand{\del}[1]{\textcolor{red}{EZ: \textbf{\sout{#1}}}}
 
-% remove (hide) stuff
+% remove (hide) stuff, comments
+\newcommand{\inred}[1]{{\color{red}{#1}}}
 \newcommand{\remove}[1]{}
-\newcommand{\idit}[1]{{\bf [[Idit: #1]]}}
-
+\newcommand{\idit}[1]{[[\inred{Idit: #1}]]}
+\newcommand{\Idit}[1]{[[\inred{Idit: #1}]]}
+\newcommand{\sys}{Lorra}
 
 %========================
 %  Defining operators

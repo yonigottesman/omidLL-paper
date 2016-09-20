@@ -102,4 +102,7 @@ In more detail, a transaction goes through the following phases:
   transaction.}
 \end{enumerate}
 
+Stages 3--6 are performed as part of a commit operation. 
+We note that in case a transaction is read-only, i.e., does not perform updates, these stages may be skipped.
+
  

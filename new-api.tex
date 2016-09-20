@@ -1,60 +1,83 @@
 
 
-\Idit{Todo: update API to include brc, bwc, br, wc, and example combinations, some of which are supported.}
+The main goal of our fast path  is to forgo the overhead associated with two-phase transaction processing, especially for short transactions.
+In particular, the fast path can eliminate the need for remote access in local (single-region) transactions and can reduce the number of 
+calls (RPCs) the client performs.
+To this end, we introduce in Section~\ref{ssec:fast-api} a streamlined API that jointly executes multiple API calls of the original TPS. 
+We refer to transactions that use this API as \emph{fast path (FP) transactions}.
+We discuss the semantics of FP transactions relative to regular ones in Section~\ref{ssec:fast-semantics}.
 
-We support a restricted set of local transactions, focusing on short ones that
-frequently occur in production. Recall that short transactions benefit most from
-our optimizations since for them, the overhead of performing centralized coordination once or twice
-per transaction is significant.
+\subsection{API and usage}
+\label{ssec:fast-api}
 
-There are two distinctive characteristics of local transactions. First, they
-must access a single region. Second, in contrast to regular transactions, they
-cannot dynamically evolve, but rather must be provided in their entirety with a
-single API call: 
-local transactions forgo the standard API including begin and commit operations,
-and instead invoke a single function for executing the entire transaction. The
-new API functions for local transactions are prefixed with \code{LTX\_}. 
+For brevity, we refer to the TPS's API calls  begin, read, write, and commit as $b, r, w$, and $c$ respectively. 
+We now combine them to allow fast processing.
+The simplest examples of FP transactions are singletons, i.e., transactions that perform a single
+read or write. These are supported by the APIs:
+\begin{description}
+\item[br(key)] -- begins an FP transaction and reads key within it; 
+\item[bwc(key,val)] -- begins an FP transaction,  writes val into a new version of key that exceeds all existing ones, and commits.
+\end{description}
 
-The simplest examples are singleton transactions, i.e., transactions that perform a single
-read operation via \code{LTX\_read(key)} or a single update via \code{LTX\_write(key, value)}. 
-The latter creates a new version for key that exceeds all existing ones.
+A more elaborate example is a read-modify-write API: 
+\begin{description}
+\item[brwc(key,$f$)] -- begins an FP transaction,  reads the latest version of key, applies $f$ to it, 
+	writes the result into a new version of key that exceeds all existing ones, and commits.
+\end{description}
 
-A more elaborate example is a multi-read-single-write API, \code{LTX\_MRSW(\wkey, \rkeys, f)}, 
-which atomically reads values associated  with a list of \rkeys and updates the value associated with
-\wkey according to some function f of the read values. Note that this API
-is applicable only in case \wkey and all \rkeys reside in the same region. In case
-they do not, the call fails, and the transaction may be restarted as a regular
-transaction.
+To use the above API, the programmer has to encapsulate the transaction logic in a function for server-side processing. 
+Alternatively, we allow FP transactions to unfold dynamically much like regular  transactions do.
+A dynamic FP transaction may instead begin with a $br$ call, perform client-side processing, and then call the following
+function to update either the same or a different key: 
 
-The semantics for ordering local transactions relative to regular ones are
+\begin{description}
+\item[wc(key,val)] -- writes val into a new version of key that exceeds all existing ones, and commits.
+\end{description}
+
+Moreover, we do not restrict FP transactions to perform a single read -- any number of $r$'s may be called between the $br$ and $wc$.
+Note, however, that all calls must be directed at the same region, else the transaction is not local.
+In case an FP transaction dynamically discovers that it needs to access additional regions, it is aborted and should be restarted as a regular transaction. 
+In principle, it is also possible to invoke $w$ calls in the span of an FP transaction, but in this case we cannot forgo the two-phase execution. 
+That is, the $w$ calls must indicate write intents, to be atomically committed (or aborted) during the final $wc$ (or $c$) call. 
+
+
+\subsection{Semantics}
+\label{ssec:fast-semantics}
+
+The semantics for ordering FP transactions relative to regular ones are
 weaker than SI in that they do not guarantee real-time order over all regular
-and local transactions together. Specifically, a regular transaction overlapping
-two local transactions that access different regions may observe the updates of
-the second and miss an update by the first. For example, assume objects x and y
+and FP transactions together. Specifically, a regular transaction overlapping
+two FP ones that access different regions may observe an update of
+the second and miss an update by the first. For example, assume objects $x$ and $y$
 are managed in two different regions, then real-time order can be violated as
 illustrated in Figure~\ref{fig:ltx-rt} (ignore the skip operations for now; they will be explained in the next section).
 
 \begin{figure}[h]
 \includegraphics[width=\columnwidth]{LTX-RT}
-\caption{Possible violation of real-time order among local transactions in different regions. Global transaction $T_1$
-reads $x$ before it is updated by local transaction $L_1$ and reads $y$ after it is updated by local transaction $L_2$ even 
-though $L_2$ occurs after $L_1$. $T1$'s global version is $10$, and its skips the local version clocks of the regions holding $x$ and $y$ to $10$ when reading from them.}
+\caption{Possible violation of real-time order among fast path (FP) transactions in different regions. Global transaction $T_1$
+reads $x$ before it is updated by FP transaction $FP_1$ and reads $y$ after it is updated by FP transaction $FP_2$ even 
+though $FP_2$ occurs after $FP_1$. $T1$'s global version is $10$, and its skips the local version clocks of the regions holding $x$ and $y$ to $10$ when reading from them.}
 \label{fig:ltx-rt}
 \end{figure}
 
-The system still enforces a total order on all committed transactions, so that
+The system still enforces a total order ${\cal T}$ on all committed transactions, so that
 \begin{enumerate}
     \setlength{\itemsep}{0pt}
     \setlength{\parskip}{0pt}
     \setlength{\parsep}{2pt}  
 \item
-regular transactions (though not local ones) are ordered according to their commit times;
+regular transactions (though not FP ones) are ordered in ${\cal T}$  according to their commit times;
+\item
+FP transactions within each region are ordered in ${\cal T}$  according to their commit times;
 \item
 each transaction's read operations see a consistent snapshot of the database reflecting 
-a sequence of transactions that includes all those committed prior to
-its start time plus any number of concurrent local transactions; and 
+a prefix of  ${\cal T}$ that includes all transactions committed prior to
+its start time plus any number of concurrent FP transactions; and 
 \item
  a transaction commits only if none of the items it updates has been modified since that snapshot.
  \end{enumerate}
 
-\idit{Todo: add a note about causality being preserved because re-ordering can only occur across regions.}
+Note that since ${\cal T}$  respects commit-times per-region, causality is preserved, because 
+re-ordering can only occur in case transactions access disjoint  sets of data objects.
+
+

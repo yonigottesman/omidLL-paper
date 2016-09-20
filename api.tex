@@ -6,7 +6,7 @@ such as HBase~\cite{hbase}, BigTable~\cite{bigtable-osdi06},  or
 RocksDB~\cite{rocksdb}. Clients access the data store directly, and partake in transaction
 coordination, possibly using the assistance of a TM.
 
-We first describe the data model and API of the underlying data store (Sections~\ref{ssec:data-model}).
+We first describe the data model and API of the underlying data store (Section~\ref{ssec:data-model}).
 We then proceed to define  the transaction semantics provided by the TPS (Section~\ref{ssec:transactions}). 
 
 \subsection{Data store}
@@ -19,13 +19,7 @@ Thus, at any given time, an object holds a tuple \tuple{key,\tuple{version,value
 can be structured to consist of multiple columns.
 We further assume that a write operation can specify the version number it writes to.
 %monotonically increasing ??
-
-The data is \emph{partitioned} (or sharded). Each object belongs to one region
-(node, partition, shard, domain). \emph{Local transactions} are ones that access
-a single region.
-
-\paragraph{API} 
-
+%\paragraph{API} 
 The underlying data store provides the following API:
 \begin{description}
 \item [\code{\tuple{version,value} read(key)}] -- atomically returns the value with
@@ -79,4 +73,8 @@ Following a commit call, the transaction may successfully \emph{commit}, whereby
 in case of conflicts, (i.e., when two concurrent transactions attempt to update the same item), the transaction may
 \emph{abort}, in which case none of its changes take effect. An abort may also be initiated by the programmer, e.g., 
 on encountering an error. Applications typically retry a transaction upon (either type of) abort. 
+
+
+The data is \emph{partitioned} (or sharded), and each object belongs to one region. 
 Global transactions may span multiple regions, and atomically commit or abort on all. 
+%%%\emph{Local transactions} are ones that access a single region.

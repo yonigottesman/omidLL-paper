@@ -1,11 +1,11 @@
-\documentclass[preprint,10pt]{sigplanconf} 
+\documentclass[preprint]{sigplanconf-eurosys} 
 
 %========================
 %  Packages
 %========================
 
 \usepackage{graphicx,url,color}
-%\usepackage{amsmath}
+\usepackage{amsmath}
 \usepackage{amssymb}
 %\usepackage{amsthm}  %<---- for a different "look" in theorems (theorem word in bold, etc.) %ACM conflict with proof definition?
 %\usepackage{subfigure}
@@ -15,20 +15,40 @@
 \usepackage{times}
 
 \usepackage{todonotes}
-\usepackage[normalem]{ulem} %strikethrough: \sout{Hello World}
-\usepackage{lastpage} %for number of pages
+%\usepackage[normalem]{ulem} %strikethrough: \sout{Hello World}
+%\usepackage{lastpage} %for number of pages
 \usepackage{xspace}
-\usepackage{multirow}
-\usepackage{balance}
+%\usepackage{multirow}
+%\usepackage{balance}
 
 \input{macros}
 
 %========================
 \begin{document}
 
+\special{papersize=8.5in,11in}
+\setlength{\pdfpageheight}{\paperheight}
+\setlength{\pdfpagewidth}{\paperwidth}
+
+\conferenceinfo{CONF 'yy}{Month d--d, 20yy, City, ST, Country}
+\copyrightyear{20yy}
+\copyrightdata{978-1-nnnn-nnnn-n/yy/mm}
+%\copyrightdoi{nnnnnnn.nnnnnnn}
+
+% Uncomment the publication rights you want to use.
+%\publicationrights{transferred}
+%\publicationrights{licensed}     % this is the default
+%\publicationrights{author-pays}
+
+%\titlebanner{Draft}        % These are ignored unless
+\preprintfooter{Draft - Submitted to XX}   % 'preprint' option specified.
+
 \title{Fast Local Transactions in Distributed Data Stores}
 
-\authorinfo{
+\authorinfo{Paper ID}
+           {Number of pages}
+           {}
+
 \remove{
  Aran Bergman\\
  	\affaddr{Technion -- I.I.T}\\
@@ -51,7 +71,7 @@ Ohad Shacham\\
  	\email{ohads@yahoo-inc.com}
  
 }
-}
+
 
 \maketitle
 
@@ -71,13 +91,15 @@ TBD
 \section{Introduction} \label{sec:intro}
 \input{intro}
 
+\Idit{The roadmap below is not essential; maybe replace with summary of contributions.}
 The remainder of this paper is organized as follows:
-We begin by providing the context for this work -- we define TPS API and semantics in Section~\ref{sec:api} and
-then  survey TPS implementation design space, highlighting the common properties of TPSs that can benefit from our approach. 
-We proceed to define the extended API and semantics of the fast-path service we offer in Section~\ref{sec:api}.
+We begin by providing the context for this work:   in Section~\ref{sec:api} we define the  API and semantics of a TPS, 
+and    Section~\ref{sec:context} surveys  the design space of popular TPS implementations, 
+highlighting the common properties of TPSs that can benefit from our approach. 
+In Section~\ref{sec:new-api} we propose our extended TPS API, which provides a fast-path for local transactions. 
 Section~\ref{sec:alg} then describes our algorithm for supporting fast-path local transactions.  
-Section~\ref{sec:impl} presents \sys, our low latency transaction processing system,
-and~\ref{sec:eval} presents its evaluation. 
+Section~\ref{sec:impl} presents \sys, our low latency transaction processing system, where our fast-pass service is implemented, 
+and Section~\ref{sec:eval} presents its evaluation. 
 We review related work in Section ~\ref{sec:related} and conclude with Section ~\ref{sec:conclusions}.
 
 \section{Transaction API and Semantics} \label{sec:api}

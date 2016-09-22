@@ -10,12 +10,12 @@ We discuss the semantics of FP transactions relative to regular ones in Section~
 \subsection{API and usage}
 \label{ssec:fast-api}
 
-For brevity, we refer to the TPS's API calls  begin, read, write, and commit as $b, r, w$, and $c$ respectively. 
+For brevity, we refer to the TPS's API calls  begin, read, write, and commit as \code{b, r, w}, and \code{c} respectively. 
 We now combine them to allow fast processing.
 The simplest examples of FP transactions are singletons, i.e., transactions that perform a single
 read or write. These are supported by the APIs:
 \begin{description}
-\item[br(key)] -- begins an FP transaction and reads key within it; 
+\item[br(key)] -- begins an FP transaction and reads key within it. Recall that read-only transactions need not commit. 
 \item[bwc(key,val)] -- begins an FP transaction,  writes val into a new version of key that exceeds all existing ones, and commits.
 \end{description}
 
@@ -27,18 +27,41 @@ A more elaborate example is a read-modify-write API:
 
 To use the above API, the programmer has to encapsulate the transaction logic in a function for server-side processing. 
 Alternatively, we allow FP transactions to unfold dynamically much like regular  transactions do.
-A dynamic FP transaction may instead begin with a $br$ call, perform client-side processing, and then call the following
+A dynamic FP transaction may instead begin with a \code{br} call, perform client-side processing, and then call the following
 function to update either the same or a different key: 
 
 \begin{description}
 \item[wc(key,val)] -- writes val into a new version of key that exceeds all existing ones, and commits.
 \end{description}
 
-Moreover, we do not restrict FP transactions to perform a single read -- any number of $r$'s may be called between the $br$ and $wc$.
+Moreover, we do not restrict FP transactions to perform a single read -- any number of \code{r}'s may be called between the \code{br} 
+and \code{wc}. The supported types of FP transactions are summarized in Table~\ref{table:fp-types}.
 Note, however, that all calls must be directed at the same region, else the transaction is not local.
 In case an FP transaction dynamically discovers that it needs to access additional regions, it is aborted and should be restarted as a regular transaction. 
-In principle, it is also possible to invoke $w$ calls in the span of an FP transaction, but in this case we cannot forgo the two-phase execution. 
-That is, the $w$ calls must indicate write intents, to be atomically committed (or aborted) during the final $wc$ (or $c$) call. 
+
+\begin{table}[htb]
+%\def\arraystretch{1.5}%  1 is the default, change whatever you need
+\centerline{
+\begin{tabular}{l  @{\hspace{2em}} l}
+Call sequence & Transaction type\\
+\hline
+\code{br} & single read\\
+\code{bwc} & single write\\
+\code{br, r*} &  multi-read\\
+\code{br, r*, wc} & multi-read, single write\\
+\code{brwc} & streamlined single-read-write\\
+%\hline
+\end{tabular}
+}
+\caption{Supported FP transaction types.}
+\label{table:fp-types}
+\end{table}
+
+In principle, it would have been possible to also allow \code{w} calls in the span of an FP transaction, 
+but in this case, it is not possible to forgo the two-phase execution. 
+That is, the \code{w} calls would need to indicate write intents, and  to be atomically committed (or aborted) during the final \code{wc} 
+(or \code{c}) call. 
+Given the limited benefit and extra compexity of allowing many writes in FP transactions, we do not support this option in our solution.
 
 
 \subsection{Semantics}
@@ -77,7 +100,7 @@ its start time plus any number of concurrent FP transactions; and
  a transaction commits only if none of the items it updates has been modified since that snapshot.
  \end{enumerate}
 
-Note that since ${\cal T}$  respects commit-times per-region, causality is preserved, because 
-re-ordering can only occur in case transactions access disjoint  sets of data objects.
+Note that since ${\cal T}$  respects commit times in each region, causality is preserved, because 
+only transactions that  access disjoint  sets of data objects can be re-ordered.
 
 

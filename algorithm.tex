@@ -1,42 +1,48 @@
 
 
 We now explain our support for local transactions with SI semantics in the
-context of a system as described in Section~\ref{sec:context} above. Our
-solution consists of two parts. First, in Section~\ref{ssec:region-clock}, we enhance the
-underlying data store with support for per-region local version clocks and an
-API to manipulate this clock jointly with objects stored at that region. This
-entails a minor modification to management of global timestamps (in the TM or oracle). 
-Second, we add client-side support for local transactions, as explained in Section~\ref{ssec:lc-client}.
+context of a system as described in Section~\ref{sec:context} above. 
+Our solution consists of three parts: First, in Section~\ref{ssec:region-clock}, we enhance the
+underlying data store with support for per-region \emph{Local Version Clocks (LVCs)}. 
+This aspect is already implemented in CockroachDB, which uses 
+per-region Hybrid Logical Clocks~\cite{Kulkarni2014LogicalPC} in order to allow for distributed timestamp allocation. 
+In the systems that maintain a GVC, (e.g.,~\cite{Percolator2010,tephra,OmidICDE2014,omid-blog}), our 
+addition of  LVCs 
+entails a minor modification to management of global timestamps (in the transaction manager or oracle). 
+Second, in Section~\ref{ssec:lvc-access}
+we extend the underlying data store's API to allow manipulating 
+a region's LVC jointly with objects stored at that region. 
+Finally, we add client-side support for the fast path API, as explained in Section~\ref{ssec:lc-client}.
 
-\subsection{Data store and timestamp management extensions} \label{ssec:region-clock}
+\subsection{Local version clock} \label{ssec:region-clock}
 
+\remove{
 We add some functionality to a region, to be used exclusively by our client-side
-extensions given in Section 3.3 below. The key mechanism used to support local
-transactions is a local version clock (LVC) per region. Like the GVC, LVCs are
-also monotonically increasing. Each region has its
-own LVC. In Section~\ref{ssec:lvc} we describe this local clock's API and its impact on
-the GVC. We then proceed to present the extension of the data store API for
-accessing objects together with the LVC in Section~\ref{ssec:lvc-access}.
+extensions given in Section~\ref{ssec:lc-client} below. The key mechanism used to support local
+transactions is a local version clock (LVC) per region. 
+}
 
-\subsubsection{Local version clock} \label{ssec:lvc}
-
-\idit{Todo: generalize the discussion in this subsection to encompass CockroachDB, which does not have a GVC, and whose local clocks are essentially updated similarly to our LVC to reflect causality relations.}
-
-Each region's LVC is loosely synchronized with the GVC. The idea is to use the
-region's LVC for ordering local transactions in any given region, and allow
-local transactions to progress in different regions independently. Note that it
-is safe to do so because no global order needs to be enforced among transactions
+Like the GVC, LVCs are also monotonically increasing. Each region has its
+own LVC, which is loosely synchronized with the GVC. The idea is to use the
+region's LVC for ordering FP transactions in any given region, and allow
+FP transactions to progress independently in different regions. Note that it
+is safe to do so because no global order needs to be enforced among FP transactions
 that access disjoint sets of objects.
 
-Multi-region transactions, in turn, continue to obtain their versions from the
-GVC. Therefore, whenever a multi-region transaction $T$ accesses a given region,
-we have to synchronize that region's LVC with the GVC in order to ensure that
-the version obtained by $T$ exceeds those obtained by earlier completed
+Regular (multi-region) transactions, in turn, continue to obtain their versions from the
+GVC (except in CockroachDB, where local clocks are used for all transactions and 
+a conservative conflict detection policy enforces aborts in case there is uncertainty regarding
+the global order of events). 
+Therefore, whenever a regular transaction $T$ accesses a given region,
+we synchronize that region's LVC with the GVC in order to ensure that
+the timestamp obtained by $T$ exceeds those obtained by earlier completed
 transactions within the region, and that later transactions within that region
-will obtain higher versions than $T$'s.
+will obtain higher versions than $T$'s. (A similar approach was used for enforcing 
+causality in Hybrid Logical Clocks~\cite{Kulkarni2014LogicalPC} as used by CockroachDB, 
+and for supporting local transactions in Mediator~\cite{mediator}.
 
 To support such loose synchronization, the GVC now advances at a coarse
-granularity of epochs. This can be implemented, for example, by choosing some
+granularity of \emph{epochs}. This can be implemented, for example, by choosing some
 epoch size $2^\ell$, and keeping the $\ell$ least significant bits of the GVC padded
 with zeros. In other words, every increment of the GVC increases its value by
 $2^\ell$.
@@ -46,9 +52,9 @@ incrementing the least significant bits).
 
 The LVC has a single component, LVC.current, and it supports the following API:
 \begin{description}
-\item[\code{LVC.skip(epoch)}] -- atomically set LVC.current to max(epoch, LVC.current) .
+\item[\code{LVC.skip(epoch)}] -- atomically set LVC.current to max(epoch, LVC.current).
 
-\item[\code{LVC.fetchAndIncrement()}] -- atomically increment LVC.current and return new
+\item[\code{LVC.fetchAndIncrement()}] -- atomically increment LVC.current and return its new
 value.
 For simplicity, we assume that the LVC is used so it does not overrun the epoch
 and does not wrap around within the epoch. That is, fetchAndIncrement is called
@@ -64,11 +70,10 @@ with respect to the GVC using the skip operation. Specifically, whenever a
 transaction in a new epoch accesses (for either read or write intention
 indication) an object in a region whose LVC is still in an older epoch, it
 invokes that region's LVC.skip so it will not lag behind the transaction's
-read-timestamp obtained from the GVC. Thus, new local transactions that will
+tentative timestamp ($ts_1$) obtained from the GVC. Thus, new local transactions that will
 begin later in the region will have higher timestamps, as needed.
-
 Note that transaction commits do not alter the LVC; the LVC only reflects
-transactions' read-timestamps obtained when they  begin.
+transactions' tentative timestamps obtained when they  begin.
 
 Note also that as long as a running transaction does not access a given region,
 further updates can occur by local transactions in that region, and these
@@ -80,64 +85,73 @@ commences, as in the example of Figure~\ref{fig:ltx-rt}.
 Here, x is written with LVC=10 and later y is written with its LVC=0. The
 concurrent transaction's snapshot time is 10, which includes the update of x and
 not that of y. The same scenario does not occur with two local transactions
-accessing the same region, since once the LVC is incremented, not further
+accessing the same region, since once the LVC is incremented, no further
 updates in the same region can occur with older LVC values.
 
 
 
-\subsubsection{Accessing data and the LVC together} \label{ssec:lvc-access}
+\subsection{Accessing data and the LVC together} \label{ssec:lvc-access}
 
-In order to allow local transactions to execute with a single data store access,
+In order to allow FP transactions to execute with a single data store access,
 we extend the data store to support functions that access data objects and the
-LVC together. Thus, a local transaction can increment LVC, obtain a version, and
-write with this version, all in one round-trip to the local data store.
+LVC together. Thus, an FP transaction can increment LVC, obtain a timestamp, 
+write with this timestamp, and commit, all in one round-trip to the local data store.
 
 We further enforce atomic access to the data and the LVC. This is important in
 order to avoid races between obtaining a version from the LVC and updating the
 data. For example, if the updates of the LVC and the data were separate, the
 following scenario could have arisen:
 \begin{itemize}
-  \item Local transaction $L_1$ plans to update object A and obtains LVC value 2.
-  \item Multi-region transaction $T_1$ obtains read version 2.
-  \item Local transaction $L_2$ obtains LVC value 3 and updates object B.
-  \item Multi-region transaction $T_2$ obtains read version 3.
-  \item $T_2$ reads the old version of A (since it had not been written by $L_1$ yet)
-  and the new version of  B.
-  \item $L_1$ writes A with 2 and completes.
-  \item $T_2$ reads the new version of A and the old version of  B.
+  \item FP transaction $FP_1$ plans to update object x and obtains LVC value $1$.
+  \item Regular transaction $T_1$ obtains tentative timestamp $10$.
+  \item FP transaction $FP_2$ obtains LVC value $11$ and updates object y.
+  \item Regular transaction $T_2$ obtains tentative timestamp $20$.
+  \item $T_2$ reads the old version of x  (since it had not yet been written by $FP_1$)
+  and the new version of  y.
+  \item $FP_1$ writes x with version $1$ and completes.
+  \item $T_2$ reads the new version of x and the old version of  y.
 \end{itemize}
 Here, SI is violated.
 
-In addition, the new functions must take care not to breach the  atomicity of
-concurrent transactions. To this end, they rely on the write intention indications.
-We extend the data store with the following functions, whose 
+In addition, the new functions must take care not to breach the  atomicity of concurrent transactions. 
+To this end, they rely on  write intents. 
+One option is to abort an FP transaction whenever a write intent exists for one of its written or read keys. 
+Starvation can be avoided by retrying the transaction as a regular one.
+Alternatively, an FP transaction may resolve write intents similarly to regular ones.
+Note that in case the resolution accesses a global table, this makes the FP transaction non-local.
+Nevertheless, such remote access is needed only in case of contention between a regular transaction 
+and a concurrent FP one on the same key.
+
+We extend the data store API with the following calls, whose 
 pseudocode is given in Algorithm~\ref{alg:lvc-and-data}. 
 
 \begin{description}
-  \item[\code{mutate(key, value)}] atomically increments the region's LVC
+   \item [\code{getWithTs(key)}]  returns the current LVC read $ts$, plus the highest committed version-value pair pertaining to key with version up to ts.
+   Write intents are either resolved or lead to abort.
+   \item[\code{mutate(key, ts)}] atomically increments the region's LVC
   and creates a new version for key associated with the new LVC value. The
-  operation fails (returns false) if the latest version of the object has a write intention
-  indication. 
-  \item [\code{validateAndMutate(\wkey, \wversion, value, robjs)}]
- where \robjs = $\langle$ \rkey, \rversion $\rangle$*  is an optional parameter.
-Atomically validates that the provided versions of \wkey and \rkeys (if
-applicable)  are equal to the highest ones in the data store and mutates the
-object associated with \wkey and the LVC as mutate does. Returns true if the
-validation is successful, otherwise returns false and does not perform the
-mutation. 
-Note that the version numbers provided with the object parameters correspond to
-old versions; they are used for validation, and are not stored with the new
-version. The new version is produced using the LVC.
-\item [\code{collect(keys)}]   
-returns a consistent snapshot of version-value pairs pertaining to keys. 
-In particular, it selects a $ts$, which is the region's LVC at some point during its execution, and returns the version with the highest version that does not have a write intention indication associated with each key up to this $ts$. 
+  operation fails (returns false) if the latest version of the object has a write intent indication. 
+   \item [\code{validateAndMutate(key, ts, value)}]
+atomically validates that the  highest version of key in the data store does not exceeed the provided timestamp
+and mutates the  object associated with key and the LVC as \code{mutate} does. Returns true if the
+validation is successful, otherwise returns false and does not perform the mutation. 
 \end{description}
 
 \begin{algorithm}[htb]
 \begin{algorithmic}
+\Procedure{getWithTs}{key}
+\State ts $\leftarrow$ \code{LVC.get()}
+\State $\langle$ version, value $\rangle \leftarrow$ highest version  $\leq$ ts of key
+\If{\code{hasWriteIntent(key, version)}} 
+	\State resolve write intent or abort
+\EndIf
+\State return $\langle$ ts, value $\rangle$ 
+\EndProcedure
+\Statex
+%
 \Procedure{mutate}{key, value} 
 \If{ \code{hasWriteIntent(key)} }
-return false
+\State return false
 \EndIf
 \State  version $\leftarrow$ \code{LVC.fetchAndIncrement()}
 \State add $\langle$ version, value $\rangle$ to key
@@ -145,80 +159,107 @@ return false
 \EndProcedure
 \Statex
 %
-\Procedure{validateAndMutate}{\wkey, \wversion, value, $\langle$ \rkey, \rversion $\rangle$*}
+\Procedure{validateAndMutate}{key, ts, value} 
+%%%%$\langle$ \rkey, \rversion $\rangle$*}
 \If{ \code{hasWriteIntent(key)}}
 	\State return false
 \EndIf
-\If{latest version of \wkey $\neq$  \wversion}
+\If{latest version of key $>$ ts}
 	\State return false
 \EndIf
-\ForAll{\rkey,\rversion}
+\remove{
+\ForAll{$\langle$ \rkey, \rversion $\rangle$}
  	\If{latest version of \rkey $\neq$ \rversion} 
     		\State return false
     	\EndIf
  \EndFor
+ }
 \State  version $\leftarrow$ \code{LVC.fetchAndIncrement()}
 \State add $\langle$ version, value $\rangle$ to key
 \State return true
 \EndProcedure
-\Statex
 %
-\Procedure{collect}{keys}
-\State $ts \leftarrow$ \code{LVC.get()}
-\ForAll{key $\in$ keys} 
-	\State S $\leftarrow \{ \langle$
-	% \rangle \}$ 
-	key, version, value $\rangle$ in data store $|$ 
-\State	$\neg$ \code{hasWriteIntent(key, version, value)} $\wedge$ 
-\State version $\leq ts \}$ 
-	\State add argmax$_S$ (version) to snapshot
- \EndFor
-\State return $\langle$ snapshot, $ts \rangle$
-\EndProcedure
-
 \end{algorithmic}
-\caption{Methods for atomic access of LVC and data in a single region. Each method executes atomically.}
+\caption{Atomic access of LVC and data in a single region data store. Each method executes atomically.}
 \label{alg:lvc-and-data}
 \end{algorithm}
 
 
-\subsection{Client-side support for local transactions} \label{ssec:lc-client}
+\subsection{Client-side support for FP transactions} \label{ssec:lc-client}
 
-Pseudocode for the client-side implementation of various local transaction types is given in 
-Algorithm~\ref{alg:ltx-client}. 
-Singletons are implemented directly using the new functions in the underlying data store.
-The next type of local transaction is a single-key read-and-write,  \code{LTX\_SRW}. It is
-parametrized by some compute function f that generates the new value from the old one.
-Because \code{LTX\_SRW} does not perform the update to the data store atomically
-with the read, it needs to validate the mutate operation to ensure that the object
+There are two aspects to supporting FP transactions. First, we need to implement the client API defined in Section~\ref{sec:new-api} above.
+We do this in Section~\ref{ssec:local-client-alg}. Second, we need to modify the implementation of regular transactions to be aware of 
+FP ones; this is addressed in Section~\ref{ssec:regular-client-alg}.
+
+\subsubsection{Implementing FP APIs} \label{ssec:local-client-alg}
+
+Pseudocode for the client-side implementation of the FP transaction API is given in  Algorithm~\ref{alg:ltx-client}. 
+As for regular transactions, the ongoing transaction's tentative timestamp is stored in a local variable,
+which we denote by \code{ts$_1$}. 
+
+The 
+\code{br} and \code{bwc} APIs are implemented directly using the new functions \code{getWithTs} and \code{checkAndMutate}, resp.
+In addition, \code{br} stores its obtained timestamp in  \code{ts$_1$},  for potential subsequent \code{r} calls.
+An ensuing \code{wc} call validates that the written key has not been modified since the preceding \code{br} call.
+
+
+ Another streamlined type of FP transaction is a single-key read-and-write,  \code{brwc}. It is
+parametrized by some compute function $f$ that generates the new value from the old one.
+Because \code{brwc} does not perform the update to the data store atomically
+with the read, it needs to validate the \code{mutate} operation to ensure that the object
 has not been updated since its latest version was read at the beginning of the
 operation. If the validation fails, the transaction can be retried, either the
 same way or using a regular transaction.
-Finally, we extend this operation to read from multiple objects and update one, 
-using \code{LTX\_MRSW}.
+
 
 \begin{algorithm}[htb]
 \begin{algorithmic}
-\Procedure{LTX\_read}{key} 
-\State  return collect(key).array
+\State local variable \code{ts$_1$} \Comment tentative ts of ongoing transaction
+\Statex
+\Procedure{br}{key} 
+\State $\langle$ \code{ts$_1$}, value  $\rangle \leftarrow$ getWithTs(key)
+\State  return value
 \EndProcedure
- % 
-\Procedure{LTX\_write}{key, value} 
+%
+\Statex
+\Procedure{bwc}{key, value} 
 \State  return mutate(key, value)
 \EndProcedure
 %
-\Procedure{LTX\_SRW}{key, f} 
-\State $\langle$ version, value $\rangle \leftarrow$ read(key)
-\State  return \code{validateAndMutate(key, version, f(value))}
+ \Statex
+\Procedure{wc}{key, value} 
+\State return \code{validateAndMutate(key, \code{ts$_1$}, value)}
 \EndProcedure
 %
-\Procedure{LTX\_MRSW}{\wkey, \rkeys, f} 
-\State \Comment \rkeys is a non-empty list 
-\State $\langle$ snap, ts $\rangle \leftarrow$ \code{collect(keys)}
- \State return \code{validateAndMutate(\wkey, ts, f(snap), snap)}
+ \Statex
+\Procedure{brwc}{key, f} 
+\State $\langle$ \code{ts$_1$}, value $\rangle \leftarrow$ getWithTs(key)
+\State  return \code{validateAndMutate(key, \code{ts$_1$}, f(value))}
 \EndProcedure
+
 \end{algorithmic}
-\caption{Client-side code for local transactions.}
+\caption{Client-side code for FP transactions.}
 \label{alg:ltx-client}
 \end{algorithm}
+
+\subsubsection{Ensuring monotonicity of written versions} \label{ssec:regular-client-alg}
+
+We saw that FP transactions become aware of pending regular transactions via write intents. This ensures correctness
+in case a write intent is written for a key before the FP transaction accesses it. However, it may be the
+case that a regular transaction with a smaller timestamp than the FP transaction will write its intent (with 
+the smaller timestamp) \emph{after} the FP transaction accesses the key as in the following scenario:
+\begin{enumerate}
+\item Transaction $T_1$ begins with tentative timestamp $10$.  
+\item FP transaction $FP_1$ writes key and commits with timestamp $11$.  
+\item Transaction $T_1$ writes key with timestamp $10$.  
+\end{enumerate}
+In this case, $T_1$ must detect the write-write conflict with $FP_1$ and abort.
+To this end, we slightly modify the write operation of regular transactions so as to validate that no 
+later versions exist for the written key. In other words, a write operation only creates a new version if it exceeds all
+exisiting ones, and otherwise aborts.
+We note that  some data stores and TPSs already employ this modus operandi of writing only monotonically increasing versions.
+This feature is also beneficial for regular tranasctions, as it leads to early conflict detection.
+
+
+
 

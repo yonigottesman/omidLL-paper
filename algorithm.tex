@@ -82,7 +82,7 @@ these objects. Thus, unlike with regular transactions, which satisfy real-time
 order, a transaction's snapshot may reflect changes that occur after it
 commences, as in the example of Figure~\ref{fig:ltx-rt}.
 
-Here, x is written with LVC=10 and later y is written with its LVC=0. The
+Here, x is written with LVC=10 in one region, and later y is written in another region with its LVC=0. The
 concurrent transaction's snapshot time is 10, which includes the update of x and
 not that of y. The same scenario does not occur with two local transactions
 accessing the same region, since once the LVC is incremented, no further

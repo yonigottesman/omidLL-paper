@@ -21,7 +21,7 @@ read or write. These are supported by the APIs:
 
 A more elaborate example is a read-modify-write API: 
 \begin{description}
-\item[brwc(key,$f$)] -- begins an FP transaction,  reads the latest version of key, applies $f$ to it, 
+\item[brwc(key,)] -- begins an FP transaction,  reads the latest version of key, applies $f$ to it (on the server side), 
 	writes the result into a new version of key that exceeds all existing ones, and commits.
 \end{description}
 

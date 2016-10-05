@@ -7,7 +7,7 @@ to discuss our implementation of fast path transactions in  Section~\ref{ssec:fp
 \subsection{\sys\ design choices}
 \label{ssec:ll-txns}
 
-In Section~\ref{sec:context} we outlined the design space of existing TPSs that suppport SI semantics via the general paradigm outlined in Algorithm~\ref{alg:schema}. 
+In Section~\ref{sec:context} we outlined the design space of existing TPSs that support SI semantics via the general paradigm outlined in Algorithm~\ref{alg:schema}. 
 The design choices made by different existing TPSs as well as by \sys\ are summarized in Table~\ref{table:design-space}.
 
 \begin{table}[htb]
@@ -42,7 +42,7 @@ We will see below that this modification improves performance \Idit{quantify!}
 Percolator also performs conflict detection (line~\ref{l:validate}) in a distributed manner, using a two-phase commit protocol, where all objects are locked during the validation.  Unfortunately, as long as a lock is held, it blocks all transactions attempting to access the locked object. Since clients might stall or 
 crash while holding a lock, Percolator supports a recovery procedure that allows blocked transactions to forcefully abort pending ones, 
 after a certain timeout. Later works (on Omid and Tephra) have decided to forgo such blocking, and replaced the two-phase commit protocol by 
-centralized conflict detection. CockroachDB takes a different approach of performing distributed validation at write time, by replacing writes with atomic validate-and-write operations that can abort either the current transaction or a conflicting one. Since the centralized conflict detection in Omid 2 is exteremely scalable, (capable of sustaining orders of magnitude higher throughput than the network), 
+centralized conflict detection. CockroachDB takes a different approach of performing distributed validation at write time, by replacing writes with atomic validate-and-write operations that can abort either the current transaction or a conflicting one. Since the centralized conflict detection in Omid 2 is extremely scalable, (capable of sustaining orders of magnitude higher throughput than the network), 
 \sys\ adopts this mechanism from Omid 2. 
 
 The centralized service maintains an in-memory hash table mapping keys to 

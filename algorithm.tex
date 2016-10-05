@@ -132,7 +132,7 @@ pseudocode is given in Algorithm~\ref{alg:lvc-and-data}.
   and creates a new version for key associated with the new LVC value. The
   operation fails (returns false) if the latest version of the object has a write intent indication. 
    \item [\code{validateAndMutate(key, ts, value)}]
-atomically validates that the  highest version of key in the data store does not exceeed the provided timestamp
+atomically validates that the  highest version of key in the data store does not exceed the provided timestamp
 and mutates the  object associated with key and the LVC as \code{mutate} does. Returns true if the
 validation is successful, otherwise returns false and does not perform the mutation. 
 \end{description}
@@ -256,9 +256,9 @@ the smaller timestamp) \emph{after} the FP transaction accesses the key as in th
 In this case, $T_1$ must detect the write-write conflict with $FP_1$ and abort.
 To this end, we slightly modify the write operation of regular transactions so as to validate that no 
 later versions exist for the written key. In other words, a write operation only creates a new version if it exceeds all
-exisiting ones, and otherwise aborts.
+existing ones, and otherwise aborts.
 We note that  some data stores and TPSs already employ this modus operandi of writing only monotonically increasing versions.
-This feature is also beneficial for regular tranasctions, as it leads to early conflict detection.
+This feature is also beneficial for regular transactions, as it leads to early conflict detection.
 
 
 

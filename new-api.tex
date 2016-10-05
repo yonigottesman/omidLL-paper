@@ -61,7 +61,7 @@ In principle, it would have been possible to also allow \code{w} calls in the sp
 but in this case, it is not possible to forgo the two-phase execution. 
 That is, the \code{w} calls would need to indicate write intents, and  to be atomically committed (or aborted) during the final \code{wc} 
 (or \code{c}) call. 
-Given the limited benefit and extra compexity of allowing many writes in FP transactions, we do not support this option in our solution.
+Given the limited benefit and extra complexity of allowing many writes in FP transactions, we do not support this option in our solution.
 
 
 \subsection{Semantics}

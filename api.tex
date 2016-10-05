@@ -13,7 +13,7 @@ We then proceed to define  the transaction semantics provided by the TPS (Sectio
 \label{ssec:data-model}
 
 The underlying data store holds  \emph{objects} (often referred to as \emph{rows}) identified by unique \emph{keys}.
-We consider multi-versioned obejcts, where object values are associated with \emph{version numbers}, and
+We consider multi-versioned objects, where object values are associated with \emph{version numbers}, and
 multiple versions associated with the same key may co-exist in the data store.
 Thus, at any given time, an object holds a tuple \tuple{key,\tuple{version,value}+}, where value
 can be structured to consist of multiple columns.

@@ -9,7 +9,7 @@ A TPS's API is offered by a client library, which accesses the data directly in 
 performs coordination actions to begin, commit, or abort transactions. 
 
 The TPSs we consider all rely on timestamps for coordination: when a transaction begins it obtains a \emph{tentative timestamp} $ts_1$, 
-which it uses (1) to determine what version of each key to read; possibly (2) as a tetntative version for data items it writes; and possibly (3) as a unique transaction id.   
+which it uses (1) to determine what version of each key to read; possibly (2) as a tentative version for data items it writes; and possibly (3) as a unique transaction id.   
 In Percolator, Omid, Tephra, and \sys, timestamps are provided by a monotonically
 increasing \emph{global version  clock (GVC)} managed by a central service. 
 CockroachDB instead uses the local clock of
@@ -63,7 +63,7 @@ In more detail, a transaction goes through the following phases (outlined in Alg
  		using data on all past commits that the client obtains at begin time, whereas CockroachDB and Omid 2 
  		have the read refer to a centralized transaction table (also called commit table). 
 		Percolator  waits for the intent to be lifted (by the completion of the writing transactions), and in case the wait times-out, 
-		forces this tranaction to abort. 
+		forces this transaction to abort. 
 	 	 CockroachDB forces the transaction with the write intent to either commit with a higher version 
   		than its own read timestamp, or abort. Similarly, the solution we implement in \sys\ forces the transaction with the pending write 
   		intent to abort. 
@@ -91,7 +91,7 @@ In more detail, a transaction goes through the following phases (outlined in Alg
   which can reside in a global table (like the commit table of 
   Omid 2 and the transaction table of CockroachDB) or alongside the first  key written by 
   the transaction (as in Percolator and \sys).  Note that a commit attempt may fail and abort instead. 
-  \item \emph{Clean-up} -- Finally, a tranaction changes its write intents to
+  \item \emph{Clean-up} -- Finally, a transaction changes its write intents to
   persistent writes in case of commit, and removes them in case of abort. This
   phase occurs after the transaction is persistently committed or aborted via the commit entry, in
   order to reduce the overhead of future transactions (by sparing them the need to check the commit entry)

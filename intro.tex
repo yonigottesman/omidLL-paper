@@ -5,21 +5,28 @@ NOSQL key-value stores such as BigTable, HBase, and RocksDB have increased in po
 This need is addressed by a number of popular  \emph{transaction processing systems (TPSs)} 
 such as  Percolator~\cite{Percolator2010}, Omid~\cite{OmidICDE2014,omid-blog}, Tephra~\cite{tephra}, and CockroachDB~\cite{cockroach}, 
 which offer transactions on top of  BigTable~\cite{bigtable-osdi06}, HBase~\cite{hbase}, HBase, and RocksDB~\cite{rocksdb}, resp. 
+(In the context of this paper, we consider only TPSs that are layered atop a stand-alone key-value store). 
 The underlying NOSQL stores are typically distributed  over multiple \emph{regions} (sometimes called nodes, shards, domains, or partitions).
 The main purpose of a TPS is to support \emph{global transactions}, i.e., ones that span multiple regions.
 
 The need to atomically perform multiple  updates  entails a two-phase design, whereby transactions first indicate their \emph{intent} to write certain values, and then atomically \emph{commit} (or \emph{abort}) all their write intents at the same time. In addition, 
 all the values written by a single transaction are associated with a common  \emph{timestamp} (or \emph{version number}). 
 Reads, in turn, rely on these timestamps in order to read a consistent snapshot of the data store. They further  
-require some mechanism (either centralized or distributed) to determine what to do on encountering a write intent
-%, which may be implemented in various ways, either centralized or distributed.
+require some mechanism (either centralized or distributed) to determine what to do on encountering a write intent.
+
+A TPS also implements  a \emph{validation} or \emph{conflict detection} mechanism in order to ensure transaction isolation, which can mean
+either serializability or snapshot isolation~\cite{DBLP:conf/sigmod/BerensonBGMOO95}; we focus here on the
+latter (see Section~\ref{sec:api}) ,  which is popular in real-world systems  and amenable to scalable implementations.
+Conflicting transactions that would violate the required isolation level are
+aborted. Conflicts are checked at commit time, and possibly during write-write conflicts.
 
 Transaction processing thus follows the general schema outlined in Algorithm~\ref{alg:schema}, 
 while systems vary in their implementations of each of the steps. 
-For example, whereas most systems rely on a centralized service (requiring remote access) for timestamp allocation~\cite{OmidICDE2014,omid-blog,tephra,Percolator2010}, this is not essential~\cite{cockroach}; similarly, validation (conflict detection) can use a centralized service~\cite{OmidICDE2014,omid-blog,tephra}, per-transaction records in a global table~\cite{cockroach}, or two-phase commit~\cite{Percolator2010}. Different ways to implement this schema are  discussed in Section~\ref{sec:context}.
+For example, whereas most systems rely on a centralized service (requiring remote access) for timestamp allocation~\cite{OmidICDE2014,omid-blog,tephra,Percolator2010}, this is not essential~\cite{cockroach}; similarly, validation (conflict detection) can use a centralized service~\cite{OmidICDE2014,omid-blog,tephra}, per-transaction entries in a global table~\cite{cockroach}, or two-phase commit~\cite{Percolator2010}. 
+Different ways to implement this schema are  discussed in Section~\ref{sec:context}.
  
 \begin{algorithm}[tb]
-\begin{algorithmic}
+\begin{algorithmic}[1]
 \Procedure{begin}{}
 \State obtain tentative (start) timestamp $ts_1$ 
 %and transaction id $txid$
@@ -28,7 +35,7 @@ For example, whereas most systems rely on a centralized service (requiring remot
 
 \Procedure{read}{key} \Comment transactional read
 \If{hasWriteIntent(key)}
-	\State resolve intents, possibly by aborting transactions
+	\State resolve intents, possibly  aborting transactions \label{l:resolve}
 \EndIf
 \State return latest version of key that does not exceed $ts_1$
 \EndProcedure
@@ -43,9 +50,9 @@ For example, whereas most systems rely on a centralized service (requiring remot
 
 \Procedure{commit}{write-set}
 \State obtain commit timestamp $ts_2$
-\If{validate(write-set, $ts_2$)}  \Comment check for conflicts
+\If{validate(write-set, $ts_2$)}  \Comment check for conflicts  \label{l:validate}
 	\Statex \Comment commit all write intents with version $ts_2$
-	\State atomically and persistently indicate commit 
+	\State atomically and persistently indicate commit   \label{l:commit}
 \Else
 	\State abort	
 \EndIf
@@ -60,7 +67,7 @@ The two-phase transaction processing schema induces high overhead, especially on
 (1) \emph{begin} to obtain a tentative timestamp, in most implementations from a centralized service;  
 (2) add \emph{write intent} to the data store; 
 (3) \emph{get commit timestamp}, typically using a centralized service, (though in some cases, the tentative timestamp is used);
-(4) \emph{validate} (conflict detection), possibly combined with the above (using a centralized service) or using two-phase locking; 
+(4) \emph{validate} (conflict detection), using a centralized service or two-phase locking; 
 (5) \emph{indicate commit}, sometimes at the data store and sometimes at a global table; and 
 (6) \emph{clean-up} -- replace write intent with actual write in the data store. 
 The overhead is exacberated by 
@@ -70,7 +77,7 @@ In this work we expedite   \emph{local transactions}, namely,  transactions that
 introduce a \emph{fast path} for such transactions, which mitigates this overhead
 without a significant impact on global (multi-region) transactions.
 The concept is generic and is applicable to a family of TPSs that use the schema of Section~\ref{sec:context}, 
-including Percolator~\cite{Percolator2010}, Omid (versions 1 and 2)~\cite{OmidICDE2014,omid-blog}, Tephra~\cite{tephra}, 
+including Percolator~\cite{Percolator2010}, Omid 1~\cite{OmidICDE2014}, Omid 2~\cite{omid-blog}, Tephra~\cite{tephra}, 
 and CockroachDB~\cite{cockroach}. 
 In Section~\ref{sec:new-api} we define API extensions for fast local transactions, 
 and in Section~\ref{sec:alg}, we consider  a generic TPS that supports global transactions, 
@@ -82,8 +89,9 @@ A second contribution of this paper is building  a new low-latency transaction p
 where we embody the fast path concept.  
 \sys\ is based on the open-source version of Omid 2~\cite{omid-blog}, a transaction processing engine for HBase, 
 but replaces its centralized commit table access with a lower-latency distributed approach to indicating commits.  
-\sys\ supports local transactions via (1) distributed timestamp allocation; (2) extensions to the underlying key-value store, 
-which we implement in HBase; and (3) an extended client-side transaction library. 
+\sys\ supports local transactions via (1) distributed timestamp allocation; (2) extensions to the underlying key-value store API; 
+and (3) an extended client-side transaction library. 
+We implement (1) and (2) in HBase region servers, and (3) based on the Omid client library.
 \Idit{Discuss evaluation results given in Section~\ref{sec:eval}.}
 
 \remove{
@@ -113,10 +121,6 @@ transactions, and enhance it with optimized support for specific types of local
 transactions. Our main goal is to expedite short single-object transactions,
 which are popular in production web workloads~\cite{sieve}.
 %
-We focus here on systems supporting \emph{snapshot isolation} (SI)~\cite{DBLP:conf/sigmod/BerensonBGMOO95}, which is
-popular in real-world systems  and amenable to scalable implementations.
-Our local transactions can be performed using the usual
-transaction mechanism, with no change in semantics.
 
  }
   

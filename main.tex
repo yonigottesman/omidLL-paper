@@ -14,14 +14,29 @@
 \usepackage[noend]{algpseudocode}
 \usepackage{times}
 
-\usepackage{todonotes}
+%\usepackage{todonotes}
 %\usepackage[normalem]{ulem} %strikethrough: \sout{Hello World}
 %\usepackage{lastpage} %for number of pages
-\usepackage{xspace}
+%\usepackage{xspace}
 %\usepackage{multirow}
 %\usepackage{balance}
 
-\input{macros}
+\usepackage[colorlinks=true,allcolors=blue,breaklinks]{hyperref}   % hyperlinks, including DOIs and URLs in bibliography
+
+%========================
+%  Macros
+%========================
+
+\newcommand{\code}[1]{\textsf{\fontsize{9}{11}\selectfont #1}}
+
+\newcommand{\inred}[1]{{\color{red}{#1}}}
+\newcommand{\remove}[1]{}
+\newcommand{\Idit}[1]{[[\inred{Idit: #1}]]}
+
+\newcommand{\sys}{Lorra}
+
+\newcommand{\tuple}[1]{\ensuremath{\langle \mbox{#1} \rangle}}
+
 
 %========================
 \begin{document}
@@ -121,9 +136,7 @@ We review related work in Section ~\ref{sec:related} and conclude with Section ~
 
 \section{Low-latency Transactions with \sys} \label{sec:impl}
 
-\subsection{\sys\ regular transaction processing}
-
-\subsection{local transactions in \sys\ and HBase}
+\input{lorra}
 
 \section{Evaluation} \label{sec:eval}
 

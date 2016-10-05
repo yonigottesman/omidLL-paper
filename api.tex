@@ -4,7 +4,7 @@ We consider a TPS  that spans multiple regions (sometimes called nodes, domains,
 (multi-region) transactions. Data is stored in an underlying NOSQL key-value store, 
 such as HBase~\cite{hbase}, BigTable~\cite{bigtable-osdi06},  or
 RocksDB~\cite{rocksdb}. Clients access the data store directly, and partake in transaction
-coordination, possibly using the assistance of a TM.
+coordination, possibly using the assistance of a  centralized service.
 
 We first describe the data model and API of the underlying data store (Section~\ref{ssec:data-model}).
 We then proceed to define  the transaction semantics provided by the TPS (Section~\ref{ssec:transactions}). 
@@ -12,7 +12,7 @@ We then proceed to define  the transaction semantics provided by the TPS (Sectio
 \subsection{Data store}
 \label{ssec:data-model}
 
-The underlying data store holds  \emph{objects}  identified by unique \emph{keys}; with HBase and BigTable this refers to rows.
+The underlying data store holds  \emph{objects} (often referred to as \emph{rows}) identified by unique \emph{keys}.
 We consider multi-versioned obejcts, where object values are associated with \emph{version numbers}, and
 multiple versions associated with the same key may co-exist in the data store.
 Thus, at any given time, an object holds a tuple \tuple{key,\tuple{version,value}+}, where value

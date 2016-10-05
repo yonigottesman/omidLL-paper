@@ -1,0 +1,70 @@
+
+To realize our local transactions, we build \sys, a scalable low-latency TPS on top of HBase. 
+\sys\ is an evolution of Omid 2, redesigned to reduce latency by distributing the commit entries.
+We describe \sys's normal transaction processing in Section~\ref{ssec:ll-txns}, and then proceed
+to discuss our implementation of fast path transactions in  Section~\ref{ssec:fp-impl}.
+
+\subsection{\sys\ design choices}
+\label{ssec:ll-txns}
+
+In Section~\ref{sec:context} we outlined the design space of existing TPSs that suppport SI semantics via the general paradigm outlined in Algorithm~\ref{alg:schema}. 
+The design choices made by different existing TPSs as well as by \sys\ are summarized in Table~\ref{table:design-space}.
+
+\begin{table}[htb]
+
+\centerline{
+\begin{tabular}{|l|cccc|}
+\hline
+TPS & txn  	& \multicolumn{2}{c}{		 validation} & reads\\
+	& entry	& 	scheme & time & cause abort	\\
+\hline
+Omid, Tephra 	& {\bf R}   & {\bf C} & commit & no\\
+Percolator 		& {\bf D}   & {\bf D} & commit & yes \\
+Omid 2 			& {\bf C}  	& {\bf C} & commit & no\\
+CockroachDB 		& {\bf C}  	& {\bf D} & write & yes\\
+\sys				& {\bf D} 	& {\bf C} & commit & yes\\
+%\hline
+\end{tabular}
+}
+\caption{Design choices  in TPSs. {\bf C} -- centralized,  {\bf D} -- distributed, {\bf R} -- replicated.}
+\label{table:design-space}
+\end{table}
+
+All considered TPSs store per-transaction entries, which are the source of truth regarding the transaction status (pending, committed, or aborted). 
+This entry is updated in line~\ref{l:commit} of Algorithm~\ref{alg:schema}, and are checked in order to resolve write intents in line~\ref{l:resolve}.
+Omid 1 and Tephra replicate this information among all active clients, which consumes high bandwidth and does not scale. Omid 2 and 
+CockroachDB use dedicated tables. In experiments we ran, we observed that the centralized table is Omid 2's principal scalability bottleneck, and while this bottleneck is mitigated via batching commit table updates, this also increases latency. 
+%Omid 2 chose this  option as it was designed primarily for high throughput, with less emphasis on latency. On the other hand, we target our fast path transactions for workloads that require low latency. 
+We therefore opt to follow (in this aspect) the design of Percolator, which stores the transaction's entry alongside its first written key and stores pointers to this first key at all other keys written by the transaction. Thus, updates of transaction entries can be performed in parallel by 
+independent clients, and such updates are no longer a performance bottleneck. 
+We will see below that this modification improves performance \Idit{quantify!}
+
+Percolator also performs conflict detection (line~\ref{l:validate}) in a distributed manner, using a two-phase commit protocol, where all objects are locked during the validation.  Unfortunately, as long as a lock is held, it blocks all transactions attempting to access the locked object. Since clients might stall or 
+crash while holding a lock, Percolator supports a recovery procedure that allows blocked transactions to forcefully abort pending ones, 
+after a certain timeout. Later works (on Omid and Tephra) have decided to forgo such blocking, and replaced the two-phase commit protocol by 
+centralized conflict detection. CockroachDB takes a different approach of performing distributed validation at write time, by replacing writes with atomic validate-and-write operations that can abort either the current transaction or a conflicting one. Since the centralized conflict detection in Omid 2 is exteremely scalable, (capable of sustaining orders of magnitude higher throughput than the network), 
+\sys\ adopts this mechanism from Omid 2. 
+
+The centralized service maintains an in-memory hash table mapping keys to 
+commit timestamps ($ts_2$) of transactions that last wrote them. A conflict arises whenever a key in a transaction's write-set has been written 
+with a timestamp higher than its $ts_1$. 
+In case the conflict detection service crashes, all pending transactions are aborted, and it can be immediately restarted with an empty table, because only conflicts with concurrent transactions need to be checked. 
+
+Whenever a read encounters a write intent, it resolves it (line~\ref{l:resolve}) via the commit entry at the first written key. 
+If the commit entry is committed, the written value is taken into account, and if it is aborted, the value is ignored. 
+But if the commit entry is neither committed nor aborted, the reading transaction forces the writing transaction to abort by using 
+an atomic read-modify-write operation to set its status to aborted. Similar scenarios occur in Percolator and CockroachDB, since 
+they use distributed validation. Omid and Tephra, on the other hand, do not need to force such aborts, because they use a single centralized service for timestamp allocation, validation, and writing the commit entry in a way that ensures that  if the read sees a write intent by an uncommitted transaction, that transaction will not commit with an earlier timestamp than the read.
+%
+The possibility of reads aborting pending transactions means that commit attempts (line~\ref{l:commit}) have to  
+check whether the transaction is aborted atomically with writing the commit status.
+
+
+\subsection{Local transactions in \sys}
+\label{ssec:fp-impl}
+
+
+\Idit{I'm not sure we need this subsection -- anything to say beyond what is in Section~\ref{sec:alg}? Something about the HBase implementation?}
+
+
+

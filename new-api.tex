@@ -76,7 +76,7 @@ are managed in two different regions, then real-time order can be violated as
 illustrated in Figure~\ref{fig:ltx-rt} (ignore the skip operations for now; they will be explained in the next section).
 
 \begin{figure}[h]
-\includegraphics[width=\columnwidth]{LTX-RT}
+\includegraphics[width=\columnwidth]{figs/LTX-RT}
 \caption{Possible violation of real-time order among fast path (FP) transactions in different regions. Global transaction $T_1$
 reads $x$ before it is updated by FP transaction $FP_1$ and reads $y$ after it is updated by FP transaction $FP_2$ even 
 though $FP_2$ occurs after $FP_1$. $T1$'s global version is $10$, and its skips the local version clocks of the regions holding $x$ and $y$ to $10$ when reading from them.}

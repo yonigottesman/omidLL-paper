@@ -13,15 +13,15 @@ We discuss the semantics of FP transactions relative to regular ones in Section~
 For brevity, we refer to the TPS's API calls  begin, read, write, and commit as \code{b, r, w}, and \code{c} respectively. 
 We now combine them to allow fast processing.
 The simplest examples of FP transactions are singletons, i.e., transactions that perform a single
-read or write. These are supported by the APIs:
+read or write. These are supported by the APIs: 
 \begin{description}
-\item[br(key)] -- begins an FP transaction and reads key within it. Recall that read-only transactions need not commit. 
+\item[br(key)] -- begins an FP transaction and reads key within it. Recall that read-only transactions don't need to commit. 
 \item[bwc(key,val)] -- begins an FP transaction,  writes val into a new version of key that exceeds all existing ones, and commits.
 \end{description}
 
 A more elaborate example is a read-modify-write API: 
 \begin{description}
-\item[brwc(key,)] -- begins an FP transaction,  reads the latest version of key, applies $f$ to it (on the server side), 
+\item[brwc(key,f)] -- begins an FP transaction,  reads the latest version of key, applies $f$ to it (on the server side), 
 	writes the result into a new version of key that exceeds all existing ones, and commits.
 \end{description}
 

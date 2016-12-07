@@ -1,9 +1,8 @@
 
-
 We consider a TPS  that spans multiple regions (sometimes called nodes, domains, or shards) and supports global
 (multi-region) transactions. Data is stored in an underlying NOSQL key-value store, 
 such as HBase~\cite{hbase}, BigTable~\cite{bigtable-osdi06},  or
-RocksDB~\cite{rocksdb}. Clients access the data store directly, and partake in transaction
+RocksDB~\cite{rocksdb}. Clients access the data store directly using the TPS API, and partake in transaction
 coordination, possibly using the assistance of a  centralized service.
 
 We first describe the data model and API of the underlying data store (Section~\ref{ssec:data-model}).

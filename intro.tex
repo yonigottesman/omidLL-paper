@@ -1,5 +1,5 @@
 
-NOSQL key-value stores such as BigTable, HBase, and RocksDB have increased in popularity over the past few years, and are now very widely deployed. Yet in many installations, the single-key access offered by these data stores is insufficient; developers  increasingly require 
+NOSQL key-value stores such as \Yoni{cite here and only here?}BigTable, HBase, and RocksDB have increased in popularity over the past few years, and are now very widely deployed. Yet in many installations, the single-key access offered by these data stores is insufficient; developers  increasingly require 
  \emph{ACID} (atomic, consistent, isolated, and durable) \emph{transactions} that access multiple keys.
  (Transaction API and semantics are discussed in Section~\ref{sec:api}).
 This need is addressed by a number of popular  \emph{transaction processing systems (TPSs)} 
@@ -15,7 +15,7 @@ Reads, in turn, rely on these timestamps in order to read a consistent snapshot 
 require some mechanism (either centralized or distributed) to determine what to do on encountering a write intent.
 
 A TPS also implements  a \emph{validation} or \emph{conflict detection} mechanism in order to ensure transaction isolation, which can mean
-either serializability or snapshot isolation~\cite{DBLP:conf/sigmod/BerensonBGMOO95}; we focus here on the
+either serializability or snapshot isolation (SI) ~\cite{DBLP:conf/sigmod/BerensonBGMOO95}; we focus here on the
 latter (see Section~\ref{sec:api}) ,  which is popular in real-world systems  and amenable to scalable implementations.
 Conflicting transactions that would violate the required isolation level are
 aborted. Conflicts are checked at commit time, and possibly during write-write conflicts.
@@ -82,8 +82,10 @@ and CockroachDB~\cite{cockroach}.
 In Section~\ref{sec:new-api} we define API extensions for fast local transactions, 
 and in Section~\ref{sec:alg}, we consider  a generic TPS that supports global transactions, 
 and enhance it with optimized support for specific types of local transactions. 
-Our main goal is to expedite short single-object transactions,
+Our main goal is to expedite short single-object \Yoni{what is a single object?} transactions,
 which are popular in production web workloads~\cite{omid-blog}.
+
+\Yoni{Add a motivation paragraph. Some kind of workload that can benifit from local trnasactions. And a workload that would benifit from br-*r-wc}
 
 A second contribution of this paper is building  a new low-latency transaction processing system, \sys, presented in Section~\ref{sec:impl},
 where we embody the fast path concept.  

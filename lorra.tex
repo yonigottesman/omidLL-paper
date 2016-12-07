@@ -1,4 +1,7 @@
 
+
+
+\Yoni{MAybe add a figure of omidLL architecture vs omid 2?}
 To realize our local transactions, we build \sys, a scalable low-latency TPS on top of HBase. 
 \sys\ is an evolution of Omid 2, redesigned to reduce latency by distributing the commit entries.
 We describe \sys's normal transaction processing in Section~\ref{ssec:ll-txns}, and then proceed
@@ -9,7 +12,7 @@ to discuss our implementation of fast path transactions in  Section~\ref{ssec:fp
 
 In Section~\ref{sec:context} we outlined the design space of existing TPSs that support SI semantics via the general paradigm outlined in Algorithm~\ref{alg:schema}. 
 The design choices made by different existing TPSs as well as by \sys\ are summarized in Table~\ref{table:design-space}.
-
+\Yoni{I think this is confusing. Does centrelized mean only one entity has access to it, or does it mean the table is not distributed?}
 \begin{table}[htb]
 
 \centerline{
@@ -45,7 +48,7 @@ after a certain timeout. Later works (on Omid and Tephra) have decided to forgo 
 centralized conflict detection. CockroachDB takes a different approach of performing distributed validation at write time, by replacing writes with atomic validate-and-write operations that can abort either the current transaction or a conflicting one. Since the centralized conflict detection in Omid 2 is extremely scalable, (capable of sustaining orders of magnitude higher throughput than the network), 
 \sys\ adopts this mechanism from Omid 2. 
 
-The centralized service maintains an in-memory hash table mapping keys to 
+The centralized service, called Transactional Status Oracle (TSO), maintains an in-memory hash table mapping keys to 
 commit timestamps ($ts_2$) of transactions that last wrote them. A conflict arises whenever a key in a transaction's write-set has been written 
 with a timestamp higher than its $ts_1$. 
 In case the conflict detection service crashes, all pending transactions are aborted, and it can be immediately restarted with an empty table, because only conflicts with concurrent transactions need to be checked. 
@@ -62,9 +65,7 @@ check whether the transaction is aborted atomically with writing the commit stat
 
 \subsection{Local transactions in \sys}
 \label{ssec:fp-impl}
+To support local transactions, we implemented the algorithms and APIs described in Section~\ref{sec:alg}. Each Hbase region server maintains an LVC which is updated whenever a transaction accesses it. Omid 2 API was extended to support FP transactions, and the write stage in reglar transactions was modified to use checkAndMutate instead of put. 
 
-
-\Idit{I'm not sure we need this subsection -- anything to say beyond what is in Section~\ref{sec:alg}? Something about the HBase implementation?}
-\Yoni{I think we should shortly say we modified Hbase region server to support local transactions}
 
 

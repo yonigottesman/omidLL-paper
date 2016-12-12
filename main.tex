@@ -25,6 +25,8 @@
 \usepackage{subcaption}
 \usepackage{graphicx}
 \usepackage{caption}
+\usepackage{float}
+
 %========================
 %  Macros
 %========================
@@ -40,7 +42,7 @@
 \newcommand{\sys}{Lorra}
 \newcommand{\speedup}[1]{#1$\times$}
 \newcommand{\tuple}[1]{\ensuremath{\langle \mbox{#1} \rangle}}
- \usepackage{float}
+
 %========================
 \begin{document}
 
@@ -121,7 +123,7 @@ and    Section~\ref{sec:context} surveys  the design space of popular TPS implem
 highlighting the common properties of TPSs that can benefit from our approach. 
 In Section~\ref{sec:new-api} we propose our extended TPS API, which provides a fast-path for local transactions. 
 Section~\ref{sec:alg} then describes our algorithm for supporting fast-path local transactions.  
-Section~\ref{sec:impl} presents \sys, our low latency transaction processing system, where our fast-pass service is implemented, 
+Section~\ref{sec:lorra} presents \sys, our low latency transaction processing system, where our fast-pass service is implemented, 
 and Section~\ref{sec:eval} presents its evaluation. 
 We review related work in Section ~\ref{sec:related} and conclude with Section ~\ref{sec:conclusions}.
 
@@ -137,10 +139,11 @@ We review related work in Section ~\ref{sec:related} and conclude with Section ~
 \section{Fast Path  Algorithm} \label{sec:alg}
 \input{algorithm}
 
-\section{Low-latency Transactions with \sys} \label{sec:impl}
-
+\section{Low-latency Transactions with \sys} \label{sec:lorra}
 \input{lorra}
 
+\section{\sys\ Implementation} \label{sec:impl}
+\input{implementation}
 
 
 \section{Evaluation} \label{sec:eval}

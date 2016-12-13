@@ -98,13 +98,14 @@
 
 
 
-In this section we describe \sys\ implementation to details.
-\Yoni{tilt txid tsc tsr}
+\Yoni{ explain here or in \ref{sec:ll-txns} that each key has multiple versions, we use $txd$ $tx_r$ $tx_c$....}
+
 \subsection{Transaction metadata}
 \label{ssec:tso}
-Figure~\ref{fig:model} shows the metadata of a transaction during its stages of execution. The \emph{version} field  is the txid of the transaction which is returned at the begin stage. The \emph{commit} field indicates whether the data is committed, and if it is, its commit timestamp (tsc). Since transaction commit needs to be an atomic step, one key from the transaction's write set is chosen to be the \emph{leader} of that transaction, and when the transaction is committed a single atomic write is initiated to the \emph{leader's} commit field with the tsc. Transactions' read operations refer to the keys \emph{leaders} to find out if the value has been committed or not, and if it is committed, they use the tsc to determine whether the value is in their snapshot.
+\Yoni{make sure Idit defines  in section \ref{sec:ll-txns}}
+Figure~\ref{fig:model} shows the metadata of a transaction during its stages of execution. For each version of a key in the data store we add 3 additional fields: (1) A \emph{version} field, which holds the $txid$ of the transaction that wrote it, in our implementation the $tx_r$ received at the begin stage is used as the $txid$. (2) A \emph{commit} field, which indicates whether the data is tentative or committed, if it's committed, the value will be the transaction's $ts_c$. (3) A \emph{leader} field. Since the transaction commit needs to be an atomic step, one key from the transaction's write set is chosen to be the \emph{leader} of that transaction, and when the transaction is committed a single atomic write is initiated to the \emph{leader's} commit field with the transaction's $ts_c$. Transaction read operations refer to the key's \emph{leader} to find out whether the value has been committed or not.
 
-To avoid an extra RPC to the leader on every read, after a transaction is committed, a post-commit stage writes the $ts_c$ to the \emph{commit} field of every key in the write set of that transaction. Before initiating an extra RPC to the leader, a read operation first reads the \emph{commit} field of the key and only if it doesn't have any value the operation will read from the leader.
+
 
 
 \subsection{Client-side operation}
@@ -130,6 +131,7 @@ To ensure monotonicity of written versions as seen in Section~\ref{ssec:regular-
 
 \paragraph{Commit}
 The client requests \emph{commit(txid, write-set)} from the TSO. The TSO assigns it a commit timestamp $ts_c$ and checks for conflicts. If there are none, the client will write the $ts_c$ in the leader's \emph{commit} field. As explained at the Get stage, the transaction must atomically commit only if no other get invalidated it. This is done using the data store checkAndMutate function to read the invalidation symbol before writing the $ts_c$.
+To avoid an extra RPC to the leader on every read, after a transaction is committed, a post-commit stage writes the $ts_c$ to the \emph{commit} field of every key in the write set of that transaction. 
 Following a successful commit, the client adds $ts_c$ to all data items it wrote to.
 
 \paragraph{Singleton Read}

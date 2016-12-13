@@ -45,8 +45,8 @@ centralized conflict detection. CockroachDB takes a different approach of perfor
 \sys\ adopts this mechanism from Omid 2. 
 
 The centralized service, called Transactional Status Oracle (TSO), maintains an in-memory hash table mapping keys to 
-commit timestamps ($ts_2$) of transactions that last wrote them. A conflict arises whenever a key in a transaction's write-set has been written 
-with a timestamp higher than its $ts_1$. 
+commit timestamps ($ts_c$) of transactions that last wrote them. A conflict arises whenever a key in a transaction's write-set has been written 
+with a timestamp higher than its $ts_r$. 
 In case the conflict detection service crashes, all pending transactions are aborted, and it can be immediately restarted with an empty table, because only conflicts with concurrent transactions need to be checked. 
 
 Whenever a read encounters a write intent, it resolves it (line~\ref{l:resolve}) via the commit entry at the first written key. 

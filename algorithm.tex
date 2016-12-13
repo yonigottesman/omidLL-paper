@@ -101,11 +101,11 @@ We further enforce atomic access to the data and the LVC. This is important in
 order to avoid races between obtaining a version from the LVC and updating the
 data. For example, if the updates of the LVC and the data were separate, the
 following scenario could have arisen (x and y are in the same region):
-\Yoni{This is a bad example. I think we can find an example with one FP and one Tx}
+\Yoni{Find shorter example?}
 \begin{itemize}
   \item FP transaction $FP_1$ plans to update object x and obtains LVC value $1$.
   \item Regular transaction $T_1$ obtains tentative timestamp $10$.
-  \Yoni{\item $T_1$ Reads y, causes LVC to skip to $10$.}
+  \Yoni{\item $T_1$ reads y, causes LVC to skip to $10$.}
   \item FP transaction $FP_2$ obtains LVC value $11$ and updates object y.
   \item Regular transaction $T_2$ obtains tentative timestamp $20$.
   \item $T_2$ reads the old version of x  (since it had not yet been written by $FP_1$)
@@ -117,7 +117,7 @@ Here, SI is violated.
 
 In addition, the new functions must take care not to breach the  atomicity of concurrent transactions. 
 To this end, they rely on  write intents. 
-One option is to abort an FP transaction whenever a write intent exists for one of its written or read keys.\Yoni{read keys? In current implementation we dont fail we just look for a commited version} 
+One option is to abort an FP transaction whenever a write intent exists for one of its written or read keys.\Yoni{read keys?} 
 Starvation can be avoided by retrying the transaction as a regular one.
 Alternatively, an FP transaction may resolve write intents similarly to regular ones.
 Note that in case the resolution accesses a global table, this makes the FP transaction non-local.

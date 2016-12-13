@@ -1,7 +1,3 @@
-
-
-
-\Yoni{MAybe add a figure of omidLL architecture vs omid 2?}
 To realize our local transactions, we build \sys, a scalable low-latency TPS on top of HBase. 
 \sys\ is an evolution of Omid 2, redesigned to reduce latency by distributing the commit entries.
 We describe \sys's normal transaction processing in Section~\ref{ssec:ll-txns}, and then proceed
@@ -12,7 +8,7 @@ to discuss our implementation of fast path transactions in  Section~\ref{ssec:fp
 
 In Section~\ref{sec:context} we outlined the design space of existing TPSs that support SI semantics via the general paradigm outlined in Algorithm~\ref{alg:schema}. 
 The design choices made by different existing TPSs as well as by \sys\ are summarized in Table~\ref{table:design-space}.
-\Yoni{I think this is confusing. Does centrelized mean only one entity has access to it, or does it mean the table is not distributed?}
+\Yoni{Does centrelized mean only one entity has access to it, or does it mean the table is not distributed?}
 \begin{table}[htb]
 
 \centerline{
@@ -25,7 +21,7 @@ Omid, Tephra 	& {\bf R}   & {\bf C} & commit & no\\
 Percolator 		& {\bf D}   & {\bf D} & commit & yes \\
 Omid 2 			& {\bf C}  	& {\bf C} & commit & no\\
 CockroachDB 		& {\bf C}  	& {\bf D} & write & yes\\
-\sys				& {\bf D} 	& {\bf C} & commit & \Yoni{yes?! I dont think so}\\
+\sys				& {\bf D} 	& {\bf C} & commit & \Yoni{yes?!}\\
 %\hline
 \end{tabular}
 }

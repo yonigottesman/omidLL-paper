@@ -129,4 +129,4 @@ sympy-plots-for-*.tex/
 /loctx.pdf
 /loctx-paper.pdf
 Makefile
-*.pdf
+#*.pdf

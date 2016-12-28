@@ -128,5 +128,4 @@ sympy-plots-for-*.tex/
 /Local Transactions.pdf
 /loctx.pdf
 /loctx-paper.pdf
-Makefile
-#*.pdf
+/main.pdf

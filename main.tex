@@ -1,4 +1,6 @@
-\documentclass[preprint]{sigplanconf-eurosys} 
+%\documentclass[preprint]{sigplanconf-eurosys} 
+\documentclass[letterpaper,twocolumn,10pt]{article}
+\usepackage{usenix,epsfig,endnotes}
 
 %========================
 %  Packages
@@ -40,69 +42,32 @@
 
 
 \newcommand{\sys}{Lorra}
-\newcommand{\sysll}{omidLL}
+\newcommand{\sysll}{OmidLL}
 \newcommand{\speedup}[1]{#1$\times$}
 \newcommand{\tuple}[1]{\ensuremath{\langle \mbox{#1} \rangle}}
 
 %========================
 \begin{document}
 
-\special{papersize=8.5in,11in}
-\setlength{\pdfpageheight}{\paperheight}
-\setlength{\pdfpagewidth}{\paperwidth}
+\date{}
 
-\conferenceinfo{CONF 'yy}{Month d--d, 20yy, City, ST, Country}
-\copyrightyear{20yy}
-\copyrightdata{978-1-nnnn-nnnn-n/yy/mm}
-%\copyrightdoi{nnnnnnn.nnnnnnn}
+\title{\Large \bf Low-Latency Transactions in Distributed Data Stores}
 
-% Uncomment the publication rights you want to use.
-%\publicationrights{transferred}
-%\publicationrights{licensed}     % this is the default
-%\publicationrights{author-pays}
-
-%\titlebanner{Draft}        % These are ignored unless
-\preprintfooter{Draft - Submitted to XX}   % 'preprint' option specified.
-
-\title{Fast Local Transactions in Distributed Data Stores}
-
-\authorinfo{Paper ID}
-           {Number of pages}
-           {}
-
-\remove{
-
- Aran Bergman\\
- 	\affaddr{Technion -- I.I.T}\\
-	\email{aranb@technion.ac.il}
-\and %
-Edward Bortnikov\\
-	\affaddr{Yahoo Research}\\
-	\email{ebortnik@yahoo-inc.com}
-\and %
-	Yonatan Gottesman\\
-	\affaddr{Yahoo Research}\\
-	\email{yonatang@yahoo-inc.com}
-\and %
-Eshcar Hilel\\
-	\affaddr{Yahoo Research}\\
-	\email{eshcar@yahoo-inc.com}
-\and %
-Idit Keidar\\
-	\affaddr{Technion -- I.I.T}\\
-	\email{idish@ee.technion.ac.il}
-\and %
-Ohad Shacham\\
-	\affaddr{Yahoo Research}\\
- 	\email{ohads@yahoo-inc.com}
- 
-}
+\author{
+{\rm Yonatan Gottesman, Ohad Shacham,  Edward Bortnikov, Eshcar Hilel}\\
+	Yahoo Research
+\and 
+{\rm Idit Keidar}\\
+	Technion and Yahoo Research
+\and 
+{\rm  Aran Bergman}\\
+ 	{Technion}
+} % end author
 
 
 \maketitle
 
-%For ACM formats
-\sloppy
+
 
 %=========================================================================
 %  Abstract
@@ -117,42 +82,41 @@ TBD
 \section{Introduction} \label{sec:intro}
 \input{intro}
 
-\Idit{The roadmap below is not essential; maybe replace with summary of contributions.}
+% \Idit{The roadmap below is not essential; maybe replace with summary of contributions.}
 The remainder of this paper is organized as follows:
-We begin by providing the context for this work:   in Section~\ref{sec:api} we define the  API and semantics of a TPS, 
-and    Section~\ref{sec:context} surveys  the design space of popular TPS implementations, 
-highlighting the common properties of TPSs that can benefit from our approach. 
-In Section~\ref{sec:new-api} we propose our extended TPS API, which provides a fast-path for local transactions. 
-Section~\ref{sec:alg} then describes our algorithm for supporting fast-path local transactions.  
-Section~\ref{sec:lorra} presents \sys, our low latency transaction processing system, where our fast-pass service is implemented, 
-and Section~\ref{sec:eval} presents its evaluation. 
-We review related work in Section ~\ref{sec:related} and conclude with Section ~\ref{sec:conclusions}.
+In Section~\ref{sec:api} we define the  API and semantics of a TPS. 
+Section~\ref{sec:ll} presents \sys, without the fast path. 
+Section~\ref{sec:alg} then describes our support for fast-path  transactions in \sys.  
+Section~\ref{sec:eval} presents an empirical evaluation.
+In Section~\ref{sec:context} we generalize the local transactions algorithm, and explain how it could be implemented in 
+other TPSs. 
+ We review related work in Section ~\ref{sec:related} and conclude with Section~\ref{sec:conclusions}.
+
 
 \section{Transaction API and Semantics} \label{sec:api}
 \input{api}
 
-\section{Context and Applicability} \label{sec:context}
-\input{context}
 
-\section{Introducing Fast Path Local Transactions} \label{sec:new-api}
-\input{new-api}
-
-\section{Fast Path  Algorithm} \label{sec:alg}
-\input{algorithm}
-
-\section{Low-latency Transactions with \sys} \label{sec:lorra}
+\section{Low-latency Transactions with \sys} \label{sec:ll}
 \input{lorra}
-
-\section{\sys\ Implementation} \label{sec:impl}
 \input{implementation}
 
+\section{Fast Path Local Transactions}
+\label{sec:alg}
+\subsection{API for local transactions}
+\input{new-api}
+\subsection{Algorithm}
+\input{algorithm}
 
 \section{Evaluation} \label{sec:eval}
 \input{Evaluation}
 
-\Idit{Compare the following: Omid 2, regular transactions in \sys, local transactions in \sys, HBase.}
+\Idit{Compare the following: Omid synchronous, Omid asynchronous, \sys\ without locals, \sys\ with locals, HBase.}
 
 \Idit{Add graph showing cost of RMW (validation) in regular transaction write.}
+
+\section{Local Transactions in Additional TPSs} \label{sec:context}
+\input{context}
 
 \section{Related Work} \label{sec:related}
 

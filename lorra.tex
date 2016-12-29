@@ -1,7 +1,7 @@
 To realize our local transactions, we build \sys, a scalable low-latency TPS on top of HBase. 
-\sys\ is an evolution of Omid 2, redesigned to reduce latency by distributing the commit entries.
-We describe \sys's normal transaction processing in Section~\ref{ssec:ll-txns}, and then proceed
-to discuss our implementation of fast path transactions in  Section~\ref{ssec:fp-impl}.
+\sys\ is an evolution of Omid, redesigned to reduce latency by distributing the commit entries.
+%We describe \sys's normal transaction processing in Section~\ref{ssec:ll-txns}, and then proceed
+%to discuss our implementation of fast path transactions in  Section~\ref{ssec:fp-impl}.
 
 \subsection{\sys\ design choices}
 \label{ssec:ll-txns}
@@ -58,10 +58,12 @@ they use distributed validation. Omid and Tephra, on the other hand, do not need
 The possibility of reads aborting pending transactions means that commit attempts (line~\ref{l:commit}) have to  
 check whether the transaction is aborted atomically with writing the commit status.
 
+\remove{
 
 \subsection{Local transactions in \sys}
 \label{ssec:fp-impl}
 To support local transactions, we implemented the algorithms and APIs described in Section~\ref{sec:alg}. Each Hbase region server maintains an LVC which is updated whenever a transaction accesses it. Omid 2 API was extended to support FP transactions, and the write stage in reglar transactions was modified to use checkAndMutate instead of put. 
 
+}
 
 

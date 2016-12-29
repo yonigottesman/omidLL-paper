@@ -1,7 +1,127 @@
-To realize our local transactions, we build \sys, a scalable low-latency TPS on top of HBase. 
+
+
+We now describe \sys, a scalable low-latency TPS on top of HBase. 
 \sys\ is an evolution of Omid, redesigned to reduce latency by distributing the commit entries.
-%We describe \sys's normal transaction processing in Section~\ref{ssec:ll-txns}, and then proceed
-%to discuss our implementation of fast path transactions in  Section~\ref{ssec:fp-impl}.
+We begin in Section~\ref{ssec:schema} with some background on the modus operandi of existing TPSs that support SI, including Omid. 
+We will see that, while many TPSs follow a similar schema,  there are different design choices to be made in popluating the schema. 
+We discuss the design choice of \sys\ in Section~\ref{ssec:ll-txns}. 
+
+\subsection{Schema of TPS operation}
+\label{ssec:schema}
+
+
+In many TPSs, transaction processing follows the general schema outlined in Algorithm~\ref{alg:schema}, 
+while systems vary in their implementations of each of the steps. 
+For example, whereas most systems rely on a centralized service for timestamp allocation~\cite{OmidICDE2014,omid-fast,tephra,Percolator2010}, this is not essential~\cite{cockroach}; similarly, validation (conflict detection) can use a centralized service~\cite{OmidICDE2014,omid-fast,tephra}, per-transaction entries in a global table~\cite{cockroach}, or distributed locking and validation~\cite{Percolator2010}. 
+Different ways to implement this schema are  discussed in Section~\ref{sec:context}.
+We now overview the phases a transaction goes through, focusing on Omid's approach.
+
+\begin{algorithm}[tb]
+\begin{algorithmic}[1]
+\Procedure{begin}{}
+\State obtain read timestamp $ts_r$ 
+\EndProcedure
+\Statex
+
+\Procedure{read}{key} \Comment transactional read
+\If{hasWriteIntent(key)}
+	\State resolve, possibly  aborting transactions \label{l:resolve}
+\EndIf
+\State return highest version   $\le ts_r$ of key
+\EndProcedure
+\Statex
+
+\Procedure{write}{key, value} \Comment transactional write
+\State optionally check for conflicts and abort if found 
+\State indicate write intent for key with value and $ts_r$
+\State add key to local write-set
+\EndProcedure
+\Statex
+
+\Procedure{commit}{write-set}
+\State obtain commit timestamp $ts_c$
+\Statex \Comment check for write-write conflicts  \label{l:validate}
+\If{validate(write-set, $ts_c$)}  
+	\Statex \Comment commit all write intents with version $ts_c$
+	\State atomically and persistently indicate commit   \label{l:commit}
+\Else
+	\State abort	
+\EndIf
+\State clean-up write intents and other meta-data
+\EndProcedure
+\end{algorithmic}
+\caption{TPS operation schema.} 
+\label{alg:schema}
+\end{algorithm} 
+
+
+\paragraph{Begin.} 
+  When a transaction begins, it obtains a read timestamp (version) $ts_r$ for reading its consistent snapshot, and unique transaction id.
+  The two can be combined (i.e., $ts_r$ can serve as the  transaction id, provided that it is unique).
+  In most cases, this is done using a centralized entity (sometimes called timestamp oracle~\cite{Percolator2010,OmidICDE2014}
+   or transaction manager~\cite{omid-blog}). 
+%  In CockroachDB, the timestamp is based on a local clock that is ``close to'' real-time and preserves causality 
+ % across regions, and unique transaction ids are used to break ties in case timestamps (from different regions) are identical. 
+
+  \paragraph{Transactional reads and writes.} 
+  %: Collect reads and indicate write intents -- 
+ In the course of a transaction, reads  obtain a consistent snapshot,
+ %\emph{collect} values for their transaction's snapshot, 
+ while write operations indicate their \emph{intent} to write. 
+ %\Idit{We said that it was possible to do write intents at commit time rather than encounter time, 
+ %but do we have any example of a system that does it? I think not, hence removed this.
+ % Only warp does but it's different as it's not SI, not multi-versioned.}
+  	 	\begin{itemize}
+  		\item  \emph{A read operation} obtains the value of a single object atomically. 
+  		Only versions committed with timestamps  smaller or equal to the transaction's $ts_1$ are read. 
+ 		Different  policies are used for resolving pending write intents. For example, Omid 1 resolves them 
+ 		using data on all past commits that the client obtains at begin time, whereas CockroachDB and Omid 2 
+ 		have the read refer to a centralized transaction table (also called commit table). 
+		Percolator  waits for the intent to be lifted (by the completion of the writing transactions), and in case the wait times-out, 
+		forces this transaction to abort. 
+	 	 CockroachDB forces the transaction with the write intent to either commit with a higher version 
+  		than its own read timestamp, or abort. Similarly, the solution we implement in \sys\ forces the transaction with the pending write 
+  		intent to abort. 
+  		\item \emph{Indicating write intents} changes the objects' write intent columns
+  		to indicate a transaction attempting to write them is under way. The value the
+  		transaction intends to write is added with a new version, typically the transaction's $ts_1$.
+% In Omid, this   		version is the transaction's id. 
+		Each object is updated atomically by itself. 
+		In some solutions writes check for conflicts before declaring their intents~\cite{cockroach}, whereas in others, 
+		all conflict detection is deferred to commit time. 
+  %This can occur either at encounter time or at commit time, in which case it occurs as the first phase of the commit. 
+  	\end{itemize}
+  \paragraph{Commit.} 
+  When a transaction is ready to commit, it gets a commit timestamp, $ts_w$. 
+  In most cases, e.g.,~\cite{Percolator2010,tephra,OmidICDE2014,omid-blog}, 
+  this is the GVC value at commit time. 
+  Before the transaction can commit, it must check that it does not conflict with any 
+  concurrent transactions.  For SI, we need to check for write-write conflicts only. 
+  This step checks write intentions as well as version numbers. It may be combined  with the above step using a centralized 
+  transaction manager~\cite{OmidICDE2014,tephra,omid-blog}, or may rely a two-phase commit protocol where the written objects are first 
+  locked, then validated, and then committed~\cite{Percolator2010}. 
+ Alternatively, conflicts may be detected in situ by atomically validating each written object as part of adding a write  intent~\cite{cockroach}.
+ 
+ In case validation succeeds, the transaction is committed 
+  in one atomic irrevocable  step. This is achieved by writing to a designated persistent \emph{commit entry}, 
+  which can reside in a global table (like the commit table of 
+  Omid 2 and the transaction table of CockroachDB) or alongside the first  key written by 
+  the transaction (as in Percolator and \sys).  Note that a commit attempt may fail and abort instead. 
+ 
+  Finally, a transaction changes its write intents to
+  persistent writes in case of commit, and removes them in case of abort. This
+  phase occurs after the transaction is persistently committed or aborted via the commit entry, in
+  order to reduce the overhead of future transactions (by sparing them the need to check the commit entry)
+  and to garbage collect   obsolete information. 
+  
+  \remove{Note that whenever a transaction encounters a write
+  indication in the collect phase it must access the commit entry in order to
+  check the transaction's commit status. Once the clean-up phase is over, future
+  transactions no longer incur this overhead for keys updated by the terminated
+  transaction.}
+
+
+ 
 
 \subsection{\sys\ design choices}
 \label{ssec:ll-txns}
@@ -64,6 +184,16 @@ check whether the transaction is aborted atomically with writing the commit stat
 \label{ssec:fp-impl}
 To support local transactions, we implemented the algorithms and APIs described in Section~\ref{sec:alg}. Each Hbase region server maintains an LVC which is updated whenever a transaction accesses it. Omid 2 API was extended to support FP transactions, and the write stage in reglar transactions was modified to use checkAndMutate instead of put. 
 
-}
 
 
+\subsection{Background: TPS algorithm schema}
+
+
+
+Transaction processing thus follows the general schema outlined in Algorithm~\ref{alg:schema}, 
+while systems vary in their implementations of each of the steps. 
+For example, whereas most systems rely on a centralized service (requiring remote access) for timestamp allocation~\cite{OmidICDE2014,omid-blog,tephra,Percolator2010}, this is not essential~\cite{cockroach}; similarly, validation (conflict detection) can use a centralized service~\cite{OmidICDE2014,omid-blog,tephra}, per-transaction entries in a global table~\cite{cockroach}, or two-phase commit~\cite{Percolator2010}. 
+Different ways to implement this schema are  discussed in Section~\ref{sec:context}.
+ 
+ }
+ 

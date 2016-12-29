@@ -1,12 +1,8 @@
 
-We consider a TPS  that spans multiple regions (sometimes called nodes, domains, or shards) and supports global
-(multi-region) transactions. Data is stored in an underlying NOSQL key-value store, 
-such as HBase~\cite{hbase}, BigTable~\cite{bigtable-osdi06},  or
-RocksDB~\cite{rocksdb}. Clients access the data store directly using the TPS API, and partake in transaction
-coordination, possibly using the assistance of a  centralized service.
 
-We first describe the data model and API of the underlying data store (Section~\ref{ssec:data-model}).
-We then proceed to define  the transaction semantics provided by the TPS (Section~\ref{ssec:transactions}). 
+A TPS allows users to bundle multiple data store operations into a single atomic transaction. 
+We describe the data model and API of the underlying data store in Section~\ref{ssec:data-model}, and 
+then proceed to define  the transaction semantics provided by the TPS in Section~\ref{ssec:transactions}. 
 
 \subsection{Data store}
 \label{ssec:data-model}
@@ -44,11 +40,12 @@ A \emph{transaction} is a sequence of read and write operations on different obj
 \emph{isolation} (in that concurrent transactions do not see each other's partial updates), and 
 \emph{durability} (whereby updates survive crashes).
 
-Different isolation levels can be considered for the third property. We consider systems providing  
+Different isolation levels can be considered for the third property. We consider 
 snapshot isolation~\cite{DBLP:conf/sigmod/BerensonBGMOO95}, 
-which is provided by popular database technologies such as Oracle, PostgreSQL, and SQL Server.
+which is provided by popular database technologies such as Oracle, PostgreSQL, and SQL Server,
+and TPSs such as Percolator, Omid, Tephra, and  CockroachDB.
 
-Intuitively, SI ensures that the information a transaction retrieves from the database 
+Intuitively, SI ensures that the data a transaction reads from the database 
 does not mix old and new values. For example, if a task updates the values of two stocks, then no other transaction may observe the old value of one of these stocks and the new value of the other. 
 %
 More precisely, SI enforces a total order on committed transactions according to their commit times so that 
@@ -63,7 +60,7 @@ each transaction's read operations see a consistent snapshot of the database ref
  a transaction commits only if none of the items it updates has been modified since that snapshot.
  \end{enumerate}
 Thus, under SI, two concurrent transactions conflict only if they both \emph{update} the same item.  
-In contrast, under serializability, a transaction that updates an item also conflicts with transactions that \emph{read} that item. Snapshot isolation is thus amenable to implementations (using multi-versioned concurrency control) that 
+In contrast, under serializability, a transaction that updates an item also conflicts with transactions that \emph{read} that item. Snapshot isolation is thus amenable to implementations (using MVCC) that 
 allow more concurrency than serializable ones, and hence scale better.
 
 TPSs allow programmers to  delineate transactions via the begin and commit APIs: 
@@ -71,9 +68,9 @@ the sequence of read and write operations a client invokes between begin and  co
 Following a commit call, the transaction may successfully \emph{commit}, whereby all of its operations take effect;
 in case of conflicts, (i.e., when two concurrent transactions attempt to update the same item), the transaction may
 \emph{abort}, in which case none of its changes take effect. An abort may also be initiated by the programmer, e.g., 
-on encountering an error. Applications typically retry a transaction upon (either type of) abort. 
+on encountering an error. Applications typically retry a transaction upon  abort. 
 
 
-The data is \emph{partitioned} (or sharded), and each object belongs to one region. 
-Global transactions may span multiple regions, and atomically commit or abort on all. 
+%%%The data is \emph{partitioned} (or sharded), and each object belongs to one region. 
+%%%%Global transactions may span multiple regions, and atomically commit or abort on all. 
 %%%\emph{Local transactions} are ones that access a single region.

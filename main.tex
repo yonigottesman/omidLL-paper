@@ -39,7 +39,7 @@
 \newcommand{\remove}[1]{}
 \newcommand{\Idit}[1]{[[\inred{Idit: #1}]]}
 \newcommand{\Yoni}[1]{[\inred{Yoni: #1}]}
-
+\newcommand{\tb}{\hspace{5mm}}
 
 \newcommand{\sys}{Lorra}
 \newcommand{\sysll}{OmidLL}
@@ -51,17 +51,12 @@
 
 \date{}
 
-\title{\Large \bf Low-Latency Transactions in Distributed Data Stores}
+\title{\Large \bf\sys: Low-Latency Transactions in Distributed Data Stores}
 
 \author{
-{\rm Yonatan Gottesman, Ohad Shacham,  Edward Bortnikov, Eshcar Hilel}\\
-	Yahoo Research
-\and 
-{\rm Idit Keidar}\\
-	Technion and Yahoo Research
-\and 
-{\rm  Aran Bergman}\\
- 	{Technion}
+{\rm Yonatan Gottesman\footnotemark[1]\tb Aran Bergman\footnotemark[2]\tb   Edward Bortnikov\footnotemark[1] }\\ 
+{\rm Eshcar Hillel\footnotemark[1]\tb Idit Keidar\footnotemark[1] \footnotemark[2]\tb Ohad Shacham\footnotemark[1]}\\
+	\footnotemark[1] Yahoo Research\ \ \footnotemark[2] Technion
 } % end author
 
 
@@ -102,10 +97,10 @@ other TPSs.
 \input{implementation}
 
 \section{Fast Path Local Transactions}
-\label{sec:alg}
-\subsection{API for local transactions}
 \input{new-api}
-\subsection{Algorithm}
+\label{sec:alg}
+%\subsection{API for local transactions}
+%\subsection{Algorithm}
 \input{algorithm}
 
 \section{Evaluation} \label{sec:eval}

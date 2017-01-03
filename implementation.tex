@@ -1,3 +1,6 @@
+	\subsection{\sys\ algorithm} 
+\label{ssec:ll}
+
 \begin{figure}[!t]
   \centering
   
@@ -6,12 +9,12 @@
     \begin{tabular}{|c|c|c|c|c|}
       \hline
       key & value & version & commit& leader\\
-      \hline
+      %\hline
       \hline
       k1 & a & 3 & &\\
-      \hline
+      %\hline
       k2 & b & 3 & &k1\\
-      \hline
+      %\hline
       k2 & c & 3 & &k1\\
       \hline
     \end{tabular}
@@ -25,11 +28,11 @@
       \hline
       key & value & version & commit& leader\\
       \hline
-      \hline
+      %\hline
       k1 & a & 3 & 7&\\
-      \hline
+      %\hline
       k2 & b & 3 & &k1\\
-      \hline
+      %\hline
       k2 & c & 3 & &k1\\
       \hline
     \end{tabular}
@@ -44,11 +47,11 @@
       \hline
       key & value & version & commit& leader\\
       \hline
-      \hline
+      %\hline
       k1 & a & 3 & 7&\\
-      \hline
+      %\hline
       k2 & b & 3 & 7&\\
-      \hline
+      %\hline
       k2 & c & 3 & 7&\\
       \hline
     \end{tabular}
@@ -57,7 +60,8 @@
   \end{subfigure}
 
   
-  \caption{Different stages of metadata during a transaction. The $txid$ the transaction received from the begin stage is 3, and the $ts_c$ it received when committing is 7. The leader chosen for this transaction is k1 }
+  \caption{Evolution of metadata during a transaction. The transaction receives $ts_r=3$ in the begin stage, 
+  and the $ts_c$ it receives when committing is $7$; its leader is k1.}
   \label{fig:model}
 \end{figure}
 
@@ -65,75 +69,97 @@
 \begin{algorithm}[t]
   \begin{algorithmic}
     \begin{small}
-      \Procedure{get(key)}{} 
+      \Procedure{read}{key} 
       \For{rec $\leftarrow$ ds.get(\emph{key}, versions down from $ts_r$)}
-      \If{rec.commit$\not=$nil} \Comment not tentative
-      \If{rec.commit $< ts_r$}  \State return rec.value \EndIf
-      \Else \Comment tentative
-      \State value $\leftarrow$ {\sc GetTentativeValue(rec)}
-      \If{value $\not=$nil}  
-	  \State return value
-      \EndIf
-      \EndIf
+		\If{rec.commit $\not \in\{$nil, abort$\}$} \Comment committed
+     			 \If{rec.commit $< ts_r$}  \State return rec.value \EndIf
+      		\ElsIf{rec.commit = nil}  
+      			\State leader $\leftarrow$ rec.leader.commit
+      			 \If{leader $\not \in\{$nil, abort$\}$} \Comment committed
+     				 \If{leader $< ts_r$}  \State return leader \EndIf
+			\Else \Comment abort conflicting transaction
+				\State $ts_c$ $\leftarrow$ checkAndMutate(leader, nil, abort)
+      				\If{$ts_c$ $\not=$ {abort}} \Comment  committed
+     					 \State rec.commit $\leftarrow ts_c$ \Comment helping 
+      				  	\If{$ts_c$ $< ts_r$}  return rec.value \EndIf
+				\EndIf
+			\EndIf
+		\EndIf
       \EndFor
-      \EndProcedure
-      \Statex
-      \Procedure{GetTentativeValue(rec)}{} 
-      \State leader $\leftarrow$ rec.leader
-      \State $tx_c$ $\leftarrow$ checkAndInvalidate(leader)
-      \If{$tx_c$ $\not=$ nil} \Comment  committed
-      \State update rec.commit \Comment helping 
-      \If{$tx_c$ $< ts_r$}  return rec.value \EndIf
-      \Else
-
       \State  return nil
-      \EndIf
       \EndProcedure
-    \end{small}
+
+\Statex
+
+\Procedure{commit}{}
+      
+      	\State $ts_c \leftarrow$ TM.commit($ts_r$, write-set) \Comment may return abort
+      	\State  res $\leftarrow$ {\sc checkAndMutate}(leader.commit, nil,  $ts_c$)
+	\State \Comment post-commit
+	\ForAll{versions ver written by this transaction}
+			\If{res = abort} remove ver      	
+			\Else\ ver.commit $\leftarrow ts_c$ 
+			\EndIf
+	\EndFor
+\EndProcedure
+      
+       \end{small}
   \end{algorithmic}
-  \caption{\sys's \emph{get(key)} operation.} 
+  \caption{\sys's read and commit operations.} 
   %for transaction with read timestamp $ts_r$.}
   \label{fig:get-pseudocode}
 \end{algorithm} 
 
+The meta-data used by \sys\ for transaction management is stored in two additional columns associated with each object version in the data store:
+(1) \emph{commit} holds the status of the transaction that wrote this version -- \emph{nil} if it is pending, its  $ts_c$ if committed, and 
+otherwise \emph{abort}; 
+and
+(2) \emph{leader} is a pointer to the writing transaction's commit entry, namely, the \emph{commit} column of the first key written by the same
+transaction. 
 
+Since the transaction commit needs to be an atomic step, the first key in the transaction's write-set is chosen to be the leader, and the transaction commits via a single atomic write of $ts_c$ to the leader's commit column. Transactional read operations, in turn, refer to the leader to find out whether the value they are attempting to read has been committed or not.
+Figure~\ref{fig:model} shows the metadata of a transaction during its stages of execution. 
 
-\Yoni{ explain here or in \ref{sec:ll-txns} that each key has multiple versions, we use $txd$ $tx_r$ $tx_c$....}
+\sys's TM is based on Omid's TM, and has the same functionality except that it does not write commit entries.
+In particular, it manages a monotonically increasing global clock for allocating read timestamps on begin and commit timestamps on commit,
+and it performs validation (i.e., conflict detection) upon commit using an in-memory hash table. 
+Since the TM algorithm has been reported elsewhere~\cite{omid-fast}, and the \sys\ client need not be aware of 
+its implementation details, we avoid repeating these details here. 
 
-\subsection{Transaction metadata}
-\label{ssec:tso}
-\Yoni{make sure Idit defines  in section \ref{sec:ll-txns}}
-Figure~\ref{fig:model} shows the metadata of a transaction during its stages of execution. For each version of a key in the data store we add 3 additional fields: (1) A \emph{version} field, which holds the $txid$ of the transaction that wrote it, in our implementation the $tx_r$ received at the begin stage is used as the $txid$. (2) A \emph{commit} field, which indicates whether the data is tentative or committed, if it's committed, the value will be the transaction's $ts_c$. (3) A \emph{leader} field. Since the transaction commit needs to be an atomic step, one key from the transaction's write set is chosen to be the \emph{leader} of that transaction, and when the transaction is committed a single atomic write is initiated to the \emph{leader's} commit field with the transaction's $ts_c$. Transaction read operations refer to the key's \emph{leader} to find out whether the value has been committed or not.
+Algorithm~\ref{fig:get-pseudocode} describes \sys's implementation of read and commit operations.
+%Begin and write operations follow the template of Algorithm~\ref{alg:schema}. 
+The client's operations proceed as follows:
 
+\paragraph{Write.}
+The client adds the tentative record \emph{(key, value, $ts_r$, nil , leader)} to the data store, where
+the leader is the first key the client updates during the transaction. It also tracks key in its local write-set.
+\remove{
+To ensure monotonicity of written versions as seen in Section~\ref{ssec:regular-client-alg}, instead of using the standard \emph{put} operation the data store exposes, we must use checkAndMutate which will atomically put the record only if the latest version of the key is smaller than $ts_r$.
+}
 
-
-
-\subsection{Client-side operation}
-\label{ssec:client}
-
-\paragraph{Begin}
-The client obtains from the TSO a read timestamp $ts_r$, which also becomes its transaction id ($txid$).
-
-
-\paragraph{Get}
-Algorithm~\ref{fig:get-pseudocode} describes \sys's implementation of Algorithm~\ref{alg:schema} READ procedure.
+\paragraph{Read.}
 The data store's get operation is referred to as ds.get(key,version). The algorithm traverses records pertaining
 to key with versions smaller than $ts_r$, latest to earliest, and returns the first key that is committed. Upon
-encountering a tentative record (with commit=nil), the algorithm will get the leader's record from the data store,
-read its $ts_c$ from the \emph{commit} field and return the key if the $ts_c$ is smaller than $ts_r$. To ensure SI,
-if the leader's \emph{commit} field is nil, the transaction that leader represents must be aborted \Yoni{example here?}. The checkAndInvalidate function will atomically read the \emph{commit} field and if its value is nil, will insert an invalidation symbol in it. When a transaction commits, it atomically checks it hasn't been invalidated before inserting the $ts_c$ to the \emph{commit} field.
+encountering a tentative record (with commit=nil), the algorithm gets the leader's record from the data store,
+reads its $ts_c$, and again returns the key if the $ts_c$ is smaller than $ts_r$. 
 
-\paragraph{Put}
-The client adds the tentative record \emph{(key, value, txid, nil,leader)} to the data store.
-The leader is chosen to be the first key the client updates during a transaction.
-To ensure monotonicity of written versions as seen in Section~\ref{ssec:regular-client-alg}, instead of using the standard \emph{put} operation the data store exposes, we must use checkAndMutate which will atomically put the record only if the latest version of the key is smaller than $ts_r$.
+If thecommit entry is still nil, read cannot return without determing the final outcome
+of the pending transaction. \Yoni{example here?}. 
+It  therefore forcefully aborts it. This is done using an atomic 
+ {checkAndMutate} function that atomically reads and sets the commit entry to abort if its value is nil.
+%When a transaction commits, it atomically checks it hasn't been invalidated before inserting the $ts_c$ to the commit .
 
 
-\paragraph{Commit}
-The client requests \emph{commit(txid, write-set)} from the TSO. The TSO assigns it a commit timestamp $ts_c$ and checks for conflicts. If there are none, the client will write the $ts_c$ in the leader's \emph{commit} field. As explained at the Get stage, the transaction must atomically commit only if no other get invalidated it. This is done using the data store checkAndMutate function to read the invalidation symbol before writing the $ts_c$.
-To avoid an extra RPC to the leader on every read, after a transaction is committed, a post-commit stage writes the $ts_c$ to the \emph{commit} field of every key in the write set of that transaction. 
-Following a successful commit, the client adds $ts_c$ to all data items it wrote to.
+\paragraph{Commit.}
+The client sends a commit request to the TM, which assigns it a commit timestamp $ts_c$ and checks for conflicts. 
+If the TM does not return abort, this means that the validation has been successful, and the client writes $ts_c$ in the leader's {commit} column. 
+However, the transaction can commit only if no read has invalidated it. Therefore, it uses 
+the data store's checkAndMutate function to write $ts_c$ only if the commit status is still nil.
+To avoid an extra read of the leader on every read, once a transaction is committed, the post-commit stage writes 
+the $ts_c$ to the {commit} columns of all keys in  the transaction's write-set. 
+%Following a successful commit, the client adds $ts_c$ to all data items it wrote to.
 
+\remove{
 \paragraph{Singleton Read}
 \Yoni{This is the same as \ref{ssec:local-client-alg}}
 \paragraph{Singleton Write}
@@ -144,4 +170,4 @@ Following a successful commit, the client adds $ts_c$ to all data items it wrote
 \subsection{HBase region server}
 \label{ssec:hbase}
 \Yoni{is there something special to say here?}
-
+}

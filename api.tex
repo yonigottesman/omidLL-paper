@@ -1,8 +1,9 @@
 
 
-A TPS allows users to bundle multiple data store operations into a single atomic transaction. 
+\sys\ is a TPS, namely a service that runs atop an underlying data store and 
+allows users to bundle multiple data store operations into a single atomic transaction. 
 We describe the data model and API of the underlying data store in Section~\ref{ssec:data-model}, and 
-then proceed to define  the transaction semantics provided by the TPS in Section~\ref{ssec:transactions}. 
+then proceed to define  the transaction semantics provided by \sys\ in Section~\ref{ssec:transactions}. 
 
 \subsection{Data store}
 \label{ssec:data-model}
@@ -15,10 +16,10 @@ can be structured to consist of multiple columns.
 We further assume that a write operation can specify the version number it writes to.
 %monotonically increasing ??
 %\paragraph{API} 
-The underlying data store provides the following API:
+The  data store provides the following API:
 \begin{description}
 \item [\code{\tuple{version,value} read(key)}] -- atomically returns the value with
-the highest version associated with key along with its version.
+the highest version associated with key along with its version number.
 \item The API further allows traversing (reading) earlier versions of the same
 key in descending order.
 \item [\code{write(key,value,version)}] -- atomically creates or updates the version:

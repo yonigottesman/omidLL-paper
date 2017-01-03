@@ -79,16 +79,16 @@ TBD
 
 % \Idit{The roadmap below is not essential; maybe replace with summary of contributions.}
 The remainder of this paper is organized as follows:
-In Section~\ref{sec:api} we define the  API and semantics of a TPS. 
-Section~\ref{sec:ll} presents \sys, without the fast path. 
-Section~\ref{sec:alg} then describes our support for fast-path  transactions in \sys.  
-Section~\ref{sec:eval} presents an empirical evaluation.
-In Section~\ref{sec:context} we generalize the local transactions algorithm, and explain how it could be implemented in 
-other TPSs. 
+In Section~\ref{sec:api} we define the TPS service  API and semantics. 
+Section~\ref{sec:ll} presents \sys's support for general transactions, without the fast path for short ones. 
+Section~\ref{sec:alg} then describes our support for fast-path  transactions.  
+We empirically evaluate \sys\ in Section~\ref{sec:eval}.
+In Section~\ref{sec:context} we generalize the local transactions algorithm
+(of Section~\ref{sec:alg}), and explain how the fast-path could be supported in other TPSs. 
  We review related work in Section ~\ref{sec:related} and conclude with Section~\ref{sec:conclusions}.
 
 
-\section{Transaction API and Semantics} \label{sec:api}
+\section{Service API and Semantics} \label{sec:api}
 \input{api}
 
 
@@ -96,9 +96,10 @@ other TPSs.
 \input{lorra}
 \input{implementation}
 
-\section{Fast Path Local Transactions}
-\input{new-api}
+\section{Fast Path Transactions}
 \label{sec:alg}
+
+\input{new-api}
 %\subsection{API for local transactions}
 %\subsection{Algorithm}
 \input{algorithm}
@@ -125,21 +126,6 @@ other TPSs.
 
 \bibliographystyle{acm}
 \bibliography{main}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Appendix
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%\newpage
-
-\begin{appendix}
-	
-	\section{Notations and definitions} \label{sec:app1}
-
-
-\end{appendix}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 \end{document}

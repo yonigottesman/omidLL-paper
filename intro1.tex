@@ -1,0 +1,34 @@
+% Transactions in big-data platforms
+In recent years, transaction processing technologies have paved their way into big data 
+platforms that scale to many petabytes of data~\cite{Spanner2012,Percolator2010,Omid2017}. 
+In some cases, they are built into the storage system itself~\cite{Spanner2012} whereas in the 
+others they are standalone services~\cite{Omid2017}. Transaction management complements 
+the underlying key-value storage with {\em atomicity}, {\em consistency}, {\em isolation\/} and 
+{\em durability} (ACID) semantics that enable programmers perform complex data manipulation 
+without over-complicating their applications. The need for transaction awareness in web-scale 
+applications started from specific use cases like real-time content indexing~\cite{Percolator2010,Omid2017} 
+but quickly expanded to generic high-level abstractions, e.g., full-scale SQL OLTP and 
+online analytics~\cite{Phoenix, F1-2013}.
+
+Similarly to many technologies, the adoption of transactions took the "functionality-first" approach. 
+For example, the developers of Google Spanner~\cite{Spanner2012} claim: ``We believe it
+is better to have application programmers deal with performance problems due to overuse 
+of transactions as bottlenecks arise, rather than always coding around the lack of transactions''. 
+However, the expectation for high performance is picking up rapidly. For instance, the early-days  
+transactions-enabled systems were throughput-oriented~\cite{Percolator2010,Omid2017}. 
+With the thrust into new domains like messaging~\cite{Borthakur:2011} and algorithmic 
+trading~\cite{opentsdb} that require interactive behavior, latency becomes king. 
+
+Consider the design of a major 
+
+a metadata store 
+
+% \Idit{The roadmap below is not essential; maybe replace with summary of contributions.}
+The remainder of this paper is organized as follows:
+In Section~\ref{sec:api} we define the  API and semantics of a TPS. 
+Section~\ref{sec:ll} presents \sys, without the fast path. 
+Section~\ref{sec:alg} then describes our support for fast-path  transactions in \sys.  
+Section~\ref{sec:eval} presents an empirical evaluation.
+In Section~\ref{sec:context} we generalize the local transactions algorithm, and explain how it could be implemented in 
+other TPSs. 
+ We review related work in Section ~\ref{sec:related} and conclude with Section~\ref{sec:conclusions}.

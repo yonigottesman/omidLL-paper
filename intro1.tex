@@ -4,9 +4,9 @@ platforms that scale to many petabytes of data~\cite{Spanner2012,Percolator2010,
 In some cases, they are built into the storage system itself~\cite{Spanner2012} whereas in the 
 others they are standalone services~\cite{Omid2017}. Transaction management complements 
 the underlying key-value storage with {\em atomicity}, {\em consistency}, {\em isolation\/} and 
-{\em durability} (ACID) semantics that enable programmers perform complex data manipulation 
-without over-complicating their applications. The need for transaction awareness in web-scale 
-applications started from specific use cases like real-time content indexing~\cite{Percolator2010,Omid2017} 
+{\em durability} (ACID) semantics~\cite{Gray:1992:TPC:573304} that enable programmers perform 
+complex data manipulation without over-complicating their applications. The need for transaction awareness 
+in web-scale applications started from specific use cases like real-time content indexing~\cite{Percolator2010,Omid2017} 
 but quickly expanded to generic high-level abstractions, e.g., full-scale SQL OLTP and 
 online analytics~\cite{Phoenix, F1-2013}.
 
@@ -19,9 +19,7 @@ transactions-enabled systems were throughput-oriented~\cite{Percolator2010,Omid2
 With the thrust into new domains like messaging~\cite{Borthakur:2011} and algorithmic 
 trading~\cite{opentsdb} that require interactive behavior, latency becomes king. 
 
-Consider the design of a major 
-
-a metadata store 
+Consider the design of a major email service provider backend. TBD. 
 
 % \Idit{The roadmap below is not essential; maybe replace with summary of contributions.}
 The remainder of this paper is organized as follows:

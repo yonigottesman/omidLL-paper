@@ -143,7 +143,7 @@ to key with versions smaller than $ts_r$, latest to earliest, and returns the fi
 encountering a tentative record (with commit=nil), the algorithm gets the leader's record from the data store,
 reads its $ts_c$, and again returns the key if the $ts_c$ is smaller than $ts_r$. 
 
-If thecommit entry is still nil, read cannot return without determing the final outcome
+If the commit entry is still nil, read cannot return without determining the final outcome
 of the pending transaction. \Yoni{example here?}. 
 It  therefore forcefully aborts it. This is done using an atomic 
  {checkAndMutate} function that atomically reads and sets the commit entry to abort if its value is nil.

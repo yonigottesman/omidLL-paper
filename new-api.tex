@@ -1,24 +1,53 @@
 
 
-The main goal of our fast path  is to forgo the overhead associated with two-phase transaction processing, especially for short transactions.
-In particular, the fast path can eliminate the need for remote access in local (single-region) transactions and can reduce the number of 
-calls (RPCs) the client performs.
-To this end, we introduce in Section~\ref{ssec:fast-api} a streamlined API that jointly executes multiple API calls of the original TPS. 
-We refer to transactions that use this API as \emph{fast path (FP) transactions}.
-We discuss the semantics of FP transactions relative to regular ones in Section~\ref{ssec:fast-semantics}.
+The goal of our fast path  is to forgo the overhead associated with two-phase transaction processing and communication with 
+the (possibly remote) TM. This is particularly important for short transactions, where the begin and commit overhead is not amortized
+across many operations.
+\inred{Can we give some example workload?}
 
-\subsection{API and usage}
+To this end, we introduce in Section~\ref{ssec:fast-api} a streamlined API that jointly executes multiple API calls of the original TPS;
+we refer to transactions that use this API as \emph{fast path (FP) transactions}. We 
+then discuss the semantics of FP transactions relative to regular ones.
+% in Section~\ref{ssec:fast-semantics}.
+
+\inred{Explain regions!}
+
+We proceed to explain our support for local transactions with SI semantics in the
+context of a system following the generic schema of  Algorithm~\ref{alg:schema} above. 
+Our solution consists of three parts: First, in Section~\ref{ssec:region-clock}, we enhance the
+underlying data store with support for per-region \emph{Local Version Clocks (LVCs)}. 
+This aspect is already implemented in CockroachDB, which uses 
+per-region Hybrid Logical Clocks~\cite{Kulkarni2014LogicalPC} in order to allow for distributed timestamp allocation. 
+In the systems that maintain a GVC, (e.g.,~\cite{Percolator2010,tephra,OmidICDE2014,omid-blog}), our 
+addition of  LVCs 
+entails a minor modification to management of global timestamps (in the transaction manager or oracle). 
+Second, in Section~\ref{ssec:lvc-access}
+we extend the underlying data store's API to allow manipulating 
+a region's LVC jointly with objects stored at that region. 
+Finally, we add client-side support for the fast path API, as explained in Section~\ref{ssec:lc-client}.
+
+
+\subsection{API and semantics}
 \label{ssec:fast-api}
 
-For brevity, we refer to the TPS's API calls  begin, read, write, and commit as \code{b, r, w}, and \code{c} respectively. 
-We now combine them to allow fast processing.
-The simplest examples of FP transactions are singletons, i.e., transactions that perform a single
+\paragraph{API.}
+For brevity, we refer to the TPS's API calls  begin, read, write, and commit as \code{b, r, w}, and \code{c} respectively, and 
+we combine them to allow fast processing.
+The basic FP transactions are singletons, i.e., transactions that perform a single
 read or write. These are supported by the APIs: 
 \begin{description}
-\item[br(key)] -- begins an FP transaction and reads key within it. Recall that read-only transactions don't need to commit. 
+\item[brc(key)] -- begins an FP transaction, reads key within it, and commits.
+%Recall that read-only transactions don't need to commit. 
 \item[bwc(key,val)] -- begins an FP transaction,  writes val into a new version of key that exceeds all existing ones, and commits.
 \end{description}
 
+We further support a fast path transaction consisting of a read and a dependant write, via a pair of API calls:
+\begin{description}
+\item[br(key)] -- begins an FP transaction and  reads the latest version of key.
+\item[wc(key,val)] -- 	validates that key has not been written since the last \code{br} call, writes val into a new version of key, and commits.
+\end{description}
+
+\remove{
 A more elaborate example is a read-modify-write API: 
 \begin{description}
 \item[brwc(key,f)] -- begins an FP transaction,  reads the latest version of key, applies $f$ to it (on the server side), 
@@ -63,9 +92,10 @@ That is, the \code{w} calls would need to indicate write intents, and  to be ato
 (or \code{c}) call. 
 Given the limited benefit and extra complexity of allowing many writes in FP transactions, we do not support this option in our solution.
 
+}
 
-\subsection{Semantics}
-\label{ssec:fast-semantics}
+\paragraph{Semantics.}
+%\label{ssec:fast-semantics}
 
 The semantics for ordering FP transactions relative to regular ones are
 weaker than SI in that they do not guarantee real-time order over all regular

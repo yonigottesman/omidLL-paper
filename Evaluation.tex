@@ -73,7 +73,7 @@
 	\caption[]{Transaction of size 10 latency}
     \label{fig:l:tx10}
   \end{subfigure}			
-  \caption{A Comparison between Omid 2 centralized txn entry and \sys's distributed txn entry.}
+  \caption{A Comparison between Omid's centralized transaction entry and \sys's distributed transaction entry.}
   \label{fig:ll}
 \end{figure}
 
@@ -82,14 +82,15 @@
 This section reports the evaluation results of \sys.
 
 \paragraph{Methodology}
-To evaluate \sys, we set up a 3 node Hbase cluster loaded with 50GB of data, and a machine hosting the TSO.
-Another machine created load on the system by running threads that generated random transactions towards Hbase and the TSO. To create further load on th TSO, we
+To evaluate \sys, we set up a 3 node Hbase cluster loaded with 50GB of data, and a machine hosting the TM.
+Another machine created load on the system by running threads that generated random transactions towards Hbase and the TM. 
+%To create further load on the TM, we
 
-Transaction size had a zipfian distribution from 1 to 10.
-To measure the latency of transactions we modified YCSB~\cite{Cooper:2010:BCS:1807128.1807152} to perform a begin and commit towards the TSO at the beginning and end of each transaction, and used YCSB framework to measure the latency of each stage.
+Transaction size had a Zipf distribution from 1 to 10.
+To measure the latency of transactions we modified YCSB~\cite{Cooper:2010:BCS:1807128.1807152} to perform a begin and commit towards the TM at the beginning and end of each transaction, and used YCSB framework to measure the latency of each stage.
 
-\paragraph{Distributed txn entry}
-We first compare \sys's distributed txn entry approach to Omid 2 centralized approach. Figure~\ref{fig:ll} shows the latency of a transaction while applying increasing load on the system. The load is measured in kilo transactions per second (KTPS), and the transaction latency is measured in milliseconds. Figure~\ref{fig:ll:tx1} shows the latency of a transaction with a single read or write. The figure shows that latency obtained by \sys\ is \speedup{4} faster than Omid 2. \sys\ performs better because Omid 2 is throughput oriented and batches the writes to txn entries, so on every begin stage the client has to wait for all commits in the batch to get persistent.
+\paragraph{Distributed transaction entry}
+We first compare \sys's distributed transaction entry approach to Omid's centralized approach. Figure~\ref{fig:ll} shows the latency of a transaction while applying increasing load on the system. The load is measured in kilo transactions per second (KTPS), and the transaction latency is measured in milliseconds. Figure~\ref{fig:ll:tx1} shows the latency of a transaction with a single read or write. The figure shows that latency obtained by \sys\ is \speedup{4} faster than Omid 2. \sys\ performs better because Omid 2 is throughput oriented and batches the writes to transaction entries, so on every begin stage the client has to wait for all commits in the batch to get persistent.
 Figure~\ref{fig:ll:tx1} shows the latency of transactions with 5 read or write operations. This time the latency obtained by \sys\ is \speedup{1.8} faster than Omid 2. For transactions with 5 operations to an Hbase table, the begin and commit time become negligible.
 
 \paragraph{FP API latency}
@@ -108,4 +109,4 @@ Figure~\ref{fig:latency:rmw} compares the latency of a read modify write transac
 \Yoni{
   --background noise
   --switch order of charts
-  --explain that the LL is better for all TPS so it doesnt matter the point we choose to check}
+  --explain that the LL is better for all TPS so it doesn't matter the point we choose to check}

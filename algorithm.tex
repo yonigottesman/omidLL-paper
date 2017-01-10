@@ -1,18 +1,6 @@
 
 
-We now explain our support for local transactions with SI semantics in the
-context of a system as described in Section~\ref{sec:context} above. 
-Our solution consists of three parts: First, in Section~\ref{ssec:region-clock}, we enhance the
-underlying data store with support for per-region \emph{Local Version Clocks (LVCs)}. 
-This aspect is already implemented in CockroachDB, which uses 
-per-region Hybrid Logical Clocks~\cite{Kulkarni2014LogicalPC} in order to allow for distributed timestamp allocation. 
-In the systems that maintain a GVC, (e.g.,~\cite{Percolator2010,tephra,OmidICDE2014,omid-blog}), our 
-addition of  LVCs 
-entails a minor modification to management of global timestamps (in the transaction manager or oracle). 
-Second, in Section~\ref{ssec:lvc-access}
-we extend the underlying data store's API to allow manipulating 
-a region's LVC jointly with objects stored at that region. 
-Finally, we add client-side support for the fast path API, as explained in Section~\ref{ssec:lc-client}.
+
 
 \subsection{Local version clock} \label{ssec:region-clock}
 
@@ -189,7 +177,7 @@ validation is successful, otherwise returns false and does not perform the mutat
 
 \subsection{Client-side support for FP transactions} \label{ssec:lc-client}
 
-There are two aspects to supporting FP transactions. First, we need to implement the client API defined in Section~\ref{sec:new-api} above.
+There are two aspects to supporting FP transactions. First, we need to implement the client API defined in Section~\ref{ssec:fast-api} above.
 We do this in Section~\ref{ssec:local-client-alg}. Second, we need to modify the implementation of regular transactions to be aware of 
 FP ones; this is addressed in Section~\ref{ssec:regular-client-alg}.
 
@@ -200,7 +188,7 @@ As for regular transactions, the ongoing transaction's tentative timestamp is st
 which we denote by \code{ts$_1$}. 
 
 The 
-\code{br} and \code{bwc} APIs are implemented directly using the new functions \code{getWithTs} and \code{checkAndMutate}, resp.
+\code{br} and \code{bwc} APIs are implemented directly using the new functions \code{getWithTs} and \code{checkAndMutate}, respectively.
 In addition, \code{br} stores its obtained timestamp in  \code{ts$_1$},  for potential subsequent \code{r} calls.
 An ensuing \code{wc} call validates that the written key has not been modified since the preceding \code{br} call.
 

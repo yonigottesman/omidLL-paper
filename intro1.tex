@@ -6,8 +6,8 @@ others they are standalone services~\cite{Omid2017}. Transaction management comp
 the underlying key-value storage with {\em atomicity}, {\em consistency}, {\em isolation\/} and 
 {\em durability} (ACID) semantics~\cite{Gray:1992:TPC:573304} that enable programmers perform 
 complex data manipulation without over-complicating their applications. The need for transaction awareness 
-in web-scale applications started from specific use cases like real-time content indexing~\cite{Percolator2010,Omid2017} 
-but quickly expanded to generic high-level abstractions, e.g., full-scale SQL OLTP and 
+in web-scale applications started from specific use cases like real-time content indexing~\cite{Percolator2010,
+Omid2017} but quickly expanded to generic high-level abstractions, e.g., full-scale SQL OLTP and 
 online analytics~\cite{Phoenix, F1-2013}.
 
 Similarly to many technologies, the adoption of transactions took the "functionality-first" approach. 
@@ -15,11 +15,33 @@ For example, the developers of Google Spanner~\cite{Spanner2012} claim: ``We bel
 is better to have application programmers deal with performance problems due to overuse 
 of transactions as bottlenecks arise, rather than always coding around the lack of transactions''. 
 However, the expectation for high performance is picking up rapidly. For instance, the early-days  
-transactions-enabled systems were throughput-oriented~\cite{Percolator2010,Omid2017}. 
+transactions-enabled systems were throughput-oriented~\cite{Percolator2010, Omid2017}. 
 With the thrust into new domains like messaging~\cite{Borthakur:2011} and algorithmic 
 trading~\cite{opentsdb} that require interactive behavior, latency becomes king. 
 
-Consider the design of a major email service provider backend. TBD. 
+Consider the platform powering Yahoo! Mail -- a service with hundreds of millions of users. 
+The Mail backend ingests billions of messages daily. Every new message undergoes machine 
+classification (e.g., spam filters, thread detection and ``smart view'' tagging\footnote{\footnotesize{\url{
+https://yahoohelpcommunity.tumblr.com/post/118485031125/getting-to-know-smart-views-in-yahoo-mail}}}). 
+The users can further manipulate their messages -- star, tag, and move between folders.    
+They can browse and search for content; the volume of metadata and search requests 
+is many billions per day.  Mail users expect a consistent experience -- messages never 
+disappear, starred content gets prioritized in search, folder counters are reliable, etc.
+
+The Yahoo! Mail metadata and search platform is built on top of Apache HBase~\cite{hbase}, 
+which provides reliable and scalable key-value storage. The system's first generation was not 
+transaction-enabled. This exposed the developers to very complex programming scenarios in 
+order to achieve ACID behavior -- e.g., to guarantee consistent folder listings, or to provide 
+atomic folder metadata updates when messages get relocated. Using a transaction API, e.g.,  
+Apache Incubator Omid~\cite{omid}, makes their life much easier, however doing so 
+must preserve the real-time latency SLA's for interactive user experience. For example, 
+simple updates and point queries must complete within single-digit milliseconds. The original 
+Omid implementation, which is designed for high-throughput data pipelines~\cite{Omid2017}, 
+fails to match these requirements. % -- especially under high loads. 
+
+We present \sys -- a low-latency {\em and\/} high-throughput transaction processing system
+that can be built over a variety of distributed key-value stores. Our implementation of \sys 
+reuses parts of Omid's implementation. TBD ... 
 
 % \Idit{The roadmap below is not essential; maybe replace with summary of contributions.}
 The remainder of this paper is organized as follows:

@@ -40,24 +40,27 @@ The original Omid implementation, which is designed for high-throughput data pip
 fails to match these requirements. % -- especially under high loads. 
 
 Motivated by this example, we present {\sys\/} -- a low-latency {\em and\/} high-throughput 
-transaction processing system. {\sys\/} dissipates the bottlenecks in the existing transaction 
-managers to reduce the overhead of begin and commit operations. 
-It especially favors short single-key transactions (read, write, and read-compute-write) -- 
-a key use case in multiple latency-sensitive applications. {\sys}'s basic version is compatible 
-with standard key-value store API's. The advanced version introduces a standalone API 
-for short transactions that eliminates the begin/commit overhead entirely. This  
-capability requires minor extensions of the underlying data store. 
- 
+transaction processing system. {\sys\/} introduces an efficient protocol that dissipates the 
+bottlenecks in the existing transaction managers to reduce the overhead of begin and commit 
+operations. Its impact is maximized for short single-key transactions (read, write, and read-compute-write) 
+that are prevalent in latency-sensitive applications. The protocol is also favorable for system 
+throughput that scales far beyond the previously achievable limits. 
+
+Beyond the generic performance optimizations, {\sys\/} introduces a {\em fast-path\/} API for short 
+transactions that eliminates the begin/commit overhead entirely. This capability requires minor 
+extensions to the data store API's, to enable {\em local\/} commits directly within the storage layer. 
+
 Similarly to multiple modern transaction managers~\cite{cockroach,Spanner2012,Percolator2010,Omid2017},
 {\sys\/} implements the {\em snapshot isolation} (SI) consistency model~\cite{DBLP:conf/sigmod/BerensonBGMOO95}
-that scales better than the traditional lock-based serializability implementations. 
+that scales better than the traditional lock-based serializability implementations. {\sys}'s basic protocol is 
+inspired in part by the ideas behind other systems, however their combination is novel. Local fast-path transactions 
+are new contribution. 
 
 % \Idit{The roadmap below is not essential; maybe replace with summary of contributions.}
 The remainder of this paper is organized as follows:
-In Section~\ref{sec:api} we define the  API and semantics of a TPS. 
+In Section~\ref{sec:api} we define the  API and semantics of a transaction processing service. 
 Section~\ref{sec:ll} presents \sys, without the fast path. 
 Section~\ref{sec:alg} then describes our support for fast-path  transactions in \sys.  
 Section~\ref{sec:eval} presents an empirical evaluation.
 In Section~\ref{sec:context} we generalize the local transactions algorithm, and explain how it could be implemented in 
-other TPSs. 
- We review related work in Section ~\ref{sec:related} and conclude with Section~\ref{sec:conclusions}.
+other systems. We review related work in Section ~\ref{sec:related} and conclude with Section~\ref{sec:conclusions}.

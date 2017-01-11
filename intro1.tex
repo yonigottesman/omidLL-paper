@@ -32,7 +32,7 @@ The Yahoo! Mail metadata and search platform is built on top of Apache HBase~\ci
 which provides reliable and scalable key-value storage. The system's first generation was not 
 transaction-enabled. This exposed the developers to very complex programming scenarios 
 to achieve ACID behavior -- e.g., to guarantee consistent folder listings, or to provide 
-atomic updates of multiple counters. Using a transaction API, e.g.,  
+atomic updates of multiple counters. Using a transaction API for HBase, e.g.,  
 Apache Incubator Omid~\cite{omid}, makes their life much easier, however doing so 
 must preserve the real-time latency SLA's for interactive user experience. For example, 
 simple updates, point queries and small scans must complete within single-digit milliseconds. 
@@ -40,21 +40,25 @@ The original Omid implementation, which is designed for high-throughput data pip
 fails to match these requirements. % -- especially under high loads. 
 
 Motivated by this example, we present {\sys\/} -- a low-latency {\em and\/} high-throughput 
-transaction processing system. {\sys\/} introduces an efficient protocol that dissipates the 
-bottlenecks in the existing transaction managers to reduce the overhead of begin and commit 
-operations. Its impact is maximized for short single-key transactions (read, write, and read-compute-write) 
-that are prevalent in latency-sensitive applications. The protocol is also favorable for system 
-throughput that scales far beyond the previously achievable limits. 
-
-Beyond the generic performance optimizations, {\sys\/} introduces a {\em fast-path\/} API for short 
-transactions that eliminates the begin/commit overhead entirely. This capability requires minor 
-extensions to the data store API's, to enable {\em local\/} commits directly within the storage layer. 
-
-Similarly to multiple modern transaction managers~\cite{cockroach,Spanner2012,Percolator2010,Omid2017},
+transaction processing system. Similarly to multiple modern transaction managers~\cite{cockroach,Spanner2012,Percolator2010,Omid2017},
 {\sys\/} implements the {\em snapshot isolation} (SI) consistency model~\cite{DBLP:conf/sigmod/BerensonBGMOO95}
-that scales better than the traditional lock-based serializability implementations. {\sys}'s basic protocol is 
-inspired in part by the ideas behind other systems, however their combination is novel. Local fast-path transactions 
-are new contribution. 
+that scales better than the traditional lock-based serializability implementations. {\sys\/} introduces an efficient protocol 
+that dissipates the bottlenecks in the prior implementations the overhead of begin and commit operations. 
+Its impact is maximized for short single-key transactions (read, write, and read-compute-write) that are prevalent 
+in latency-sensitive applications. The protocol is also favorable for system throughput that scales far beyond 
+the previously achievable limits. Parts of our protocol are inspired by ideas behind other systems, however
+their combination is novel, to the best of our knowledge. 
+
+On top of the generic performance optimizations, {\sys\/} introduces a novel {\em fast-path\/} algorithm for short transactions 
+that eliminates the begin/commit overhead entirely. The fast path requires minor extensions to the underlying 
+data store, to enable {\em local\/} commits directly within the storage layer and verify the correctness of general 
+transactions in presence of these commits. The latency improvement for short transactions comes at the expense 
+of minor negative impact on the rest. 
+
+We implemented {\sys\/} based on the open source Omid code, and also extended the HBase code to 
+enable fast-path transactions. Our experiments show substantial reduction in latency for all transactions, 
+as well as near-infinite system scalabiliy, compared to the baseline. Fast-path transactions perform very 
+closely to native atomic operations, whereas the deceleration of general transactions is immaterial. 
 
 % \Idit{The roadmap below is not essential; maybe replace with summary of contributions.}
 The remainder of this paper is organized as follows:

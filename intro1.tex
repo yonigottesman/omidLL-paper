@@ -30,18 +30,27 @@ disappear, starred content gets prioritized in search, folder counters are relia
 
 The Yahoo! Mail metadata and search platform is built on top of Apache HBase~\cite{hbase}, 
 which provides reliable and scalable key-value storage. The system's first generation was not 
-transaction-enabled. This exposed the developers to very complex programming scenarios in 
-order to achieve ACID behavior -- e.g., to guarantee consistent folder listings, or to provide 
-atomic folder metadata updates when messages get relocated. Using a transaction API, e.g.,  
+transaction-enabled. This exposed the developers to very complex programming scenarios 
+to achieve ACID behavior -- e.g., to guarantee consistent folder listings, or to provide 
+atomic updates of multiple counters. Using a transaction API, e.g.,  
 Apache Incubator Omid~\cite{omid}, makes their life much easier, however doing so 
 must preserve the real-time latency SLA's for interactive user experience. For example, 
-simple updates and point queries must complete within single-digit milliseconds. The original 
-Omid implementation, which is designed for high-throughput data pipelines~\cite{Omid2017}, 
+simple updates, point queries and small scans must complete within single-digit milliseconds. 
+The original Omid implementation, which is designed for high-throughput data pipelines~\cite{Omid2017}, 
 fails to match these requirements. % -- especially under high loads. 
 
-We present \sys -- a low-latency {\em and\/} high-throughput transaction processing system
-that can be built over a variety of distributed key-value stores. Our implementation of \sys 
-reuses parts of Omid's implementation. TBD ... 
+Motivated by this example, we present {\sys\/} -- a low-latency {\em and\/} high-throughput 
+transaction processing system. {\sys\/} dissipates the bottlenecks in the existing transaction 
+managers to reduce the overhead of begin and commit operations. 
+It especially favors short single-key transactions (read, write, and read-compute-write) -- 
+a key use case in multiple latency-sensitive applications. {\sys}'s basic version is compatible 
+with standard key-value store API's. The advanced version introduces a standalone API 
+for short transactions that eliminates the begin/commit overhead entirely. This  
+capability requires minor extensions of the underlying data store. 
+ 
+Similarly to multiple modern transaction managers~\cite{cockroach,Spanner2012,Percolator2010,Omid2017},
+{\sys\/} implements the {\em snapshot isolation} (SI) consistency model~\cite{DBLP:conf/sigmod/BerensonBGMOO95}
+that scales better than the traditional lock-based serializability implementations. 
 
 % \Idit{The roadmap below is not essential; maybe replace with summary of contributions.}
 The remainder of this paper is organized as follows:

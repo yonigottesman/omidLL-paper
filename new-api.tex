@@ -1,18 +1,23 @@
 
 
 The goal of our fast path  is to forgo the overhead associated with two-phase transaction processing and communication with 
-the (possibly remote) TM. This is particularly important for short transactions, where the begin and commit overhead is not amortized
+the TM to begin and commit transactions. This is particularly important for short transactions, where the begin and commit overhead is not amortized
 across many operations.
-\inred{Can we give some example workload?}
+We therefore focus on single-key transactions.
 
-To this end, we introduce in Section~\ref{ssec:fast-api} a streamlined API that jointly executes multiple API calls of the original TPS;
-we refer to transactions that use this API as \emph{fast path (FP) transactions}. We 
-then discuss the semantics of FP transactions relative to regular ones.
+To this end, we introduce in Section~\ref{ssec:fast-api} a streamlined  \emph{fast path (FP)}
+API that jointly executes multiple API calls of the original TPS, and 
+%we refer to transactions that use this API as \emph{fast path (FP) transactions}. We 
+define the semantics of FP transactions relative to regular ones.
 % in Section~\ref{ssec:fast-semantics}.
+We proceed, in Section~\ref{ssec:fast-algorithm}, to explain our general fast path algorithm 
+\inred{for any system that follows the generic schema of  Algorithm~\ref{alg:schema} above}. 
+Finally, in Section~\ref{ssec:fast-impl}, we describe our implementation of the fast path in \sys, and 
+important practical optimizations we did in this context.
+ 
 
-\inred{Explain regions!}
-
-We proceed to explain our support for local transactions with SI semantics in the
+ \remove{
+   with SI semantics in the
 context of a system following the generic schema of  Algorithm~\ref{alg:schema} above. 
 Our solution consists of three parts: First, in Section~\ref{ssec:region-clock}, we enhance the
 underlying data store with support for per-region \emph{Local Version Clocks (LVCs)}. 
@@ -25,7 +30,7 @@ Second, in Section~\ref{ssec:lvc-access}
 we extend the underlying data store's API to allow manipulating 
 a region's LVC jointly with objects stored at that region. 
 Finally, we add client-side support for the fast path API, as explained in Section~\ref{ssec:lc-client}.
-
+}
 
 \subsection{API and semantics}
 \label{ssec:fast-api}
@@ -99,17 +104,17 @@ Given the limited benefit and extra complexity of allowing many writes in FP tra
 
 The semantics for ordering FP transactions relative to regular ones are
 weaker than SI in that they do not guarantee real-time order over all regular
-and FP transactions together. Specifically, a regular transaction overlapping
-two FP ones that access different regions may observe an update of
-the second and miss an update by the first. For example, assume objects $x$ and $y$
-are managed in two different regions, then real-time order can be violated as
-illustrated in Figure~\ref{fig:ltx-rt} (ignore the skip operations for now; they will be explained in the next section).
+and FP transactions together. For example, an FP tranasction may return 
+an older value than the latest one committed by a regular transaction. Similarly, a regular transaction overlapping
+two FP ones may observe an update of the second and miss an update by the first,  as illustrated in Figure~\ref{fig:ltx-rt}.
 
 \begin{figure}[h]
-\includegraphics[width=\columnwidth]{figs/LTX-RT}
-\caption{Possible violation of real-time order among fast path (FP) transactions in different regions. Global transaction $T_1$
+\includegraphics[width=\columnwidth]{figs/FP-semantics}
+\caption{Possible violation of real-time order among fast path (FP) transactions. Regular transaction $T_1$
 reads $x$ before it is updated by FP transaction $FP_1$ and reads $y$ after it is updated by FP transaction $FP_2$ even 
-though $FP_2$ occurs after $FP_1$. $T1$'s global version is $10$, and its skips the local version clocks of the regions holding $x$ and $y$ to $10$ when reading from them.}
+though $FP_2$ occurs after $FP_1$. 
+%$T1$'s global version is $10$, and its skips the local version clocks of the regions holding $x$ and $y$ to $10$ when reading from them.
+}
 \label{fig:ltx-rt}
 \end{figure}
 
@@ -121,16 +126,83 @@ The system still enforces a total order ${\cal T}$ on all committed transactions
 \item
 regular transactions (though not FP ones) are ordered in ${\cal T}$  according to their commit times;
 \item
-FP transactions within each region are ordered in ${\cal T}$  according to their commit times;
-\item
-each transaction's read operations see a consistent snapshot of the database reflecting 
+each regular transaction's read operations see a consistent snapshot of the database reflecting 
 a prefix of  ${\cal T}$ that includes all transactions committed prior to
 its start time plus any number of concurrent FP transactions; and 
 \item
  a transaction commits only if none of the items it updates has been modified since that snapshot.
  \end{enumerate}
 
-Note that since ${\cal T}$  respects commit times in each region, causality is preserved, because 
-only transactions that  access disjoint  sets of data objects can be re-ordered.
+Note that  ${\cal T}$  preserves causality because 
+only transactions that  access different data objects can be re-ordered.
 
+
+\subsection{Generic fast path algorithm}
+\label{ssec:fast-algorithm}
+
+
+
+\begin{algorithm}[htb]
+\begin{algorithmic}
+\State local variable \code{ts$_r$} \Comment timestamp read by ongoing transaction
+\Statex
+\Procedure{brc}{key}
+\State
+return latest non-tentative version of key
+\EndProcedure
+\Statex
+\Procedure{bumpVersion}{key, $ts_r$} 
+\Statex \Comment performed by transactional read
+\EndProcedure
+\Statex
+\Procedure{bwc}{key, value} 
+\State  TODO
+\EndProcedure
+\Statex
+\Procedure{br}{key} 
+\State $\langle$ \code{ts$_r$}, value  $\rangle \leftarrow$ getWithTs(key)
+\State  return value
+\EndProcedure
+\Procedure{wc}{key, value} 
+\State TODO
+\EndProcedure
+
+\end{algorithmic}
+\caption{Generic support for FP transactions.}
+\label{alg:fp}
+\end{algorithm}
+
+The generic fast fast path algorithm is given in Algorithm~\ref{alg:fp}. 
+%
+Single-read transactions simply return the latest committed version of the requested key they encounter.  
+They ignore tentative versions, which may lead to missing the latest commit, but is allowed by our semantics. 
+FP reads can forgo the begin call since they do not need to obtain a snapshot time a priori. 
+They can also forgo the commit call, since the consistency of their snapshot does not need to be validated.
+ 
+Single-write transactions need to produce a new version that exceeds all committed ones.  
+To this end, they need to be able to determine the latest committed version. Thus, 
+in case a bwc transaction encounters a tentative version, it simply aborts.
+Otherwise, it locally produces a version with the following two properties:
+(1) it exceeds the object's current version; and 
+(2)  it is smaller than any future commit timestamp that will be assigned to a regular transaction in the future. 
+To ensure the latter, we modify the strucutre of versions .
+\Idit{Explain logical clock with global and local component, GVC only affecting global, FP writes increasing local. 
+Explain that regular reads bump  the item's version so that future FP writes will not write smaller versions than 
+their timestamp.}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\subsection{Implementation and optimization}
+\label{ssec:fast-impl}
 

@@ -52,30 +52,29 @@ which scales better than traditional serializability implementations. {\sys\/} i
 and dissipates the principal bottleneck present therein.
 %in the prior implementations the overhead of begin and commit operations. 
 Its advantage is maximized for short  transactions, which are prevalent in latency-sensitive applications,
-and \sys\ can process \inred{in a handful of milliseconds}. The new protocol is also favorable for system throughput, 
-which is \inred{an order of magnitude higher than} 
-previously achievable limits. 
+and \sys\ can process \inred{in a handful of milliseconds}. The new protocol is also favorable for system throughput. 
+%, which is \inred{an order of magnitude higher than} previously achievable limits. 
 %Different aspects of our protocol are inspired by other systems, while their combination is novel.
 %, to the best of our knowledge. 
 
-{\sys\/} further introduces a novel {\em fast-path\/} algorithm for short (single-key) transactions 
+{\sys\/} further introduces a novel {\em fast path\/} algorithm for short (single-key) transactions 
 that eliminates the begin/commit overhead entirely. The fast path requires minor extensions to the underlying 
 data store, to enable local commits directly within the storage layer and verify the correctness of general 
 transactions in presence of such commits. This improves the latency of short transactions 
 \inred{by roughly 70\%} at the cost of minor (\inred{10-20\%}) negative impact on longer transactions. 
-The fast-path is orthogonal to other protocol aspects, and can be  supported in other 
+The fast path is orthogonal to other protocol aspects, and can be  supported in other 
 transaction processing services.
 
 We implemented {\sys\/} based on the open source Omid code, and also extended the HBase code to 
-enable fast-path transactions. Our experiments show substantial reduction in latency for all transactions, 
-as well as near-infinite system scalability. Fast-path transactions perform \inred{almost as fast as  
+enable fast path transactions. Our experiments show substantial reduction in latency for all transactions, 
+as well as near-infinite system scalability. Fast path transactions perform \inred{almost as fast as  
 native atomic operations}, and their impact on longer transactions is insignificant. 
 
 % \Idit{The roadmap below is not essential; maybe replace with summary of contributions.}
 The remainder of this paper is organized as follows:
 In Section~\ref{sec:api} we define the  API and semantics of a transaction processing service. 
 Section~\ref{sec:ll} presents \sys, without the fast path. 
-Section~\ref{sec:alg} then describes our support for fast-path  transactions in \sys.  
+Section~\ref{sec:alg} then describes our support for fast path  transactions in \sys.  
 Section~\ref{sec:eval} presents an empirical evaluation.
-In Section~\ref{sec:context} we generalize the fast-path algorithm, and explain how it could be implemented in 
+In Section~\ref{sec:context} we generalize the fast path algorithm, and explain how it could be implemented in 
 other systems. We review related work in Section ~\ref{sec:related} and conclude with Section~\ref{sec:conclusions}.

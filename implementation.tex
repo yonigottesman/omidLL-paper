@@ -124,7 +124,7 @@ Figure~\ref{fig:model} shows the metadata of a transaction during its stages of 
 \sys's TM is based on Omid's TM, and has the same functionality except that it does not write commit entries.
 In particular, it manages a monotonically increasing global clock for allocating read timestamps on begin and commit timestamps on commit,
 and it performs validation (i.e., conflict detection) upon commit using an in-memory hash table. 
-Since the TM algorithm has been reported elsewhere~\cite{omid-fast}, and the \sys\ client need not be aware of 
+Since the TM algorithm has been reported elsewhere~\cite{Omid2017}, and the \sys\ client need not be aware of 
 its implementation details, we avoid repeating these details here. 
 
 Algorithm~\ref{fig:get-pseudocode} describes \sys's implementation of read and commit operations.
@@ -161,15 +161,4 @@ To avoid an extra read of the leader on every read, once a transaction is commit
 the $ts_c$ to the {commit} columns of all keys in  the transaction's write-set. 
 %Following a successful commit, the client adds $ts_c$ to all data items it wrote to.
 
-\remove{
-\paragraph{Singleton Read}
-\Yoni{This is the same as \ref{ssec:local-client-alg}}
-\paragraph{Singleton Write}
 
-
-\Yoni{what about WC and BRWC?}
-
-\subsection{HBase region server}
-\label{ssec:hbase}
-\Yoni{is there something special to say here?}
-}

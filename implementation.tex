@@ -117,7 +117,8 @@ and
 (2) \emph{leader} is a pointer to the writing transaction's commit entry, namely, the \emph{commit} column of the first key written by the same
 transaction. 
 
-Since the transaction commit needs to be an atomic step, the first key in the transaction's write-set is chosen to be the leader, and the transaction commits via a single atomic write of $ts_c$ to the leader's commit column. Transactional read operations, in turn, refer to the leader to find out whether the value they are attempting to read has been committed or not.
+Since the transaction commit needs to be an atomic step, the first key in the transaction's write-set is chosen to be the leader, and the transaction commits via a single atomic write of $ts_c$ to the leader's commit column. Transactional read operations that find a nil commit entry 
+refer to the leader to find out whether the value they are attempting to read has been committed or not.
 Figure~\ref{fig:model} shows the metadata of a transaction during its stages of execution. 
 
 \sys's TM is based on Omid's TM, and has the same functionality except that it does not write commit entries.
@@ -138,7 +139,7 @@ To ensure monotonicity of written versions as seen in Section~\ref{ssec:regular-
 }
 
 \paragraph{Read.}
-The data store's get operation is referred to as ds.get(key,version). The algorithm traverses records pertaining
+The algorithm traverses data  records (using the data store's ds.get API) pertaining
 to key with versions smaller than $ts_r$, latest to earliest, and returns the first key that is committed. Upon
 encountering a tentative record (with commit=nil), the algorithm gets the leader's record from the data store,
 reads its $ts_c$, and again returns the key if the $ts_c$ is smaller than $ts_r$. 
@@ -146,7 +147,8 @@ reads its $ts_c$, and again returns the key if the $ts_c$ is smaller than $ts_r$
 If the commit entry is still nil, read cannot return without determining the final outcome
 of the pending transaction. \Yoni{example here?}. 
 It  therefore forcefully aborts it. This is done using an atomic 
- {checkAndMutate} function that atomically reads and sets the commit entry to abort if its value is nil.
+ {checkAndMutate} function that atomically reads and sets the commit entry to abort if its value is nil or nonexistent.
+ If checkAndMutate fails, this means that the transaction has committed, and the leader's entry is re-read.
 %When a transaction commits, it atomically checks it hasn't been invalidated before inserting the $ts_c$ to the commit .
 
 

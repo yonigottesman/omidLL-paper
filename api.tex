@@ -1,6 +1,6 @@
 
 
-\sys\ is a TPS, namely a service that runs atop an underlying data store and 
+\sys\ is a \emph{Transaction Processing System (TPS)}, namely a service that runs atop an underlying data store and 
 allows users to bundle multiple data store operations into a single atomic transaction. 
 We describe the data model and API of the underlying data store in Section~\ref{ssec:data-model}, and 
 then proceed to define  the transaction semantics provided by \sys\ in Section~\ref{ssec:transactions}. 
@@ -8,7 +8,7 @@ then proceed to define  the transaction semantics provided by \sys\ in Section~\
 \subsection{Data store}
 \label{ssec:data-model}
 
-The underlying data store holds  \emph{objects} (often referred to as \emph{rows}) identified by unique \emph{keys}.
+The  data store holds  \emph{objects} (often referred to as \emph{rows}) identified by unique \emph{keys}.
 We consider multi-versioned objects, where object values are associated with \emph{version numbers}, and
 multiple versions associated with the same key may co-exist in the data store.
 Thus, at any given time, an object holds a tuple \tuple{key,\tuple{version,value}+}, where value

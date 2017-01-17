@@ -24,7 +24,7 @@ trading~\cite{opentsdb}, latency becomes essential. This paper is motivated by s
 
 Consider, for example, the platform powering Yahoo! Mail, which serves hundreds of millions of users. 
 The Mail backend ingests billions of messages daily; messages undergo both machine 
-classification, (e.g., for spam filtering, thread detection, and ``smart view'' tagging\footnote{\footnotesize{\url{
+classification (e.g., for spam filtering, thread detection, and ``smart view'' tagging\footnote{\footnotesize{\url{
 https://yahoohelpcommunity.tumblr.com/post/118485031125/getting-to-know-smart-views-in-yahoo-mail}}}),
 and user manipulation (e.g., starring, tagging, and moving between folders).    
 Mail users browse their mail and search for content, issuing many billions of requests a day; they
@@ -34,7 +34,7 @@ disappear, starred content gets prioritized in search, folder counters are relia
 The Yahoo! Mail metadata and search platform is built on top of Apache HBase~\cite{hbase}, 
 which provides reliable and scalable key-value storage. The system's first generation
 was built without transaction support. This exposed  developers to very complex programming scenarios 
-to achieve ACID behavior, (e.g., consistent folder listings, atomic updates of multiple counters). 
+to achieve ACID behavior (e.g., consistent folder listings, atomic updates of multiple counters). 
 %We would like to build the next generation of the system using a transaction API on top of HBase.
 We have looked into building the next generation using 
  Apache Incubator Omid~\cite{omid}, which provides a transactional API on top of HBase, and 

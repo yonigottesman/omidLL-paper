@@ -188,7 +188,7 @@ We therefore opt to follow the design of Percolator, which stores each transacti
 which we call the \emph{leader}, and stores pointers to this leader at all other keys written by the transaction. 
 Thus, updates of transaction entries can be performed in parallel by 
 independent clients, and such updates are no longer a performance bottleneck. 
-We will see below that this modification improves performance 
+We will see below that this modification reduces latency
 \inred{by up to an order of magnitude} on small transactions.
 
 \paragraph{Write intent resolution.}

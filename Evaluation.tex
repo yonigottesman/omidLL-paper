@@ -20,6 +20,10 @@
 %% \end{figure*}
 
 
+\begin{figure}
+\caption{\bf{Experiment architecture.}}
+\label{fig:experiment}
+\end{figure}
 
 \begin{figure*}[]
   \centering
@@ -77,17 +81,35 @@
   \label{fig:ll}
 \end{figure}
 
+We now evaluate {\sys}'s performance for both the generic and the fast-path transactions. 
+We compare {\sys\/} to the mainstream Omid implementation. Both systems use HBase 
+as key-value storage backend. 
 
+We emulate a very large system with a small cluster, as follows. We assume that the keys 
+are hashed i.i.d. to the region servers, i.e., the server load is roughly balanced. The region
+servers run embarrassingly parallel, whereas the TM  is the only centralized service in the 
+system. Therefore, an experiment that generates a fraction of load for a small number of 
+region servers and a full load of begin/commit requests on the TM truthfully captures 
+the average end-to-end latency. 
 
-This section reports the evaluation results of \sys.
+We use a 3-node HBase cluster to serve end-to-end transactions. In parallel, we generate a background 
+begin/commit load on the TM that is worth of a 1000-node cluster. Our experiment employs a popular
+YCSB workload driver~\cite{Cooper:2010:BCS:1807128.1807152} that exercises the {\sys} (respectively, 
+Omid) API's to generate the conventional transaction traffic; we measure their latency. 
+A custom tool generates low-level background begin and commit requests to the TM~\cite{Omid2017}.
+Figure~\ref{fig:experiment} depicts our evaluation platform. 
 
+The core dataset size is 50GB with 3-way replication. 
+
+\remove{
 \paragraph{Methodology}
+
 To evaluate \sys, we set up a 3 node Hbase cluster loaded with 50GB of data, and a machine hosting the TM.
 Another machine created load on the system by running threads that generated random transactions towards Hbase and the TM. 
-%To create further load on the TM, we
 
 Transaction size had a Zipf distribution from 1 to 10.
 To measure the latency of transactions we modified YCSB~\cite{Cooper:2010:BCS:1807128.1807152} to perform a begin and commit towards the TM at the beginning and end of each transaction, and used YCSB framework to measure the latency of each stage.
+}
 
 \paragraph{Distributed transaction entry}
 We first compare \sys's distributed transaction entry approach to Omid's centralized approach. Figure~\ref{fig:ll} shows the latency of a transaction while applying increasing load on the system. The load is measured in kilo transactions per second (KTPS), and the transaction latency is measured in milliseconds. Figure~\ref{fig:ll:tx1} shows the latency of a transaction with a single read or write. The figure shows that latency obtained by \sys\ is \speedup{4} faster than Omid 2. \sys\ performs better because Omid 2 is throughput oriented and batches the writes to transaction entries, so on every begin stage the client has to wait for all commits in the batch to get persistent.

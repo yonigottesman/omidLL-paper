@@ -18,16 +18,17 @@ We further assume that a write operation can specify the version number it write
 %\paragraph{API} 
 The  data store provides the following API:
 \begin{description}
-\item [\code{\tuple{version,value} read(key)}] -- atomically returns the value with
-the highest version associated with key along with its version number.
+\item [\code{get}] -- atomically returns the value with
+the highest version associated with a given key along with its version number.
 \item The API further allows traversing (reading) earlier versions of the same
 key in descending order.
-\item [\code{write(key,value,version)}] -- atomically creates or updates the version:
+\item [\code{put}] -- atomically creates or updates an object with a given key and version:
 \remove{If the provided version number is smaller than the key's latest stored version, the update fails.} 
 if the version already exists, its value is updated;
 otherwise, a new version is added. Garbage collection of obsolete versions is a separate
 process.
-\item [checkAndMutate] --  data stores often provide means to atomically read and
+\item [\code{remove}] -- remove an object with a given key and version
+\item [check\&mutate] --  data stores often provide means to atomically read and
 update an object, e.g., HBase exports CheckAndMutate operations, which are 
 internally implemented using a RW lock, whereas BigTable supports row transactions. 
 We will extend this capability below in order to implement certain atomic

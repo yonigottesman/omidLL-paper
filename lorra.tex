@@ -66,19 +66,19 @@ We now overview the phases a transaction goes through, focusing on Omid's approa
 \paragraph{Begin.} 
   When a transaction begins, it obtains a read timestamp (version) $ts_r$ for reading its consistent snapshot.
   %, and unique transaction id.   The two can be combined (i.e., $ts_r$ can serve as the  transaction id, provided that it is unique).
- In most cases, this is done using a centralized \emph{transaction manager (TM)}, sometimes called timestamp 
- oracle~\cite{Percolator2010,OmidICDE2014}. 
+ In most cases, this is done using a centralized \emph{transaction manager (TM)}~\cite{Percolator2010,OmidICDE2014,Omid2017,tephra},
+ sometimes called timestamp oracle. 
 %  In CockroachDB, the timestamp is based on a local clock that is ``close to'' real-time and preserves causality 
  % across regions, and unique transaction ids are used to break ties in case timestamps (from different regions) are identical. 
 
 \paragraph{Transactional writes.} 
- During a transaction, a write operation indicates its \emph{intent} to write to a single object a certain new value with a certain version number;
-a dedicated \emph{commit} column in the object indicates that the write is tentative.
-It is possible to buffer write intents locally in the course of the transaction, and add the indications to the data store at commit time~\cite{Percolator2010}.
-
+ During a transaction, a write operation indicates its \emph{intent} to write to a single object a certain new value with a certain version number.
+%a dedicated \emph{commit} column in the object indicates that the write is tentative.
 In Omid, the version is the transaction's $ts_r$, which exceeds all versions written by transactions that committed before the
 current transaction began. Note that the version order among concurrent transactions that  attempt to update the same key is immaterial, 
 since all but one of these transactions is doomed to abort. 
+
+It is possible to buffer write intents locally in the course of the transaction, and add the indications to the data store at commit time~\cite{Percolator2010}.
 
 In some solutions writes check for conflicts before declaring their intents~\cite{cockroach}, whereas in others, 
 all conflict detection is deferred to commit time. 
@@ -104,12 +104,12 @@ it by updating the commit entry accordingly.
   \begin{enumerate}
   \item
   Obtain a commit timestamp, $ts_c$. 
-  In most cases, e.g.,~\cite{Percolator2010,tephra,OmidICDE2014,Omid2017}, 
+  In most cases, e.g.,~\cite{Percolator2010,OmidICDE2014,Omid2017,tephra}, 
   this is the value of some global clock maintained by a centralized entity. 
   \item \emph{Validate} that the transaction does not conflict with any concurrent transaction that has committed since it 
 had begun.  For SI, we need to check for write-write conflicts only. 
 If write intent indications are buffered, they are added at this point~\cite{Percolator2010}.
-Validation can be centralized~\cite{OmidICDE2014,tephra,Omid2017} or distributed~\cite{Percolator2010,cockroach}. 
+Validation can be centralized~\cite{OmidICDE2014,Omid2017,tephra} or distributed~\cite{Percolator2010,cockroach}. 
 
 
 \item \emph{Commit} or abort in one  irrevocable atomic step. This is achieved by persistently writing to the \emph{commit entry}, 
@@ -171,7 +171,7 @@ Percolator, the first TPS in this vein, uses a distributed commit protocol that 
 Unfortunately, while an object is locked, other transactions attempting to access it are blocked.
 Since clients may stall or fail while holding a lock, Percolator detects failures of unresponsive clients and aborts transactions on their behalf. 
 To eliminate the need for such recovery, newer systems preferred to rely on 
-a centralized TM for validation~\cite{OmidICDE2014,tephra,Omid2017}.
+a centralized TM for validation~\cite{OmidICDE2014,Omid2017,tephra}.
 CockroachDB takes a different approach of performing distributed validation at write time, by replacing writes with atomic validate-and-write operations that can abort either the current transaction or a conflicting one. 
 Since the approach of CockroachDB slows down transactional writes, and since Omid's centralized conflict detection is extremely scalable, 
 (capable of sustaining orders of magnitude higher throughput than the network~\cite{Omid2017}), 

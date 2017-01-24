@@ -1,6 +1,6 @@
 % Transactions in big-data platforms
 In recent years, transaction processing~\cite{Gray:1992:TPC:573304} technologies have paved their way into many-petabyte big data 
-platforms~\cite{Spanner2012,Percolator2010,Omid2017}. 
+platforms~\cite{Percolator2010,Spanner2012,Omid2017}. 
 %In some cases, they are built into the storage system itself~\cite{Spanner2012} whereas in the others they are standalone services~\cite{Omid2017}. 
 In a number of industrial systems~\cite{Percolator2010,Omid2017,tephra,cockroach}, transaction management complements 
 existing underlying key-value storage with {\em atomicity}, {\em consistency}, {\em isolation\/} and 
@@ -38,7 +38,7 @@ to achieve ACID behavior (e.g., consistent folder listings, atomic updates of mu
 %We would like to build the next generation of the system using a transaction API on top of HBase.
 We have looked into building the next generation using 
  Apache Incubator Omid~\cite{omid}, which provides a transactional API on top of HBase, and 
- is already in-use in other Yahoo systems~\cite{omid-blog}.
+ is already in-use in other Yahoo systems~\cite{Omid2017}.
 Unfortunately, while this makes programming much easier, it also jeopardizes 
 the real-time latency SLA for interactive user experience. For example,  
 simple updates and point queries must complete within single-digit milliseconds, 
@@ -46,7 +46,8 @@ whereas Omid, which is designed for high-throughput data pipelines~\cite{Omid201
 induces a latency of tens, or even hundreds of milliseconds under high loads. 
 
 Motivated by this example, we have developed {\sys\/} -- a low-latency {\em and\/} high-throughput 
-transaction processing system for Apache HBase. Similarly to other modern transaction managers~\cite{cockroach,Spanner2012,Percolator2010,Omid2017},
+transaction processing system for Apache HBase. Similarly to other modern transaction 
+managers~\cite{Percolator2010,Spanner2012,Omid2017,cockroach},
 {\sys\/} implements the {\em snapshot isolation} (SI) consistency model~\cite{DBLP:conf/sigmod/BerensonBGMOO95},
 which scales better than traditional serializability implementations. {\sys\/} is based on Omid~\cite{omid}, 
 and dissipates the principal bottleneck present therein.
@@ -74,7 +75,7 @@ native atomic operations}, and their impact on longer transactions is insignific
 The remainder of this paper is organized as follows:
 In Section~\ref{sec:api} we define the  API and semantics of a transaction processing service. 
 Section~\ref{sec:ll} presents \sys, without the fast path. 
-Section~\ref{sec:alg} then describes our support for fast path  transactions in \sys.  
+Section~\ref{sec:alg} then describes our support for fast path  transactions.  
 Section~\ref{sec:eval} presents an empirical evaluation.
-In Section~\ref{sec:context} we generalize the fast path algorithm, and explain how it could be implemented in 
-other systems. We review related work in Section ~\ref{sec:related} and conclude with Section~\ref{sec:conclusions}.
+%In Section~\ref{sec:context} we generalize the fast path algorithm, and explain how it could be implemented in other systems. 
+We review related work in Section ~\ref{sec:related} and conclude with Section~\ref{sec:conclusions}.

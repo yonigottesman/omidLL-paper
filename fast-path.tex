@@ -48,8 +48,9 @@ read or write. These are supported by the APIs:
 
 We further support a fast path transaction consisting of a read and a dependent write, via a pair of API calls:
 \begin{description}
-\item[br(key)] -- begins an FP transaction and  reads the latest version of key.
-\item[wc(key,val)] -- 	validates that key has not been written since the last \code{br} call, writes val into a new version of key, and commits.
+\item[br(key)] -- begins an FP transaction and  reads the latest version of key. 
+Returns the read value along with a \emph{handle} h for continuing the transaction.
+\item[wc(h, key,val)] -- 	validates that key has not been written since the  \code{br} call that returned h, writes val into a new version of key, and commits.
 \end{description}
 
 Read-only transactions never abort, but \code{bwc} and \code{wc} may abort. 
@@ -153,9 +154,10 @@ only transactions that  access different data objects can be re-ordered.
 \algblockdefx[atomic]{Atomic}{EndAtomic}
 [0]{{\bf atomically do}}
 [0]{}
+%%%%%%%%
 \begin{algorithmic}
-\State local  \code{ts$_r$} \Comment  read version of ongoing transaction
-\Statex
+%\State local  \code{ts$_r$} \Comment  read version of ongoing transaction
+%\Statex
 \Procedure{brc}{key}
 \State
 return latest non-tentative version of key
@@ -164,27 +166,34 @@ return latest non-tentative version of key
 \Statex
 \Procedure{bwc}{key, value} 
 	\State ver $\leftarrow$ commit field of key's latest version
-	\If{ver = nil} return abort \EndIf
-	\If{mask(ver, $2^\ell-1$) = $2^\ell-1$} return abort \EndIf
+	\State TODO take into account maxVersion
+	\If{ver = nil}  \Comment found tentative value -- abort 
+		\State return abort 
+	\EndIf
+	\If{mask(ver, $2^\ell-1$) = $2^\ell-1$} 
+		\State return abort 
+	\EndIf
 	ver $\leftarrow$ ver $+1$ 
 \Atomic 
 	\If{last committed version of key = ver$-1$}
-	\State	write \emph{(key, value, ver, ver, key)} to data store 
+	\State ds.put(\tuple{key, ver} with commit = ver)  
+	\State $maxVersion \leftarrow \max(maxVersion, ver)+1$
 	\Else \State return abort \EndIf
 \EndAtomic
 \EndProcedure
 %\Statex
 \Procedure{bumpVersion}{key, $ts_r$} 
 \Statex \Comment performed by transactional read
-	\State	write \emph{(key, `dummy', $ts_r$, $ts_r$, key)} to data store 
+\State TODO
+%	\State	write \emph{(key, `dummy', $ts_r$, $ts_r$, key)} to data store 
 \EndProcedure
 
 \Statex
 \Procedure{br}{key} 
 \State TODO % $\langle$ \code{ts$_r$}, value  $\rangle \leftarrow$ getWithTs(key)
-\State  return value
+\State  return \tuple{$ts_r$, value}
 \EndProcedure
-\Procedure{wc}{key, value} 
+\Procedure{wc}{h, key, value} 
 \State TODO
 \EndProcedure
 
@@ -207,7 +216,7 @@ is smaller than any commit timestamp that will be assigned to a regular transact
 
 To support (1), we change the structure of timestamps to consist of two 
 components -- a global version and a locally advancing sequence number.
-Practically, we implement the two components in one  integer, with some number $\ell$ of the less significant bits
+Practically, we implement the two components in one long integer, with some number $\ell$ of the less significant bits
 reserved to sequence numbers assigned by FP writes, and the the most significant bits representing 
 the global version determined by the TM. Thus, the TM always produces timestamps where the $\ell$ lower bits are zeros,
 and increases the global clock by $2^\ell$ on every begin and commit call.  
@@ -232,12 +241,12 @@ In case an ongoing regular transaction writes to a key before \code{bwc} accesse
 a regular transaction $T_1$ writes key after FP transaction $FP_1$, but must abort because 
 it reads the old version of key before $FP_1$'s update. In order for $T_1$ to detect this 
 conflict, the version written by $FP_1$ has to exceed its snapshot time, i.e., $ts_r$.
-To this end, we have $T_1$ \emph{bump} key's version number to $ts_r$ upon 
-performing a transactional read, by writing a dummy record with $ts_r$ in the commit field. 
+To this end, we maintain a new field \emph{maxVersion} for each key, which is at least as 
+high as the key's latest version. In addition, every transactional read \emph{bumps} key's version 
+number to the reading transaction's $ts_r$. 
+Writes consult this field and always select a new version that exceeds this value.
 Thus, once $T_1$ reads key, no FP transaction can write a version of key that should be 
 included in $T_1$'s snapshot.
-
-
 
 \inred{Todo: add \code{br} and \code{wc}}
 

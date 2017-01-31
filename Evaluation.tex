@@ -20,11 +20,13 @@
 %% \end{figure*}
 
 \begin{figure}
-\caption{Experiment architecture.}
+\caption{Benchmark architecture that emulates a large system. The YCSB client generates complete transactions 
+for a small fraction of the traffic, and measures their end-to-end latency. The custom client generates background 
+begin and commit requests for the remainder of the traffic, to emulate full load on the TM.}
 \label{fig:experiment}
 \end{figure}
 
-\begin{figure*}
+\begin{figure*}[t]
   \centering
   \begin{subfigure}[t]{0.33\textwidth}
 	\includegraphics[width=\textwidth]{figs/thpt-latency-1.png}
@@ -41,42 +43,42 @@
 	\caption[]{Transaction size = 10}
     \label{fig:tl-10}
   \end{subfigure}			
-  \caption{{\sys} versus Omid, in terms of throughput-latency tradeoff. Transactions are considered
+  \caption{{\sys} (generic and FP API's) versus Omid, in terms of latency and throughput. Transactions are considered
 by size (1, 5, and 10 data accesses). }
   \label{fig:throughput-latency}
 \end{figure*}
 
-\begin{figure*}[]
+\begin{figure*}
   \centering
   \begin{tabular}{cccc}
     
   \begin{subfigure}[t]{0.4\textwidth}
-	\includegraphics[width=\textwidth]{figs/singlewrite.pdf}
-	\caption[]{Single write transactions}
-    \label{fig:latency:lorra1write}
+	\includegraphics[width=\textwidth]{figs/stack-brc.png}
+	\caption[]{Single-write transactions}
+    \label{fig:stack-brc}
   \end{subfigure} &
 
   \begin{subfigure}[t]{0.4\textwidth}
-	\includegraphics[width=\textwidth]{figs/singleread.pdf}
-	\caption[]{Single read transactions}
-    \label{fig:latency:lorra1read}
+	\includegraphics[width=\textwidth]{figs/stack-bwc.png}
+	\caption[]{Single-read transactions}
+    \label{fig:stack-bwc}
   \end{subfigure} \\
 
     \begin{subfigure}[t]{0.4\textwidth}
-	\includegraphics[width=\textwidth]{figs/lorravslltx5.pdf}
-    \caption[]{Transaction size 5}
-    \label{fig:latency:read}
-    \label{fig:latency:lorra5}
+	\includegraphics[width=\textwidth]{figs/stack-tx5.png}
+    \caption[]{Transaction size = 5}
+    \label{fig:stack-tx5}
   \end{subfigure} &
 
   \begin{subfigure}[t]{0.4\textwidth}
-	\includegraphics[width=\textwidth]{figs/lorravslltx10.pdf}
-    \caption[]{Transaction size 10}
-    \label{fig:latency:lorra10}
+	\includegraphics[width=\textwidth]{figs/stack-tx10.png}
+    \caption[]{Transaction size = 10}
+    \label{fig:stack-tx10}
   \end{subfigure} \\
   
   \end{tabular}
-  \caption{Latency of \sys\ and \sysll\ }
+  \caption{Zoom-in on latency breakdown under specific workloads.}
+  \label{fig:zoomin}
 \end{figure*}
 
 We evaluate {\sys}'s performance for both the generic and the fast-path transactions, 
@@ -117,6 +119,7 @@ In this context, 63\% of the transactions access 3 keys or less, whereas 3\% acc
 vary from 30K to 300K transactions per second (tps). 
 
 \subsection{Numerical Results} 
+
 We start by studying the system performance in throughput-latency terms. 
 Within the workload mix described above, we compare the end-to-end latencies by transaction class -- 
 1, 5, and 10 data accesses. Figure~\ref{fig:throughput-latency} depicts the results, for the three systems. 
@@ -127,9 +130,9 @@ thanks to its reduction in commit network trips. For example, single-key transac
 by other operations. Under high loads, {\sys\/} scales almost perfectly whereas Omid suffers from a well-pronounced 
 bottleneck. For instance, Omid's single-key transaction latency soars to 75ms for under 300K tps whereas
 {\sys}'s remains almost flat. The extra delay in Omid is due to commit table write batching, which its TM applies 
-to handle congestion~\cite{Omid2017}. 
+to handle congestion~\cite{Omid2017}. %In comparison with Omid, the differences between {\sys}'s flavors are negligible. 
 
-In comparison with Omid, the differences between {\sys}'s flavors are negligible. We now zoom-in on the performance 
+We now zoom-in on the performance 
 of these two API's, under the system load of 100K transactions per second. Our goal is to evaluate the benefit of the FP
 API for the short transactions versus the impact on the long ones, in multiple scenarios. 
 

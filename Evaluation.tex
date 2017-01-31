@@ -19,11 +19,33 @@
 %%   \label{fig:latency}
 %% \end{figure*}
 
-
 \begin{figure}
 \caption{\bf{Experiment architecture.}}
 \label{fig:experiment}
 \end{figure}
+
+\begin{figure}[!h]
+  \centering
+  \begin{subfigure}[t]{0.4\textwidth}
+	\includegraphics[width=\textwidth]{figs/omdLL1.pdf}
+	\caption[]{Transaction of size 1 latency}
+    \label{fig:ll:tx1}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.4\textwidth}
+	\includegraphics[width=\textwidth]{figs/omdLL5.pdf}
+	\caption[]{Transaction of size 5 latency}
+    \label{fig:l:tx5}
+  \end{subfigure}
+    \begin{subfigure}[t]{0.4\textwidth}
+	\includegraphics[width=\textwidth]{figs/omdLL10.pdf}
+	\caption[]{Transaction of size 10 latency}
+    \label{fig:l:tx10}
+  \end{subfigure}			
+  \caption{A Comparison between Omid's centralized transaction entry and \sys's distributed transaction entry.}
+  \label{fig:throughput-latency}
+\end{figure}
+
+
 
 \begin{figure*}[]
   \centering
@@ -58,28 +80,6 @@
   \end{tabular}
   \caption{Latency of \sys\ and \sysll\ }
 \end{figure*}
-
-
-\begin{figure}[!h]
-  \centering
-  \begin{subfigure}[t]{0.4\textwidth}
-	\includegraphics[width=\textwidth]{figs/omdLL1.pdf}
-	\caption[]{Transaction of size 1 latency}
-    \label{fig:ll:tx1}
-  \end{subfigure}
-  \begin{subfigure}[t]{0.4\textwidth}
-	\includegraphics[width=\textwidth]{figs/omdLL5.pdf}
-	\caption[]{Transaction of size 5 latency}
-    \label{fig:l:tx5}
-  \end{subfigure}
-    \begin{subfigure}[t]{0.4\textwidth}
-	\includegraphics[width=\textwidth]{figs/omdLL10.pdf}
-	\caption[]{Transaction of size 10 latency}
-    \label{fig:l:tx10}
-  \end{subfigure}			
-  \caption{A Comparison between Omid's centralized transaction entry and \sys's distributed transaction entry.}
-  \label{fig:ll}
-\end{figure}
 
 We now evaluate {\sys}'s performance for both the generic and the fast-path transactions, 
 focusing on average transaction latency under a variety of workloads. We compare {\sys\/} 
@@ -116,6 +116,14 @@ data requests are load-balanced, similarly to the data itself.
 Transaction size (number of reads and writes) is a Zipfian distribution with $\theta=0.99$ and a cutoff at 10. 
 In this context, e.g., 63\% of the transactions access 3 keys or less, whereas 3\% access 10 keys. 
 
+\paragraph{Generic Transactions} We first focus on the latency of conventional transactions. 
+Figure~\ref{fig:throughput-latency}(a-c) depicts the average latency of transactions that perform 1, 5, and 10 
+data accesses, respectively. The system loads vary from 35 to 350 transactions per second. We see that 
+{\sys\/} scales almost infinitely whereas Omid suffers from a well-pronounced TM bottleneck.   
+
+throughput-la
+
+\remove{
 \paragraph{Distributed transaction entry}
 We first compare \sys's distributed transaction entry approach to Omid's centralized approach. Figure~\ref{fig:ll} shows the latency of a transaction while applying increasing load on the system. The load is measured in kilo transactions per second (KTPS), and the transaction latency is measured in milliseconds. Figure~\ref{fig:ll:tx1} shows the latency of a transaction with a single read or write. The figure shows that latency obtained by \sys\ is \speedup{4} faster than Omid 2. \sys\ performs better because Omid 2 is throughput oriented and batches the writes to transaction entries, so on every begin stage the client has to wait for all commits in the batch to get persistent.
 Figure~\ref{fig:ll:tx1} shows the latency of transactions with 5 read or write operations. This time the latency obtained by \sys\ is \speedup{1.8} faster than Omid 2. For transactions with 5 operations to an Hbase table, the begin and commit time become negligible.
@@ -126,7 +134,7 @@ We focus on 3 types of transactions: (1) Read, (2) Write and (3) Read modify wri
 
 Figures~\ref{fig:latency:read} and \ref{fig:latency:write} show the latency of a single read and write transaction. Regular transactions (b-r-c, b-w-c) query the TSO at the begin and commit stage which add 0.3ms for read transactions and 3ms for write transactions.
 Figure~\ref{fig:latency:rmw} compares the latency of a read modify write transaction, once using the FP API (br-bwc) and once using the regular transaction API (b-r-w-c).The begin and commit stage of the regular transaction add 3ms to each transaction.
-
+}
 
 
 

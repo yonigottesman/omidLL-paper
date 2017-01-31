@@ -20,7 +20,7 @@
 %% \end{figure*}
 
 \begin{figure}
-\caption{\bf{Experiment architecture.}}
+\caption{Experiment architecture.}
 \label{fig:experiment}
 \end{figure}
 
@@ -41,12 +41,10 @@
 	\caption[]{Transaction size = 10}
     \label{fig:tl-10}
   \end{subfigure}			
-  \caption{\bf{{\sys} versus Omid, in terms of throughput-latency tradeoff. Transactions under study 
-perform 1, 5, and 10 data accesses (50\%reads/50\% writes).  }}
+  \caption{{\sys} versus Omid, in terms of throughput-latency tradeoff. Transactions are considered
+by size (1, 5, and 10 data accesses). }
   \label{fig:throughput-latency}
 \end{figure*}
-
-
 
 \begin{figure*}[]
   \centering
@@ -77,14 +75,13 @@ perform 1, 5, and 10 data accesses (50\%reads/50\% writes).  }}
     \label{fig:latency:lorra10}
   \end{subfigure} \\
   
-    
   \end{tabular}
   \caption{Latency of \sys\ and \sysll\ }
 \end{figure*}
 
-We now evaluate {\sys}'s performance for both the generic and the fast-path transactions, 
-focusing on average transaction latency under a variety of workloads. We compare {\sys\/} 
-(both the generic and fast-path API's) to the mainstream Omid implementation. Both {\sys\/} 
+We evaluate {\sys}'s performance for both the generic and the fast-path transactions, 
+in terms of average transaction latency under a variety of workloads. We compare {\sys\/} 
+(the generic and fast-path API's) to the mainstream Omid implementation. Both {\sys\/} 
 and Omid use HBase as KV-storage backend. Both are configured for low-latency asynchronous 
 post-commit.   
 
@@ -92,8 +89,7 @@ We run the experiments on 12-core Intel Xeon 5 machines with 46GB RAM and 4TB
 SSD storage, interconnected by 1G Ethernet.  Every node runs the HBase and the underlying 
 Hadoop filesystem (HDFS) serving tiers within 8GB JVM containers. 
 
-% Philosophy
-\paragraph{Methodology}
+\subsection{Methodology}
 We project the transaction performance in a very large production KV-store in which the data (read/write) 
 requests are roughly load-balanced. To this end, horizontal scaling of the KV-store and its workload do not 
 affect the performance of the data requests. The control (begin/commit) requests are served by the centralized 
@@ -120,7 +116,8 @@ Transaction sizes (number of reads and writes) follow a Zipfian distribution wit
 In this context, 63\% of the transactions access 3 keys or less, whereas 3\% access 10 keys. The system loads
 vary from 30K to 300K transactions per second (tps). 
 
-\paragraph{Numerical Results} We start by studying the system performance in throughput-latency terms. 
+\subsection{Numerical Results} 
+We start by studying the system performance in throughput-latency terms. 
 Within the workload mix described above, we compare the end-to-end latencies by transaction class -- 
 1, 5, and 10 data accesses. Figure~\ref{fig:throughput-latency} depicts the results, for the three systems. 
 
@@ -130,9 +127,11 @@ thanks to its reduction in commit network trips. For example, single-key transac
 by other operations. Under high loads, {\sys\/} scales almost perfectly whereas Omid suffers from a well-pronounced 
 bottleneck. For instance, Omid's single-key transaction latency soars to 75ms for under 300K tps whereas
 {\sys}'s remains almost flat. The extra delay in Omid is due to commit table write batching, which its TM applies 
-to handle congestion~\cite{Omid2017}. In comparison with Omid, the performance gaps between {\sys}'s flavors 
-are negligible. 
+to handle congestion~\cite{Omid2017}. 
 
+In comparison with Omid, the differences between {\sys}'s flavors are negligible. We now zoom-in on the performance 
+of these two API's, under the system load of 100K transactions per second. Our goal is to evaluate the benefit of the FP
+API for the short transactions versus the impact on the long ones, in multiple scenarios. 
 
 \remove{
 
@@ -148,8 +147,9 @@ Figure~\ref{fig:latency:rmw} compares the latency of a read modify write transac
 
 
 
-
+\remove{
 \Yoni{
   --background noise
   --switch order of charts
   --explain that the LL is better for all TPS so it doesn't matter the point we choose to check}
+}

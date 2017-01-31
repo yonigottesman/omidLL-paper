@@ -41,7 +41,8 @@
 	\caption[]{Transaction of size 10 latency}
     \label{fig:l:tx10}
   \end{subfigure}			
-  \caption{A Comparison between Omid's centralized transaction entry and \sys's distributed transaction entry.}
+  \caption{\bf{{\sys} versus Omid, in terms of throughput-latency tradeoff. Transactions under study 
+perform 1, 5, and 10 data accesses (50\%reads/50\% writes).  }}
   \label{fig:throughput-latency}
 \end{figure}
 
@@ -83,11 +84,13 @@
 
 We now evaluate {\sys}'s performance for both the generic and the fast-path transactions, 
 focusing on average transaction latency under a variety of workloads. We compare {\sys\/} 
-to the mainstream Omid implementation. Both systems use HBase as KV-storage backend.
+(both the generic and fast-path API's) to the mainstream Omid implementation. Both {\sys\/} 
+and Omid use HBase as KV-storage backend. Both are configured for low-latency asynchronous 
+post-commit.   
 
 We run the experiments on 12-core Intel Xeon 5 machines with 46GB RAM and 4TB 
-SSD storage. Every node runs the HBase and the underlying Hadoop filesystem (HDFS) 
-serving tiers within 8GB JVM containers. 
+SSD storage, interconnected by 1G Ethernet.  Every node runs the HBase and the underlying 
+Hadoop filesystem (HDFS) serving tiers within 8GB JVM containers. 
 
 % Philosophy
 \paragraph{Methodology}
@@ -113,15 +116,19 @@ The Zipf parameter is $\theta=0.8$ (derived from production workloads). The resu
 guarantees that neither of the servers suffers an excessive portion of traffic due to super-popular items, i.e., the 
 data requests are load-balanced, similarly to the data itself.  
 
-Transaction size (number of reads and writes) is a Zipfian distribution with $\theta=0.99$ and a cutoff at 10. 
-In this context, e.g., 63\% of the transactions access 3 keys or less, whereas 3\% access 10 keys. 
+Transaction sizes (number of reads and writes) follow a Zipfian distribution with $\theta=0.99$, with a cutoff at 10. 
+In this context, 63\% of the transactions access 3 keys or less, whereas 3\% access 10 keys. The system loads
+vary from 35K to 350K transactions per second (tps). 
 
-\paragraph{Generic Transactions} We first focus on the latency of conventional transactions. 
-Figure~\ref{fig:throughput-latency}(a-c) depicts the average latency of transactions that perform 1, 5, and 10 
-data accesses, respectively. The system loads vary from 35 to 350 transactions per second. We see that 
-{\sys\/} scales almost infinitely whereas Omid suffers from a well-pronounced TM bottleneck.   
+\paragraph{Numerical Results} We first focus on the latency of conventional (non-fast-path) transactions. 
+Within this mix, we separately focus on transaction classes by size -- 1, 5, and 10 data accesses.
 
-throughput-la
+Figure~\ref{fig:throughput-latency}(a-c) depicts the throughput-latency curves per transaction class. 
+{\sys\/} is ubiquitously faster. It exhibits lower latencies under light loads, thanks to its reduction in commit network trips. 
+For example, its  single-key transaction latency is 5ms vs Omid's 20ms; for long transactions, the gap is negligible. Furthermore, {\sys\/} scales almost perfectly under high loads 
+whereas Omid suffers from a well-pronounced TM bottleneck. Namely, Omid's TM batches the commit table writes 
+aggressively in order to handle congestion. This comes at the expense of latency that soars above 70ms for single-key 
+transactions under 300K tps. 
 
 \remove{
 \paragraph{Distributed transaction entry}

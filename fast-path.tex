@@ -175,28 +175,30 @@ only transactions that  access different data objects can be re-ordered.
 %
 \Statex
 \Procedure{writeVersion}{old, key, value} 
-	\State maxVersion $\leftarrow$ key's  maxVersion
-	\State ver $\leftarrow$ $\max$(old, maxVersion) 
-	\If{mask(ver, $2^\ell-1$) = $2^\ell-1$} 
-		\State \Comment cannot increment version locally -- abort
-		\State return abort 
-	\EndIf
-	\State 	ver $\leftarrow$ ver  $+1$ 
+%	\State maxVersion $\leftarrow$ key's  maxVersion
+%	\State ver $\leftarrow$ $\max$(old, maxVersion) 
+%	\If{mask(ver, $2^\ell-1$) = $2^\ell-1$} 
+%		\State \Comment cannot increment version locally -- abort
+%		\State return abort 
+%	\EndIf
+%	\State 	ver $\leftarrow$ ver  $+1$ 
 \Atomic 
 	\If{ds.get(last version of key)  = old  }
+	\State ver $\leftarrow$ ds.F\&I(key)  
 	\State ds.put(\tuple{key, ver} with commit = ver)  
-	\State {\sc bumpVersion}(key, ver)
 	\State return commit
 	\Else \State return abort \EndIf
 \EndAtomic
 \EndProcedure
 %\Statex
+\remove{
 \Procedure{bumpVersion}{key, $ts$} 
 \Statex \Comment called by transactional read of key with  $ts_r = ts$
 	\State {\bf atomically} set key's maxVersion to
 	\State \hspace{10mm} $\max$($ts$, key's maxVersion) 
 \EndProcedure
 \Statex
+}
 \Procedure{br}{key} 
 \State rec  $\leftarrow$ ds.get(last committed record of key) 
 \State  return \tuple{rec.version, rec.value}
@@ -213,7 +215,7 @@ only transactions that  access different data objects can be re-ordered.
 
 The generic fast fast path algorithm is given in Algorithm~\ref{alg:fp}. 
 %
-Singleton reads simply return the value associated wtih the  latest committed version of the requested key they encounter.  
+Singleton reads simply return the value associated with the  latest committed version of the requested key they encounter.  
 They ignore tentative versions, which may lead to missing the latest commit in case its post-commit did not complete, 
 but is allowed by our semantics. 
 FP reads can forgo the begin call since they do not need to obtain a snapshot time a priori. 
@@ -261,24 +263,61 @@ it reads the old version of the key before $FP_1$'s update. This scenario is ill
 In order for $T_1$ to detect this 
 conflict, the version written by $FP_1$ has to exceed $T_1$'s snapshot time, i.e., $ts_r$.
 To this end, we maintain a new field \emph{maxVersion} for each key, which is at least as 
-high as the key's latest version. In addition, every transactional read \emph{bumps} key's version 
-number to the reading transaction's $ts_r$. 
+high as the key's latest committed version. 
+This field is updated by singleton writes and during the post-commit of transactional writes.
+In addition, every transactional read \emph{bumps} the key's {maxVersion}
+to the reading transaction's $ts_r$. 
 Writes consult this field and always select a new version that exceeds this value.
-Thus, once $T_1$ reads key and bumps its \emph{maxVersion}, 
+Thus, once $T_1$ reads a key and bumps its {maxVersion}, 
 no FP transaction can write a version of key that should be 
 included in $T_1$'s snapshot.
 
+We assume that the data store supports two atomic operations for updating {maxVersion}.
+The first is a fetch-and-increment operation, F\&I, which increments {maxVersion} and returns its
+new value; F\&I throws an abort exception in case of wrap-around of the local component of 
+the version. The second operation, \emph{bump}, takes a new version  as a parameter and
+sets  \emph{maxVersion} to the maximum between this parameter and its old value.
+Singleton writes  increment the version using F\&I, and transactional operations (reads and post-commits)
+perform { bump} together with their operations. 
+
 The  \code{br} and \code{wc} operations are similar to \code{brc} and \code{bwc}, 
-respecitively, except that \code{wc} uses the version read by \code{br} instead of 
+respectively, except that \code{wc} uses the version read by \code{br} instead of 
 reading the object's latest committed version from the data store.
 
 \subsection{Implementation and optimization}
 \label{ssec:fast-impl}
 
+When implementing support for \sys's fast path in HBase, 
+we observed that associating a maxVersion field with each key is wasteful,
+both in terms of space, and in terms of the number of updates this field undergoes.
+Instead, we aggregate the maxVersions of many keys in a single variable, 
+which we call the \emph{Local Version Clock (LVC)}.
+Like many state-of-the-art data stores, HBase data is \emph{sharded} (partitioned) 
+across many \emph{regions}, and is deployed on multiple  \emph{region servers}, each of which serves
+several hundreds of regions. Our solution implements one LVC in each region server. 
+
+We implement the two required atomic methods - F\&I and bump on the LVC using atomic hardware operations (CAS and F\&I). 
+In addition, 
+HBase   natively supports  a check\&mutate operation, which holds a lock on the affected key for the duration of the operation.
+Our implementation of the singleton write uses  check\&mutate to implement the atomic block, and calls LVC.F\&I inside this block.
+Transactional reads and post-commits call bump inside a check\&mutate  block where they perform their read and version update, respectively. 
+Note that although check\&mutate only holds a lock on the affected key, the joint update of the key and the LVC is consistent
+because it uses a form of two-phase locking: when check\&mutate begins, its locks the key, then the access to maxVersion effectively
+locks it for the duration of its update and releases the key; this is followed by an update of the key's record and the key's lock being released.
+
+Note that a transactional read's bump modifies the LVC only if its $ts_r$ exceeds it, and in particular, 
+a transaction performing multiple reads in the same region needs to bump it only once. 
+Thus, using a shared LVC for the entire region reduces the number of updates.
+
+The LVC is kept in memory, and is not persisted. 
+There are two issues to handle in this context. First,
+Hbase migrates region control from time to time across region servers, to balance load and handle failures. 
+Second, a region server may fail and be restarted. 
+In both cases, we need to ensure that the monotonicity of the LVC associated with the (migrated or recovered) region is preserved.
+To this end, when a region is started in a new server (following migration or recovery), the first operation accessing it
+in the new server accesses the TM to increment the global clock, and then 
+bumps the local clock to the value of the global clock.
+Since the LVC value can never exceed the global clock's value, this bootstrapping procedure maintains its monotonicity.
 
 
-\inred{Todo: explain the cost of keeping dummy records with read versions -- dummy records take up space, need to be ignored in reads, require physical writes because won't all be cached. Instead, we store one version, which we call the \emph{Local Version Clock (LVC)} per HBase storage node, called region server in HBase jargon. We have an atomic operation that reads the LVC and writes to a record for \code{bw}, and 
-one that reads a record and bumps the LVC for transactional reads. 
-
-The local version is cached, need not be persisted. On server recovery or region migration, we need to bump the local clock.}
 

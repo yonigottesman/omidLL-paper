@@ -24,27 +24,27 @@
 \label{fig:experiment}
 \end{figure}
 
-\begin{figure}[!h]
+\begin{figure*}
   \centering
-  \begin{subfigure}[t]{0.4\textwidth}
-	\includegraphics[width=\textwidth]{figs/omdLL1.pdf}
-	\caption[]{Transaction of size 1 latency}
-    \label{fig:ll:tx1}
+  \begin{subfigure}[t]{0.33\textwidth}
+	\includegraphics[width=\textwidth]{figs/thpt-latency-1.png}
+	\caption[]{Transaction size = 1}
+         \label{fig:tl-1}
   \end{subfigure}
-  \begin{subfigure}[t]{0.4\textwidth}
-	\includegraphics[width=\textwidth]{figs/omdLL5.pdf}
-	\caption[]{Transaction of size 5 latency}
-    \label{fig:l:tx5}
+  \begin{subfigure}[t]{0.33\textwidth}
+	\includegraphics[width=\textwidth]{figs/thpt-latency-5.png}
+	\caption[]{Transaction size = 5}
+    \label{fig:tl-5}
   \end{subfigure}
-    \begin{subfigure}[t]{0.4\textwidth}
-	\includegraphics[width=\textwidth]{figs/omdLL10.pdf}
-	\caption[]{Transaction of size 10 latency}
-    \label{fig:l:tx10}
+    \begin{subfigure}[t]{0.33\textwidth}
+	\includegraphics[width=\textwidth]{figs/thpt-latency-10.png}
+	\caption[]{Transaction size = 10}
+    \label{fig:tl-10}
   \end{subfigure}			
   \caption{\bf{{\sys} versus Omid, in terms of throughput-latency tradeoff. Transactions under study 
 perform 1, 5, and 10 data accesses (50\%reads/50\% writes).  }}
   \label{fig:throughput-latency}
-\end{figure}
+\end{figure*}
 
 
 
@@ -118,7 +118,7 @@ data requests are load-balanced, similarly to the data itself.
 
 Transaction sizes (number of reads and writes) follow a Zipfian distribution with $\theta=0.99$, with a cutoff at 10. 
 In this context, 63\% of the transactions access 3 keys or less, whereas 3\% access 10 keys. The system loads
-vary from 35K to 350K transactions per second (tps). 
+vary from 30K to 300K transactions per second (tps). 
 
 \paragraph{Numerical Results} We start by studying the system performance in throughput-latency terms. 
 Within the workload mix described above, we compare the end-to-end latencies by transaction class -- 
@@ -126,11 +126,13 @@ Within the workload mix described above, we compare the end-to-end latencies by 
 
 Both {\sys\/} implementations are ubiquitously faster than Omid. {\sys\/} exhibits lower latencies under light loads, 
 thanks to its reduction in commit network trips. For example, single-key transactions complete on average within 
-5ms under {\sys}'s generic API, versus Omid's 20ms. For longer transactions, the gap is remains fixed but is amortized 
+5ms under {\sys}'s generic API, versus Omid's 20ms. For longer transactions, the gap remains fixed but is amortized 
 by other operations. Under high loads, {\sys\/} scales almost perfectly whereas Omid suffers from a well-pronounced 
-TM bottleneck. For instance, Omid's single-key transaction latency soars above 70ms for under 300K tps whereas
+bottleneck. For instance, Omid's single-key transaction latency soars to 75ms for under 300K tps whereas
 {\sys}'s remains almost flat. The extra delay in Omid is due to commit table write batching, which its TM applies 
-to handle congestion~\cite{Omid2017}. 
+to handle congestion~\cite{Omid2017}. In comparison with Omid, the performance gaps between {\sys}'s flavors 
+are negligible. 
+
 
 \remove{
 

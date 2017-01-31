@@ -156,45 +156,54 @@ only transactions that  access different data objects can be re-ordered.
 [0]{}
 %%%%%%%%
 \begin{algorithmic}
+\small
 %\State local  \code{ts$_r$} \Comment  read version of ongoing transaction
 %\Statex
 \Procedure{brc}{key}
-\State
-return latest non-tentative version of key
+\State rec  $\leftarrow$ ds.get(last committed record of key) 
+\State  return rec.value
 \EndProcedure
 %
 \Statex
 \Procedure{bwc}{key, value} 
-	\State ver $\leftarrow$ commit field of key's latest version
-	\State TODO take into account maxVersion
-	\If{ver = nil}  \Comment found tentative value -- abort 
+	\State old $\leftarrow$ ds.get(last version of key)
+	\If{old = nil}  \Comment found tentative value -- abort 
 		\State return abort 
 	\EndIf
+	\State return {\sc writeVersion}(old, key, value)
+\EndProcedure
+%
+\Statex
+\Procedure{writeVersion}{old, key, value} 
+	\State maxVersion $\leftarrow$ key's  maxVersion
+	\State ver $\leftarrow$ $\max$(old, maxVersion) 
 	\If{mask(ver, $2^\ell-1$) = $2^\ell-1$} 
+		\State \Comment cannot increment version locally -- abort
 		\State return abort 
 	\EndIf
-	ver $\leftarrow$ ver $+1$ 
+	\State 	ver $\leftarrow$ ver  $+1$ 
 \Atomic 
-	\If{last committed version of key = ver$-1$}
+	\If{ds.get(last version of key)  = old  }
 	\State ds.put(\tuple{key, ver} with commit = ver)  
-	\State $maxVersion \leftarrow \max(maxVersion, ver)+1$
+	\State {\sc bumpVersion}(key, ver)
+	\State return commit
 	\Else \State return abort \EndIf
 \EndAtomic
 \EndProcedure
 %\Statex
-\Procedure{bumpVersion}{key, $ts_r$} 
-\Statex \Comment performed by transactional read
-\State TODO
-%	\State	write \emph{(key, `dummy', $ts_r$, $ts_r$, key)} to data store 
+\Procedure{bumpVersion}{key, $ts$} 
+\Statex \Comment called by transactional read of key with  $ts_r = ts$
+	\State {\bf atomically} set key's maxVersion to
+	\State \hspace{10mm} $\max$($ts$, key's maxVersion) 
 \EndProcedure
-
 \Statex
 \Procedure{br}{key} 
-\State TODO % $\langle$ \code{ts$_r$}, value  $\rangle \leftarrow$ getWithTs(key)
-\State  return \tuple{$ts_r$, value}
+\State rec  $\leftarrow$ ds.get(last committed record of key) 
+\State  return \tuple{rec.version, rec.value}
 \EndProcedure
+\Statex
 \Procedure{wc}{h, key, value} 
-\State TODO
+\State return {\sc writeVersion}(h, key, value)
 \EndProcedure
 
 \end{algorithmic}
@@ -204,13 +213,19 @@ return latest non-tentative version of key
 
 The generic fast fast path algorithm is given in Algorithm~\ref{alg:fp}. 
 %
-Singleton reads simply return the latest committed version of the requested key they encounter.  
+Singleton reads simply return the value associated wtih the  latest committed version of the requested key they encounter.  
 They ignore tentative versions, which may lead to missing the latest commit in case its post-commit did not complete, 
 but is allowed by our semantics. 
 FP reads can forgo the begin call since they do not need to obtain a snapshot time a priori. 
 They can also forgo the commit call, since they perform a single read, and hence their `snapshot' is trivially valid.
- 
-A singleton writes has two concerns: (1) it needs to  produce a new version number that exceeds all committed ones and
+
+In case  \code{bwc} encounters a tentative version it does not try to resolve it, but rather simply aborts.
+This may cause false aborts in case the transaction that wrote the tentative version has committed and did not 
+complete post-commit. In other cases, it prioritizes regular transactions over FP ones. We choose this approach since
+the goal is to complete FP transactions quickly, and if an FP transaction cannot complete quickly, it might as well be 
+retried as a regular one.
+   
+A singleton write has two additional concerns: (1) it needs to  produce a new version number that exceeds all committed ones and
 is smaller than any commit timestamp that will be assigned to a regular transaction in the future.
 (2)  It needs to make sure that conflicts with regular transactions are detected. 
 
@@ -221,37 +236,46 @@ reserved to sequence numbers assigned by FP writes, and the the most significant
 the global version determined by the TM. Thus, the TM always produces timestamps where the $\ell$ lower bits are zeros,
 and increases the global clock by $2^\ell$ on every begin and commit call.  
 
-Singleton writes then read the object's latest committed version and increment it, if possible without overflowing the sequence number. 
+Singleton writes then read the object's latest committed version and increment it, provided that they can do so 
+ without overflowing the sequence number. 
 In case the lower $\ell$ bits are all ones, there is a need to increment the global clock, and so the FP transaction aborts and is retried
 as a regular one. 
-In case  \code{bwc} encounters a tentative version it does not try to resolve it, but rather simply aborts.
-This may cause false aborts in case the transaction that wrote the tentative version has committed and did not 
-complete post-commit. In other cases, it prioritizes regular transactions over FP ones. We choose this approach since
-the goal is to complete FP transactions quickly, and if an FP transaction cannot complete quickly, it might as well be 
-retried as a regular one.
 
 It is important to note that the singleton write needs to \emph{atomically} find the latest version and produce a new one that exceeds it, 
-to make sure that no other transaction create a newer version in the interim.
+to make sure that no other transaction creates a newer version in the interim.
 Below, we explain how we implement such atomic conditional updates in HBase as part of \sys. 
 
 Next, we address (2), namely conflicts between FP and regular transactions.
 Note that the atomic conditional write in \code{bwc} takes care of conflicts among singletons.
 In case an ongoing regular transaction writes to a key before \code{bwc} accesses it, 
 \code{bwc} finds the tentative write and aborts. It therefore remains to consider the case that
-a regular transaction $T_1$ writes key after FP transaction $FP_1$, but must abort because 
-it reads the old version of key before $FP_1$'s update. In order for $T_1$ to detect this 
-conflict, the version written by $FP_1$ has to exceed its snapshot time, i.e., $ts_r$.
+a regular transaction $T_1$ writes to some key after FP transaction $FP_1$, but must abort because 
+it reads the old version of the key before $FP_1$'s update. This scenario is illustrated in Figure~\ref{fig:why-bump}. 
+
+\begin{figure}[htb]
+\includegraphics[width=\columnwidth]{figs/FP-why-bump}
+\caption{Conflict between FP transaction $FP_1$ and regular transaction $T_1$.}
+\label{fig:why-bump}
+\end{figure}
+
+In order for $T_1$ to detect this 
+conflict, the version written by $FP_1$ has to exceed $T_1$'s snapshot time, i.e., $ts_r$.
 To this end, we maintain a new field \emph{maxVersion} for each key, which is at least as 
 high as the key's latest version. In addition, every transactional read \emph{bumps} key's version 
 number to the reading transaction's $ts_r$. 
 Writes consult this field and always select a new version that exceeds this value.
-Thus, once $T_1$ reads key, no FP transaction can write a version of key that should be 
+Thus, once $T_1$ reads key and bumps its \emph{maxVersion}, 
+no FP transaction can write a version of key that should be 
 included in $T_1$'s snapshot.
 
-\inred{Todo: add \code{br} and \code{wc}}
+The  \code{br} and \code{wc} operations are similar to \code{brc} and \code{bwc}, 
+respecitively, except that \code{wc} uses the version read by \code{br} instead of 
+reading the object's latest committed version from the data store.
 
 \subsection{Implementation and optimization}
 \label{ssec:fast-impl}
+
+
 
 \inred{Todo: explain the cost of keeping dummy records with read versions -- dummy records take up space, need to be ignored in reads, require physical writes because won't all be cached. Instead, we store one version, which we call the \emph{Local Version Clock (LVC)} per HBase storage node, called region server in HBase jargon. We have an atomic operation that reads the LVC and writes to a record for \code{bw}, and 
 one that reads a record and bumps the LVC for transactional reads. 

@@ -120,20 +120,19 @@ Transaction sizes (number of reads and writes) follow a Zipfian distribution wit
 In this context, 63\% of the transactions access 3 keys or less, whereas 3\% access 10 keys. The system loads
 vary from 35K to 350K transactions per second (tps). 
 
-\paragraph{Numerical Results} We first focus on the latency of conventional (non-fast-path) transactions. 
-Within this mix, we separately focus on transaction classes by size -- 1, 5, and 10 data accesses.
+\paragraph{Numerical Results} We start by studying the system performance in throughput-latency terms. 
+Within the workload mix described above, we compare the end-to-end latencies by transaction class -- 
+1, 5, and 10 data accesses. Figure~\ref{fig:throughput-latency} depicts the results, for the three systems. 
 
-Figure~\ref{fig:throughput-latency}(a-c) depicts the throughput-latency curves per transaction class. 
-{\sys\/} is ubiquitously faster. It exhibits lower latencies under light loads, thanks to its reduction in commit network trips. 
-For example, its  single-key transaction latency is 5ms vs Omid's 20ms; for long transactions, the gap is negligible. Furthermore, {\sys\/} scales almost perfectly under high loads 
-whereas Omid suffers from a well-pronounced TM bottleneck. Namely, Omid's TM batches the commit table writes 
-aggressively in order to handle congestion. This comes at the expense of latency that soars above 70ms for single-key 
-transactions under 300K tps. 
+Both {\sys\/} implementations are ubiquitously faster than Omid. {\sys\/} exhibits lower latencies under light loads, 
+thanks to its reduction in commit network trips. For example, single-key transactions complete on average within 
+5ms under {\sys}'s generic API, versus Omid's 20ms. For longer transactions, the gap is remains fixed but is amortized 
+by other operations. Under high loads, {\sys\/} scales almost perfectly whereas Omid suffers from a well-pronounced 
+TM bottleneck. For instance, Omid's single-key transaction latency soars above 70ms for under 300K tps whereas
+{\sys}'s remains almost flat. The extra delay in Omid is due to commit table write batching, which its TM applies 
+to handle congestion~\cite{Omid2017}. 
 
 \remove{
-\paragraph{Distributed transaction entry}
-We first compare \sys's distributed transaction entry approach to Omid's centralized approach. Figure~\ref{fig:ll} shows the latency of a transaction while applying increasing load on the system. The load is measured in kilo transactions per second (KTPS), and the transaction latency is measured in milliseconds. Figure~\ref{fig:ll:tx1} shows the latency of a transaction with a single read or write. The figure shows that latency obtained by \sys\ is \speedup{4} faster than Omid 2. \sys\ performs better because Omid 2 is throughput oriented and batches the writes to transaction entries, so on every begin stage the client has to wait for all commits in the batch to get persistent.
-Figure~\ref{fig:ll:tx1} shows the latency of transactions with 5 read or write operations. This time the latency obtained by \sys\ is \speedup{1.8} faster than Omid 2. For transactions with 5 operations to an Hbase table, the begin and commit time become negligible.
 
 \paragraph{FP API latency}
 Figure~\ref{fig:latency} compares the latency observed by YCSB when running regular and FP transactions.

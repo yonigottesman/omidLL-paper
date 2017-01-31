@@ -178,9 +178,9 @@ Since the approach of CockroachDB slows down transactional writes, and since Omi
 \sys\ adopts this mechanism from Omid. 
 
 \paragraph{Distributed commit entry.}
-Omid 1 and Tephra replicate commit entries among all active clients, which consumes high bandwidth and does not scale. Omid and 
-CockroachDB instead use dedicated tables. CockroachDB updates the table in a distributed manner, while Omid has the centralized 
-TM persist all commits. 
+The early generation of Omid~\cite{OmidICDE2014} (referred to as Omid1) and Tephra replicate commit entries among all active clients, 
+which consumes high bandwidth and does not scale. Omid and CockroachDB instead use dedicated tables. CockroachDB updates the table in a distributed manner, 
+while Omid has the centralized TM persist all commits. 
 Our experiments show that the centralized access to commit entries is Omid's principal scalability bottleneck, and while this bottleneck is mitigated via batching commit table updates, this also increases latency.
 Omid chose this  option as it was designed primarily for high throughput. Here, on the other hand, we target  low latency. 
 

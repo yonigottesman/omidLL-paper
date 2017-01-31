@@ -31,7 +31,7 @@ Mail users browse their mail and search for content, issuing many billions of re
 expect a consistent experience, where messages never 
 disappear, starred content gets prioritized in search, folder counters are reliable, etc.
 
-The Yahoo! Mail metadata and search platform is built on top of Apache HBase~\cite{hbase}, 
+The Yahoo! Mail metadata platform is built on top of Apache HBase~\cite{hbase}, 
 which provides reliable and scalable key-value storage. The system's first generation
 was built without transaction support. This exposed  developers to very complex programming scenarios 
 to achieve ACID behavior (e.g., consistent folder listings, atomic updates of multiple counters). 
@@ -42,8 +42,8 @@ We have looked into building the next generation using
 Unfortunately, while this makes programming much easier, it also jeopardizes 
 the real-time latency SLA for interactive user experience. For example,  
 simple updates and point queries must complete within single-digit milliseconds, 
-whereas Omid, which is designed for high-throughput data pipelines~\cite{Omid2017}, 
-induces a latency of tens, or even hundreds of milliseconds under high loads. 
+whereas Omid, which was designed for high-throughput data pipelines~\cite{Omid2017}, 
+can induce a latency of tens of milliseconds under high loads. 
 
 Motivated by this example, we have developed {\sys\/} -- a low-latency {\em and\/} high-throughput 
 transaction processing system for Apache HBase. Similarly to other modern transaction 

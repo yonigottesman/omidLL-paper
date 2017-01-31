@@ -77,7 +77,7 @@ by size (1, 5, and 10 data accesses). }
   \end{subfigure} \\
   
   \end{tabular}
-  \caption{Zoom-in on latency breakdown under specific workloads.}
+  \caption{Zoom-in on latency breakdown in specific scenarios, under the 100K tps workload.}
   \label{fig:zoomin}
 \end{figure*}
 
@@ -132,9 +132,13 @@ bottleneck. For instance, Omid's single-key transaction latency soars to 75ms fo
 {\sys}'s remains almost flat. The extra delay in Omid is due to commit table write batching, which its TM applies 
 to handle congestion~\cite{Omid2017}. %In comparison with Omid, the differences between {\sys}'s flavors are negligible. 
 
-We now zoom-in on the performance 
-of these two API's, under the system load of 100K transactions per second. Our goal is to evaluate the benefit of the FP
-API for the short transactions versus the impact on the long ones, in multiple scenarios. 
+We now zoom-in on the latency of the three TPSs, under a moderate load of 100K tps. Namely, we dissect the end-to-end 
+transaction latency to its begin, read/write, and commit components. Figure~\ref{fig:zoomin} illustrates the breakdown. 
+With Omid, the control requests dominate the delay: 94\% for single-write, 89\% for single-read, and 61\%
+even for 10-access transactions! Note that Omid's begins are no less expensive than commits because both 
+requests get blocked on commit table writes. 
+
+TBD 
 
 \remove{
 

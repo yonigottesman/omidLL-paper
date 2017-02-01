@@ -124,8 +124,8 @@ We start by studying the system performance in throughput-latency terms.
 Within the workload mix described above, we compare the end-to-end latencies by transaction class -- 
 1, 5, and 10 data accesses. Figure~\ref{fig:throughput-latency} depicts the results, for the three systems. 
 
-Both {\sys\/} implementations are ubiquitously faster than Omid. {\sys\/} exhibits lower latencies under light loads, 
-thanks to its reduction in commit network trips. For example, single-key transactions complete on average within 
+Both {\sys\/} implementations are ubiquitously faster than Omid. They exhibit lower latencies under light loads, 
+thanks to reduction in network trips. For example, single-key transactions complete on average within 
 5ms under {\sys}'s generic API, versus Omid's 20ms. For longer transactions, the gap remains fixed but is amortized 
 by other operations. Under high loads, {\sys\/} scales almost perfectly whereas Omid suffers from a well-pronounced 
 bottleneck. For instance, Omid's single-key transaction latency soars to 75ms for under 300K tps whereas

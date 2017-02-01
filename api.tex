@@ -28,7 +28,7 @@ if the version already exists, its value is updated;
 otherwise, a new version is added. Garbage collection of obsolete versions is a separate
 process.
 \item [\code{remove}] -- remove an object with a given key and version
-\item [check\&mutate] --  data stores often provide means to atomically read and
+\item [\code{check\&mutate}] --  data stores often provide means to atomically read and
 update an object, e.g., HBase exports CheckAndMutate operations, which are 
 internally implemented using a RW lock, whereas BigTable supports row transactions. 
 We will extend this capability below in order to implement certain atomic
@@ -37,7 +37,7 @@ operations at the data store level.
 
 \subsection{Transaction semantics} \label{ssec:transactions}
 
-A \emph{transaction} is a sequence of read and write operations on different objects that ensures the so-called ACID properties:
+A \emph{transaction} is a sequence of read and write operations on different objects that ensures the ACID properties:
 \emph{atomicity} (all-or-nothing execution), \emph{consistency} (preserving each object's semantics), 
 \emph{isolation} (in that concurrent transactions do not see each other's partial updates), and 
 \emph{durability} (whereby updates survive crashes).

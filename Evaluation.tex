@@ -143,14 +143,14 @@ With {\sys\/}, transaction latency is dominated by data access. For example, in 
 not optimized for short transactions. For example, a single-write transaction spends approximately 0.4 ms on 
 begin, 3 ms on commit, and 2 ms on the write itself. 
 
-The fast-path API delivers better performance for this traffic. For instance, the single-write (bwc) takes 2.4 ms versus 
-5.4 ms for the generic b-w-c; the single-read (brc) takes 1.5 ms (versus 2.3 ms for b-r-c). On the other hand, the FP incurs 
-its toll on the data path in the concurrent generic transactions, which resort to atomic check-and-mutate operations instead
-of simple writes. For example, a 10-access transaction takes 24.4 ms versus 20.8 ms. 
+The FP API delivers better performance for this traffic. For instance, the single-write ({\code bwc}) takes 2.4 ms versus 
+5.4 ms for the generic {\code b-w-c}; the single-read ({\code brc}) takes 1.5 ms (versus 2.3 ms for {\code b-r-c}). On the other hand, 
+the FP incurs  a toll on the data path in the concurrent generic transactions, which resort to atomic check\&mutate operations 
+instead of simple writes. For example, a 10-access transaction takes 24.4 ms versus 20.8 ms. 
 
 We conduct a standalone experiment to evaluate the fast-path implementation of transactions that read and then write 
 to the same key. We modify the original setup to have 20\% of transactions of this kind; the rest 80\% remain the same.
-Figure~\ref{fig:rmw} depicts the results. The fast-path (br-wc) API completes within 3.9 ms versus 7 ms for generic {\sys\/} 
+Figure~\ref{fig:rmw} depicts the results. The fast-path ({\code br-wc}) API completes within 3.9 ms versus 7 ms for generic {\sys\/} 
 and 30.9 ms for Omid. 
 
 Figure~\ref{fig:fp-tradeoff} summarizes the performance tradeoffs entailed by the fast-path API, by transaction class. 

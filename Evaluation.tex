@@ -109,9 +109,9 @@ drivers exploits up to 3 client nodes. Figure~\ref{fig:experiment} depicts the e
 Our test cluster stores approximately 23M keys, which amounts to 7.66B keys in the emulated system. 
 The values are 2K big, which translates to roughly 46GB data, replicated three-way in HDFS. The keys are hash-partitioned
 across the servers, thereby balancing the amount of data governed by each server. The data accesses are 50\% reads and 
-50\% writes in all cases, unless specified otherwise. The key access frequencies follow a Zipf distribution, generated following 
+50\%, unless specified otherwise. The key access frequencies follow a Zipf distribution, generated following 
 the description in~\cite{Gray:1994:QGB:191839.191886}. The Zipf parameter is $\theta=0.8$ (derived from production workloads). 
-The resulting distribution is very heavy-tailed, which guarantees that neither of the servers suffers an excessive portion of traffic 
+This distribution is very heavy-tailed, which guarantees that neither of the servers suffers an excessive portion of traffic 
 due to super-popular items, i.e., the data requests are load-balanced, similarly to the data itself.  
 
 Transaction sizes (number of reads and writes) follow a Zipfian distribution with $\theta=0.99$, with a cutoff at 10. 
@@ -143,31 +143,32 @@ With {\sys\/}, transaction latency is dominated by data access. For example, in 
 not optimized for short transactions. For example, a single-write transaction spends approximately 0.4 ms on 
 begin, 3 ms on commit, and 2 ms on the write itself. 
 
-\begin{figure}
-\caption{Performance tradeoffs with the fast-path API in {\sys}.}
-\label{fig:fp-tradeoff}
-\end{figure}
+The fast-path API delivers better performance for this traffic. For instance, the single-write (bwc) takes 2.4 ms versus 
+5.4 ms for the generic b-w-c; the single-read (brc) takes 1.5 ms (versus 2.3 ms for b-r-c). On the other hand, the FP incurs 
+its toll on the data path in the concurrent generic transactions, which resort to atomic check-and-mutate operations instead
+of simple writes. For example, a 10-access transaction takes 24.4 ms versus 20.8 ms. 
 
-The FP API delivers better performance for this traffic -- e.g., 2.4 ms for single writes (versus 5.4 ms) and 1.5 ms 
-for single reads (versus 2.3 ms). On the other hand, it incurs its toll on the data path in the concurrent generic 
-transactions, which resort to atomic check-and-mutate operations instead of simple writes. For example, a 10-access 
-transaction takes 24.4 ms versus 20.8 ms. 
+We conduct a standalone experiment to evaluate the fast-path implementation of transactions that read and then write 
+to the same key. We modify the original setup to have 20\% of transactions of this kind; the rest 80\% remain the same.
+Figure~\ref{fig:rmw} depicts the results. The fast-path (br-wc) API completes within 3.9 ms versus 7 ms for generic {\sys\/} 
+and 30.9 ms for Omid. 
 
 Figure~\ref{fig:fp-tradeoff} summarizes the performance tradeoffs entailed by the fast-path API, by transaction class. 
+Here, the speedup for the single-write transactions is 2.3x, whereas the maximal slowdown is 14.8\%. We posit that 
+in systems geared towards real-time processing this is a reasonable tradeoff, since long transactions are less frequent
+and less sensiting to moderate extra delay. 
 
-\remove{
+\begin{figure}[t]
+\includegraphics[width=.5\textwidth]{figs/stack-br-wc.png}
+\caption{Zoom-in on latency breakdown in two-key (read+write) transactions, 
+under the 100K tps workload.}
+\label{fig:rmw}
+\end{figure}
 
-\paragraph{FP API latency}
-Figure~\ref{fig:latency} compares the latency observed by YCSB when running regular and FP transactions.
-We focus on 3 types of transactions: (1) Read, (2) Write and (3) Read modify write.
-
-Figures~\ref{fig:latency:read} and \ref{fig:latency:write} show the latency of a single read and write transaction. Regular transactions (b-r-c, b-w-c) query the TSO at the begin and commit stage which add 0.3ms for read transactions and 3ms for write transactions.
-Figure~\ref{fig:latency:rmw} compares the latency of a read modify write transaction, once using the FP API (br-bwc) and once using the regular transaction API (b-r-w-c).The begin and commit stage of the regular transaction add 3ms to each transaction.
-}
-
-
-
-
+\begin{figure}
+\caption{Summary of performance tradeoffs with the fast-path API in {\sys}.}
+\label{fig:fp-tradeoff}
+\end{figure}
 
 \remove{
 \Yoni{

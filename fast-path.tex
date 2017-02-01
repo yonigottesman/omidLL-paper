@@ -54,7 +54,7 @@ Returns the read value along with a \emph{handle} h for continuing the transacti
 \end{description}
 
 Read-only transactions never abort, but \code{bwc} and \code{wc} may abort. 
-If an FP transaction aborts, it can be retried either using the fast path again, or as a regular transaction.
+If an FP transaction aborts, it can be retried either via the fast path again, or as a regular transaction.
 
 \remove{
 A more elaborate example is a read-modify-write API: 

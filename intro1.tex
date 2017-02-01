@@ -2,10 +2,10 @@
 In recent years, transaction processing~\cite{Gray:1992:TPC:573304} technologies have paved their way into many-petabyte big data 
 platforms~\cite{Percolator2010,Spanner2012,Omid2017}. 
 %In some cases, they are built into the storage system itself~\cite{Spanner2012} whereas in the others they are standalone services~\cite{Omid2017}. 
-In a number of industrial systems~\cite{Percolator2010,Omid2017,tephra,cockroach}, transaction management complements 
+Modern industrial  systems~\cite{Percolator2010,Omid2017,tephra,cockroach} complement 
 existing underlying key-value storage with {\em atomicity}, {\em consistency}, {\em isolation\/} and 
-{\em durability} (ACID) semantics that enable programmers perform 
-complex data manipulation without over-complicating their applications. Transaction awareness 
+{\em durability} (ACID) semantics that enable programmers to perform 
+complex data manipulation without over-complicating their applications. Transaction support 
 in web-scale applications started from specific use cases like real-time content indexing~\cite{Percolator2010,
 Omid2017} but quickly expanded to 
 %generic high-level abstractions, e.g., 
@@ -48,20 +48,23 @@ can induce a latency of tens of milliseconds under high loads.
 Motivated by this example, we have developed {\sys\/} -- a low-latency {\em and\/} high-throughput 
 transaction processing system for HBase. Similarly to other modern transaction 
 managers~\cite{Percolator2010,Spanner2012,Omid2017,cockroach},
-{\sys\/} implements the {\em snapshot isolation} (SI) consistency model~\cite{DBLP:conf/sigmod/BerensonBGMOO95},
+{\sys\/} provides  \emph{snapshot isolation (SI)}~\cite{DBLP:conf/sigmod/BerensonBGMOO95},
 which scales better than traditional serializability implementations. {\sys\/} is based on Omid~\cite{omid}, 
-and dissipates the principal bottleneck present therein.
+but dissipates the principal bottleneck present therein.
 %in the prior implementations the overhead of begin and commit operations. 
-Its advantage is maximized for short  transactions, which are prevalent in latency-sensitive applications;
-\sys\ processes them in a handful of milliseconds. The new protocol is also favorable for system throughput. 
+Its advantage is maximized for short  transactions, which are prevalent in latency-sensitive applications.
+\sys\ processes  such transactions in a handful of milliseconds. The new protocol is also favorable for system throughput. 
 %, which is \inred{an order of magnitude higher than} previously achievable limits. 
 %Different aspects of our protocol are inspired by other systems, while their combination is novel.
 %, to the best of our knowledge. 
 
 {\sys\/} further introduces a novel {\em fast path\/} algorithm for short (single-key) transactions 
-that eliminates the begin/commit overhead entirely. The fast path requires minor extensions to the underlying 
-data store, to enable local commits directly within the storage layer and verify the correctness of general 
-transactions in presence of such commits. This improves the latency of short transactions 
+that eliminates the begin/commit overhead entirely. 
+The fast path requires minor extensions to the underlying 
+data store. 
+%, to enable local commits directly within the storage layer and verify the correctness of general 
+%transactions in presence of such commits. 
+This improves the latency of short transactions 
 by 1.8x on average at the cost of minor (less than 15\%) negative impact on longer transactions. 
 The fast path is orthogonal to other protocol aspects, and can be  supported in other 
 transaction processing services.

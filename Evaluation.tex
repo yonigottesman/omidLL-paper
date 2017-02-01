@@ -54,13 +54,13 @@ by size (1, 5, and 10 data accesses). }
     
   \begin{subfigure}[t]{0.4\textwidth}
 	\includegraphics[width=\textwidth]{figs/stack-brc.png}
-	\caption[]{Single-write transactions}
+	\caption[]{Single-read transactions}
     \label{fig:stack-brc}
   \end{subfigure} &
 
   \begin{subfigure}[t]{0.4\textwidth}
 	\includegraphics[width=\textwidth]{figs/stack-bwc.png}
-	\caption[]{Single-read transactions}
+	\caption[]{Single-write transactions}
     \label{fig:stack-bwc}
   \end{subfigure} \\
 
@@ -109,10 +109,10 @@ drivers exploits up to 3 client nodes. Figure~\ref{fig:experiment} depicts the e
 Our test cluster stores approximately 23M keys, which amounts to 7.66B keys in the emulated system. 
 The values are 2K big, which translates to roughly 46GB data, replicated three-way in HDFS. The keys are hash-partitioned
 across the servers, thereby balancing the amount of data governed by each server. The data accesses are 50\% reads and 
-50\% writes. The key access frequencies follow a Zipf distribution, generated following the description in~\cite{Gray:1994:QGB:191839.191886}. 
-The Zipf parameter is $\theta=0.8$ (derived from production workloads). The resulting distribution is very heavy-tailed, which 
-guarantees that neither of the servers suffers an excessive portion of traffic due to super-popular items, i.e., the 
-data requests are load-balanced, similarly to the data itself.  
+50\% writes in all cases, unless specified otherwise. The key access frequencies follow a Zipf distribution, generated following 
+the description in~\cite{Gray:1994:QGB:191839.191886}. The Zipf parameter is $\theta=0.8$ (derived from production workloads). 
+The resulting distribution is very heavy-tailed, which guarantees that neither of the servers suffers an excessive portion of traffic 
+due to super-popular items, i.e., the data requests are load-balanced, similarly to the data itself.  
 
 Transaction sizes (number of reads and writes) follow a Zipfian distribution with $\theta=0.99$, with a cutoff at 10. 
 In this context, 63\% of the transactions access 3 keys or less, whereas 3\% access 10 keys. The system loads
@@ -138,7 +138,22 @@ With Omid, the control requests dominate the delay: 94\% for single-write, 89\% 
 even for 10-access transactions! Note that Omid's begins are no less expensive than commits because both 
 requests get blocked on commit table writes. 
 
-TBD 
+With {\sys\/}, transaction latency is dominated by data access. For example, in 10-operation transactions only 
+17\% of the time is spent on the control path, which leads to much faster completion. Still, the generic API is 
+not optimized for short transactions. For example, a single-write transaction spends approximately 0.4 ms on 
+begin, 3 ms on commit, and 2 ms on the write itself. 
+
+\begin{figure}
+\caption{Performance tradeoffs with the fast-path API in {\sys}.}
+\label{fig:fp-tradeoff}
+\end{figure}
+
+The FP API delivers better performance for this traffic -- e.g., 2.4 ms for single writes (versus 5.4 ms) and 1.5 ms 
+for single reads (versus 2.3 ms). On the other hand, it incurs its toll on the data path in the concurrent generic 
+transactions, which resort to atomic check-and-mutate operations instead of simple writes. For example, a 10-access 
+transaction takes 24.4 ms versus 20.8 ms. 
+
+Figure~\ref{fig:fp-tradeoff} summarizes the performance tradeoffs entailed by the fast-path API, by transaction class. 
 
 \remove{
 

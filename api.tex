@@ -27,9 +27,9 @@ key in descending order.
 if the version already exists, its value is updated;
 otherwise, a new version is added. Garbage collection of obsolete versions is a separate
 process.
-\item [\code{remove}] -- remove an object with a given key and version
+\item [\code{remove}] -- remove an object with a given key and version.
 \item [\code{check\&mutate}] --  data stores often provide means to atomically read and
-update an object, e.g., HBase exports CheckAndMutate operations, which are 
+update an object, e.g., HBase exports check\&mutate operations, which are 
 internally implemented using a RW lock, whereas BigTable supports row transactions. 
 We will extend this capability below in order to implement certain atomic
 operations at the data store level.

@@ -18,7 +18,7 @@
       k3 & c & 3 & nil &k1\\
       \hline
     \end{tabular}
-	\caption[]{Tentative transaction}
+	\caption[]{Pending transaction}
     \label{fig:model:tentative}
   \end{subfigure}
   
@@ -93,9 +93,9 @@
 		     	 \If{ leader.commit $\not=$nil} \Comment transaction is complete
 		     	 	\State return leader.commit 
 		     	 \EndIf
-		     	 \Comment try to abort pending transaction
+		     	 \Comment try to abort pending transaction 
 			\State ok $\leftarrow$ ds.check\&mutate(leader.commit, nil, abort)
-			\State \If{$\neg$ok} \Comment leader status has changed -- recheck  
+			\If{$\neg$ok} \Comment leader status has changed -- recheck  
 				\State return  {\sc checkLeader}({leaderPtr}) \EndIf
 			\State return abort
 	   	\EndProcedure
@@ -147,36 +147,40 @@ Algorithm~\ref{fig:get-pseudocode} describes \sys's implementation of read and c
 The client's operations proceed as follows:
 
 \paragraph{Write.}
-The client adds the tentative record \emph{(key, value, $ts_r$, nil , leader)} to the data store, where
-the leader is the first key the client updates during the transaction. It also tracks key in its local write-set.
+The client adds a tentative record to the data store, with the written key and value, version number $ts_r$, 
+nil in the commit column, and a pointer to the first key written during the transaction in the leader column.
+It also tracks key in its local write-set.
 
 
 \paragraph{Read.}
 The algorithm traverses data  records (using the data store's ds.get API) pertaining
-to key with versions smaller than $ts_r$, latest to earliest, and returns the first key that is committed
+to the requested key with versions smaller than $ts_r$, latest to earliest, and returns the first value that is committed
 with a smaller version than $ts_r$. Upon
 encountering a tentative record (with commit=nil), the algorithm calls the {\sc checkLeader} function, which
-gets the leader's $ts_c$ from the data store, and again returns the key if the $ts_c$ is smaller than $ts_r$. 
+gets the leader's $ts_c$ from the data store, and again returns the key if that $ts_c$ is smaller than $ts_r$. 
 
 If the commit entry is still nil, read cannot return without determining the final commit timestamp
 of the pending transaction. 
-\Yoni{example here?}. 
+%\Yoni{example here?}. 
 To this end, {\sc checkLeader} attempts to forcefully abort the pending transaction. This is done using the
  {check\&mutate} operation, which atomically reads and sets the commit entry to abort in case its value is still nil.
 If check\&mutate fails, this means that the transaction is no longer pending, and {\sc checkLeader} is recursively called
-to re-read the leader's entry. Note that during the recursive call, the record is no longer nil, and so the recursive call 
-returns without attempting another check\&mutate.
+to re-read the leader's entry. Note that during the recursive call, the record can no longer be nil, and so the recursive call 
+always returns without attempting another check\&mutate.
  
 %When a transaction commits, it atomically checks it hasn't been invalidated before inserting the $ts_c$ to the commit .
 
 
 \paragraph{Commit.}
 The client sends a commit request to the TM, which assigns it a commit timestamp $ts_c$ and checks for conflicts. 
-If the TM does not return abort, this means that the validation has been successful, and the client writes $ts_c$ in the leader's {commit} column. 
-However, the transaction can commit only if no read has invalidated it. Therefore, it uses 
-the data store's check\&mutate function to write $ts_c$ only if the commit status is still nil.
-To avoid an extra read of the leader on every read, once a transaction is committed, the post-commit stage writes 
-the $ts_c$ to the {commit} columns of all keys in  the transaction's write-set. 
+If the TM does not return abort, this means that the validation has been successful, and the client 
+attempts to commit the transaction. 
+Note that the transaction can commit only if no read has invalidated it. Therefore, the client uses 
+the data store's check\&mutate function to write $ts_c$ to the leader's commit column 
+only if the commit status is still nil.
+
+To avoid an extra read of the leader on every transactional read, once a transaction is committed, the post-commit stage writes 
+the transation's $ts_c$ to the commit columns of all keys in  the transaction's write-set. 
 %Following a successful commit, the client adds $ts_c$ to all data items it wrote to.
 
 

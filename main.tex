@@ -70,7 +70,15 @@
 %=========================================================================
 
 \begin{abstract}
-TBD
+We present \sys, a highly scalable transaction processing engine 
+for Apache HBase. 
+The \sys\ implementation is based on Apache Incubator Omid, but 
+improves its protocol to reduce latency by an order of magnitude, 
+while at the same time improving throughput. 
+\sys\ further implements a \emph{fast path} for single-key transactions,
+processing them almost as fast as native HBase operations, while preserving
+transactional semantics relative to longer transactions.
+
 \end{abstract}
 
 %========================

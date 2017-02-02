@@ -25,15 +25,17 @@ key in descending order.
 \item [\code{put}] -- atomically creates or updates an object with a given key and version:
 \remove{If the provided version number is smaller than the key's latest stored version, the update fails.} 
 if the version already exists, its value is updated;
-otherwise, a new version is added. Garbage collection of obsolete versions is a separate
-process.
+otherwise, a new version is added. 
 \item [\code{remove}] -- remove an object with a given key and version.
 \item [\code{check\&mutate}] --  data stores often provide means to atomically read and
 update an object, e.g., HBase exports check\&mutate operations, which are 
-internally implemented using a RW lock, whereas BigTable supports row transactions. 
-We will extend this capability below in order to implement certain atomic
-operations at the data store level.
+internally implemented using a RW lock.
+%, whereas BigTable supports row transactions. 
+%We will extend this capability below in order to implement certain atomic operations at the data store level.
 \end{description}
+
+A separate process performs garbage collection of obsolete versions.
+process.
 
 \subsection{Transaction semantics} \label{ssec:transactions}
 

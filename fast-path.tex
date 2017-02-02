@@ -113,8 +113,10 @@ With FP transactions,
 and transactions continue to observe snapshots that reflect some prefix of this total order.
 However, we relax the real-time order guarantee of SI for FP transactions relative to regular ones. 
 For example, an FP transaction may return 
-an older value than the latest one committed by a regular transaction. Similarly, a regular transaction overlapping
-two FP ones may observe an update of the second and miss an update by the first,  as illustrated in Figure~\ref{fig:ltx-rt}.
+an older value than the latest one committed by a regular transaction, effectively executing the FP transaction `in the past'. 
+Similarly, a regular transaction overlapping
+two FP ones may observe an update of the second and miss an update by the first,  as illustrated in Figure~\ref{fig:ltx-rt},
+where FP2 is ordered `in the past'.
 Nevertheless, we continue to enforce real-time order on regular transactions as well as on all updates of the same key.
 
 \begin{figure}[h]
@@ -226,8 +228,9 @@ FP reads can forgo the begin call since they do not need to obtain a snapshot ti
 They can also forgo the commit call, since they perform a single read, and hence their `snapshot' is trivially valid.
 
 In case  \code{bwc} encounters a tentative version it does not try to resolve it, but rather simply aborts.
-This may cause false aborts in case the transaction that wrote the tentative version has committed and did not 
-complete post-commit. In other cases, it prioritizes regular transactions over FP ones. We choose this approach since
+This may cause false aborts in case the transaction that wrote the tentative version has committed or aborted and did not 
+complete post-commit, as well as in the case that it will eventually abort. 
+In general, this mechanism prioritizes regular transactions over FP ones. We choose this approach since
 the goal is to complete FP transactions quickly, and if an FP transaction cannot complete quickly, it might as well be 
 retried as a regular one.
    
@@ -238,7 +241,7 @@ is smaller than any commit timestamp that will be assigned to a regular transact
 To support (1), we change the structure of timestamps to consist of two 
 components -- a global version and a locally advancing sequence number.
 Practically, we implement the two components in one long integer, with some number $\ell$ of the less significant bits
-reserved for sequence numbers assigned by FP writes, and the the most significant bits representing 
+reserved for sequence numbers assigned by FP writes, and the most significant bits representing 
 the global version determined by the TM. Thus, the TM always produces timestamps where the $\ell$ lower bits are zeros,
 and increases the global clock by $2^\ell$ on every begin and commit call.  
 
@@ -254,9 +257,13 @@ Below, we explain how we implement such atomic conditional updates in HBase as p
 Next, we address (2), namely conflicts between FP and regular transactions.
 (Note that the atomic conditional write in \code{bwc} takes care of conflicts among singletons.)
 In case an ongoing regular transaction writes to a key before \code{bwc} accesses it, 
-\code{bwc} finds the tentative write and aborts. It therefore remains to consider the case that
-a regular transaction $T_1$ writes to some key after FP transaction $FP_1$, but must abort because 
+\code{bwc} finds the tentative write and aborts. 
+
+It therefore remains to consider the case that
+a regular transaction $T_1$ writes to some key after FP transaction $FP_1$, but $T_1$ must abort because
+%the key is updated between its snapshot time and update time. 
 it reads the old version of the key before $FP_1$'s update. This scenario is illustrated in Figure~\ref{fig:why-bump}. 
+Note that in this scenario it is not possible to move $FP_1$ to `the past' because of the read.
 
 \begin{figure}[htb]
 \includegraphics[width=\columnwidth]{figs/FP-why-bump}
@@ -312,8 +319,8 @@ Our implementation of the singleton write uses  check\&mutate to implement the a
 Transactional reads and post-commits call bump inside a check\&mutate  block where they perform their read and version update, respectively. 
 
 Note that although check\&mutate only holds a lock on the affected key, the joint update of the key and the LVC is consistent
-because it uses a form of two-phase locking: when check\&mutate begins, its locks the key, then the access to the LVC effectively
-locks it for the duration of its update; this is followed by an update of the key's record and the key's lock being released.
+because it uses a form of two-phase locking: when check\&mutate begins, its locks the key, then the atomic access to the LVC
+effectively locks the LVC during its update; this is followed by an update of the key's record and the key's lock being released.
 
 
 The LVC is kept in memory, and is not persisted. 
@@ -321,8 +328,9 @@ There are two issues to handle in this context. First,
 Hbase migrates region control from time to time across region servers, to balance load and handle failures. 
 Second, a region server may fail and be restarted. 
 In both cases, we need to ensure that the monotonicity of the LVC associated with the (migrated or recovered) region is preserved.
-To this end, when a region is started in a new server (following migration or recovery), the first operation accessing it
-in the new server accesses the TM to increment the global clock, and then 
+To this end, when a region is started in a new server (following migration or recovery), 
+we force the first operation accessing it
+in the new server to accesses the TM to increment the global clock, and then 
 bumps the local clock to the value of the global clock.
 Since the LVC value can never exceed the global clock's value, this bootstrapping procedure maintains its monotonicity.
 

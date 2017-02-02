@@ -154,8 +154,8 @@ It also tracks key in its local write-set.
 
 \paragraph{Read.}
 The algorithm traverses data  records (using the data store's ds.get API) pertaining
-to the requested key with versions smaller than $ts_r$, latest to earliest, and returns the first value that is committed
-with a smaller version than $ts_r$. Upon
+to the requested key with a version that does not exceed $ts_r$, latest to earliest, and returns the first value that is committed
+with a  version smaller than or equal to $ts_r$. Upon
 encountering a tentative record (with commit=nil), the algorithm calls the {\sc checkLeader} function, which
 gets the leader's $ts_c$ from the data store, and again returns the key if that $ts_c$ is smaller than $ts_r$. 
 

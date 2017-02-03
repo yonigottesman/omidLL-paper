@@ -1,179 +1,215 @@
-%% \begin{figure*}[!h]
-%%   \centering
-%%   \begin{subfigure}[t]{0.3\textwidth}
-%% 	\includegraphics[width=\textwidth]{figs/read_latency.pdf}
-%% 	\caption[]{Read}
-%%     \label{fig:latency:read}
-%%   \end{subfigure}
-%%   \begin{subfigure}[t]{0.3\textwidth}
-%% 	\includegraphics[width=\textwidth]{figs/write_latency.pdf}
-%% 	\caption[]{Write}
-%%         \label{fig:latency:write}
-%%   \end{subfigure}	
-%%   \begin{subfigure}[t]{0.3\textwidth}
-%% 	\includegraphics[width=\textwidth]{figs/rmw_latency.pdf}
-%% 	\caption[]{Read Modify Write}
-%%     \label{fig:latency:rmw}
-%%   \end{subfigure}			
-%%   \caption{Breakdown of transaction latency}
-%%   \label{fig:latency}
-%% \end{figure*}
+
+\remove{
 
 \begin{figure}
-\caption{Benchmark architecture that emulates a large system. The YCSB client generates complete transactions 
+%\centerline{\inred{TBD}}
+\caption{Benchmark architecture for emulating a large system. The YCSB client generates complete transactions 
 for a small fraction of the traffic, and measures their end-to-end latency. The custom client generates background 
-begin and commit requests for the remainder of the traffic, to emulate full load on the TM.}
+begin and commit requests emulating the remainder of the traffic, to produce full load on the TM.}
 \label{fig:experiment}
 \end{figure}
 
-\begin{figure*}[t]
-  \centering
-  \begin{subfigure}[t]{0.33\textwidth}
-	\includegraphics[width=\textwidth]{figs/thpt-latency-1.png}
-	\caption[]{Transaction size = 1}
-         \label{fig:tl-1}
-  \end{subfigure}
-  \begin{subfigure}[t]{0.33\textwidth}
-	\includegraphics[width=\textwidth]{figs/thpt-latency-5.png}
-	\caption[]{Transaction size = 5}
-    \label{fig:tl-5}
-  \end{subfigure}
-    \begin{subfigure}[t]{0.33\textwidth}
-	\includegraphics[width=\textwidth]{figs/thpt-latency-10.png}
-	\caption[]{Transaction size = 10}
-    \label{fig:tl-10}
-  \end{subfigure}			
-  \caption{{\sys} (generic and FP API's) versus Omid, in terms of latency and throughput. Transactions are considered
-by size (1, 5, and 10 data accesses). }
-  \label{fig:throughput-latency}
-\end{figure*}
+}
 
-\begin{figure*}
-  \centering
-  \begin{tabular}{cccc}
-    
-  \begin{subfigure}[t]{0.4\textwidth}
-	\includegraphics[width=\textwidth]{figs/stack-brc.png}
-	\caption[]{Single-read transactions}
+\paragraph{Tested systems.}
+
+We compare three TPSs: 
+\begin{description}
+\item[Vanilla \sys] -- the algorithm described in Section~\ref{sec:ll}, without support for FP transactions.
+\item[FP \sys] -- \sys\ extended to provide the FP API as described in Section~\ref{sec:alg}. Note that 
+our FP support impacts regular transactions as well as FP ones,
+since transactional reads and writes are modified to access the LVC together with the data, 
+inducing higher latency.
+\item[Omid] -- the Apache Incubator version of Omid, on which we base
+our implementation of \sys. 
+\end{description}
+
+All three use HBase as the underlying data store. 
+We configure all three to perform the post-commit asynchronously by a separate thread after the transaction
+completes, in order to reduce latency.
+
+In Omid and Vanilla \sys, all transactions use the standard API, namely with begin and commit calls.
+In FP \sys, transactions that can use the FP API (specifically, singleton reads, singleton writes, 
+and single-key read-writes) do so, whereas other transactions use the standard API.
+
+\paragraph{Experiment setup and methodology.}
+
+Our experiment testbed consists of seven 12-core Intel Xeon 5 machines with 46GB RAM and 4TB 
+SSD storage, interconnected by 1G Ethernet. We allocate three of these to HBase nodes, 
+three to simulate clients whose performance we measure, and one to simulate background traffic
+as explained below. \inred{Idit: where is the TM?}
+ Each HBase node runs both an HBase region server and the underlying 
+Hadoop File System (HDFS) within 8GB JVM containers. 
+
+To test scalability, we project the load on the TM when deployed in a much larger system. 
+Specifically, we project the TPSs' behavior when running over a $1000$-node HBase cluster.
+%, where the TPS processes transactions on keys sharded across $1000$ HBase region servers.
+Such a cluster serves billions of keys, and data is sharded so that each region server 
+holds roughly $.01\%$ of the data.
+Since in this setting each node holds millions of different keys, 
+the data access rates remain load-balanced across nodes 
+even when the access to individual keys is highly skewed. 
+Since read/write requests are processed independently in each node, 
+they do not impact each other. Hence, we can simulate transaction processing latency in 
+a $1000$-node cluster
+by accessing a small HBase cluster that serves a fraction of the read/write workload, 
+while stressing the TM with the full load of begin and commit requests. 
+
+We hence emulate a $1000$-node HBase with a $3$-server cluster that processes $0.3\%$ of the projected workload. 
+The $3$-node traffic is driven by three clients running the popular YCSB benchmark~\cite{Cooper:2010:BCS:1807128.1807152}, 
+exercising the traditional (synchronous) transaction processing API. YCSB measures the end-to-end latencies.
+The remainder of the control requests (background load on the TM) are generated by a custom tool~\cite{Omid2017} 
+that asynchronously posts them on the wire and collects the TM's responses. 
+%Both workload drivers exploits up to 3 client nodes. 
+%Figure~\ref{fig:experiment} depicts the experiment's setup. 
+
+\paragraph{Workload.}
+
+Our test cluster stores approximately 23M keys, which amounts to 7.66B keys in the emulated system. 
+The values are 2K big, which translates to roughly 46GB of data, replicated three-way in HDFS. The keys are hash-partitioned
+across the servers, thereby balancing the amount of data governed by each server. The data accesses are 50\% reads and 
+50\% writes. The key access frequencies follow a Zipf distribution, generated following 
+the description in~\cite{Gray:1994:QGB:191839.191886}. The Zipf parameter is $\theta=0.8$ (derived from production 
+workloads \inred{citations?}). 
+Note that under this access distribution, when each node stores ~7M keys, data requests are load-balanced across nodes.
+
+We test the system with two transaction mixes:
+\begin{description}
+\item[Random mix] -- 
+transaction sizes (number of reads and writes) follow a Zipf distribution with $\theta=0.99$, with a cutoff at $10$. 
+With these parameters, $63\%$ of the transactions access three keys or less, and only $3\%$ access $10$ keys. 
+We vary the system load from 30K to 300K transactions per second (tps). 
+\item[BRWC test] -- $80\%$ of transactions are drawn from the \inred{random mix} distribution, and $20\%$ perform a read
+and then a write to the same key. 
+\end{description}
+
+We add the BRWC test since single-key read/write transactions are common in production, and are highly unlikely to 
+occur under random key selection with billions of keys (as in our random mix).
+
+\paragraph{Results.} 
+
+\begin{figure}[t]
+\centering
+	\includegraphics[width=0.45\textwidth]{figs/thpt-latency-1.png}
+	\caption{Throughput vs.\ latency, transaction size = 1.}
+  \label{fig:tl-1}
+\end{figure}
+
+\begin{figure*}[tb]
+\centering  
+\begin{tabular}{cc}
+      \begin{subfigure}[t]{0.5\textwidth}
+	\includegraphics[width=.9\textwidth]{figs/stack-brc.png}
+    \caption[]{Single-read transactions}
     \label{fig:stack-brc}
   \end{subfigure} &
 
-  \begin{subfigure}[t]{0.4\textwidth}
-	\includegraphics[width=\textwidth]{figs/stack-bwc.png}
-	\caption[]{Single-write transactions}
+  \begin{subfigure}[t]{0.5\textwidth}
+	\includegraphics[width=.9\textwidth]{figs/stack-bwc.png}
+    \caption[]{Single-write transactions}
     \label{fig:stack-bwc}
-  \end{subfigure} \\
-
-    \begin{subfigure}[t]{0.4\textwidth}
-	\includegraphics[width=\textwidth]{figs/stack-tx5.png}
-    \caption[]{Transaction size = 5}
-    \label{fig:stack-tx5}
-  \end{subfigure} &
-
-  \begin{subfigure}[t]{0.4\textwidth}
-	\includegraphics[width=\textwidth]{figs/stack-tx10.png}
-    \caption[]{Transaction size = 10}
-    \label{fig:stack-tx10}
-  \end{subfigure} \\
-  
+  \end{subfigure}
   \end{tabular}
-  \caption{Zoom-in on latency breakdown in specific scenarios, under the 100K tps workload.}
-  \label{fig:zoomin}
+\caption{Transaction latency breakdown at 100K tps throughput, transaction size = 1.} 
+\label{fig:1key-break}
 \end{figure*}
 
-We evaluate {\sys}'s performance for both the generic and the fast-path transactions, 
-in terms of average transaction latency under a variety of workloads. We compare {\sys\/} 
-(the generic and fast-path API's) to the mainstream Omid implementation. Both {\sys\/} 
-and Omid use HBase as KV-storage backend. Both are configured for low-latency asynchronous 
-post-commit.   
 
-We run the experiments on 12-core Intel Xeon 5 machines with 46GB RAM and 4TB 
-SSD storage, interconnected by 1G Ethernet.  Every node runs the HBase and the underlying 
-Hadoop filesystem (HDFS) serving tiers within 8GB JVM containers. 
+Recall that \sys\ is motivated by the prevalence of short transactions in production, and is designed with
+the goal of speeding such transactions up.
+Its advantage is less pronounced for long transactions, where the cost of begin and commit is amortized
+across many reads and writes.
+To make the comparison meaningful, we therefore classify transactions according to their length and whether they
+access a single key, and study each transaction class separately. 
+We begin with short transactions. 
+Figure~\ref{fig:tl-1} presents the average latency of single-key transactions run as part of the random mix
+as a function of \inred{system} throughput.
+Figure~\ref{fig:1key-break} then zooms in on the latency of such transactions under a throughput of 100K tps,
+and breaks up the different factors contributing to it. 
 
-\subsection{Methodology}
-We project the transaction performance in a very large production KV-store in which the data (read/write) 
-requests are roughly load-balanced. To this end, horizontal scaling of the KV-store and its workload do not 
-affect the performance of the data requests. The control (begin/commit) requests are served by the centralized 
-TM; scaling the workload congests this bottleneck. We can therefore capture the end-to-end transaction latency
-in the projected system with a small HBase cluster that serves a fraction of workload, while stressing the TM 
-by a full load of control requests. 
+As we can see, under light load, \sys\ improves the latency of Omid by 4x to 5x, even without the fast path.
+This is because in Omid, both begin and commit wait until preceding transactions complete the writes of 
+their commit entries; this stems from Omid's design choice to avoid the need for resolving pending write intents
+by aborting transactions; see last (rightmost) column in Table~\ref{table:design-space}. 
+Single-key writes (Figure~\ref{fig:stack-bwc})
+suffer from both the begin and commit latencies, whereas single-key reads (Figure~\ref{fig:stack-brc}) 
+suffer only from begins. 
 
-We emulate a 1000-node HBase with a 3-server cluster that processes $0.3\%$ of the projected workload. 
-This traffic is driven by the popular YCSB benchmark~\cite{Cooper:2010:BCS:1807128.1807152} 
-that exercises the traditional (synchronous) transaction processing API. YCSB measures the end-to-end latencies.
-The remainder of the control requests (background load on the TM) are generated by a custom tool~\cite{Omid2017} 
-that asynchronously posts them on the wire, and collects the TM responses. Both workload
-drivers exploits up to 3 client nodes. Figure~\ref{fig:experiment} depicts the experiment's architecture. 
+As load increases, \sys\ scales almost perfectly, whereas Omid suffers from a well-pronounced 
+bottleneck. For instance, Omid's single-key transaction latency soars to 75ms under 300K tps whereas
+{\sys}'s latency remains almost flat. The extra delay in Omid is due to batching of commit record updates, 
+which its TM applies to handle congestion~\cite{Omid2017}. Such congestion arises due to Omid's centralized 
+commit entry management (penultimate column in Table~\ref{table:design-space}).
 
-Our test cluster stores approximately 23M keys, which amounts to 7.66B keys in the emulated system. 
-The values are 2K big, which translates to roughly 46GB data, replicated three-way in HDFS. The keys are hash-partitioned
-across the servers, thereby balancing the amount of data governed by each server. The data accesses are 50\% reads and 
-50\%, unless specified otherwise. The key access frequencies follow a Zipf distribution, generated following 
-the description in~\cite{Gray:1994:QGB:191839.191886}. The Zipf parameter is $\theta=0.8$ (derived from production workloads). 
-This distribution is very heavy-tailed, which guarantees that neither of the servers suffers an excessive portion of traffic 
-due to super-popular items, i.e., the data requests are load-balanced, similarly to the data itself.  
+The FP API delivers better performance for this traffic. For instance, single writes take an average of 2.4ms using 
+the {\code bwc} API versus 5.4ms using the regular transaction API (consisting of begin, write, and commit). 
+A single read executed using {\code brc} takes 1.5ms versus 2.3ms as a regular transaction. 
 
-Transaction sizes (number of reads and writes) follow a Zipfian distribution with $\theta=0.99$, with a cutoff at 10. 
-In this context, 63\% of the transactions access 3 keys or less, whereas 3\% access 10 keys. The system loads
-vary from 30K to 300K transactions per second (tps). 
-
-\subsection{Numerical Results} 
-
-We start by studying the system performance in throughput-latency terms. 
-Within the workload mix described above, we compare the end-to-end latencies by transaction class -- 
-1, 5, and 10 data accesses. Figure~\ref{fig:throughput-latency} depicts the results, for the three systems. 
-
-Both {\sys\/} implementations are ubiquitously faster than Omid. They exhibit lower latencies under light loads, 
-thanks to reduction in network trips. For example, single-key transactions complete on average within 
-5ms under {\sys}'s generic API, versus Omid's 20ms. For longer transactions, the gap remains fixed but is amortized 
-by other operations. Under high loads, {\sys\/} scales almost perfectly whereas Omid suffers from a well-pronounced 
-bottleneck. For instance, Omid's single-key transaction latency soars to 75ms for under 300K tps whereas
-{\sys}'s remains almost flat. The extra delay in Omid is due to commit table write batching, which its TM applies 
-to handle congestion~\cite{Omid2017}. %In comparison with Omid, the differences between {\sys}'s flavors are negligible. 
-
-We now zoom-in on the latency of the three TPSs, under a moderate load of 100K tps. Namely, we dissect the end-to-end 
-transaction latency to its begin, read/write, and commit components. Figure~\ref{fig:zoomin} illustrates the breakdown. 
-With Omid, the control requests dominate the delay: 94\% for single-write, 89\% for single-read, and 61\%
-even for 10-access transactions! Note that Omid's begins are no less expensive than commits because both 
-requests get blocked on commit table writes. 
-
-With {\sys\/}, transaction latency is dominated by data access. For example, in 10-operation transactions only 
-17\% of the time is spent on the control path, which leads to much faster completion. Still, the generic API is 
-not optimized for short transactions. For example, a single-write transaction spends approximately 0.4 ms on 
-begin, 3 ms on commit, and 2 ms on the write itself. 
-
-The FP API delivers better performance for this traffic. For instance, the single-write ({\code bwc}) takes 2.4 ms versus 
-5.4 ms for the generic {\code b-w-c}; the single-read ({\code brc}) takes 1.5 ms (versus 2.3 ms for {\code b-r-c}). On the other hand, 
-the FP incurs  a toll on the data path in the concurrent generic transactions, which resort to atomic check\&mutate operations 
-instead of simple writes. For example, a 10-access transaction takes 24.4 ms versus 20.8 ms. 
-
-We conduct a standalone experiment to evaluate the fast-path implementation of transactions that read and then write 
-to the same key. We modify the original setup to have 20\% of transactions of this kind; the rest 80\% remain the same.
-Figure~\ref{fig:rmw} depicts the results. The fast-path ({\code br-wc}) API completes within 3.9 ms versus 7 ms for generic {\sys\/} 
-and 30.9 ms for Omid. 
-
-Figure~\ref{fig:fp-tradeoff} summarizes the performance tradeoffs entailed by the fast-path API, by transaction class. 
-Here, the speedup for the single-write transactions is 2.3x, whereas the maximal slowdown is 14.8\%. We posit that 
-in systems geared towards real-time processing this is a reasonable tradeoff, since long transactions are less frequent
-and less sensiting to moderate extra delay. 
-
-\begin{figure}[t]
-\includegraphics[width=.5\textwidth]{figs/stack-br-wc.png}
-\caption{Zoom-in on latency breakdown in two-key (read+write) transactions, 
-under the 100K tps workload.}
+\begin{figure}[htb]
+\includegraphics[width=.45\textwidth]{figs/stack-br-wc.png}
+\caption{Latency breakdown of single-key read+write transactions in the BRWC workload,
+at 100K tps throughput.}
 \label{fig:rmw}
 \end{figure}
 
+We next focus on transactions that read and write a single key as part of the BRWC workload. 
+Their latency breakdown under a 100K tps throughput is shown in Figure~\ref{fig:rmw}.
+The fast path implementation (consisting of \code{br} and \code{wc} calls) completes within 3.9ms,
+versus 7ms for Vanilla \sys\ and 30.9ms for Omid. 
+
+We now examine longer transactions run as part of the random mix workload.
+Figure~\ref{fig:throughput-latency} shows the results for transactions of lengths $5$ and $10$.
+We see that the latency gap of \sys\ over Omid remains similar, but is amortized 
+by other operations. Omid's control requests (begin and commit) continue to 
+dominate the delay, and take up $61\%$ of the latency of 10-access transactions.
+In contrast, \sys's transaction latency is dominated by data access. For example, in 10-operation transactions only 
+$17\%$ of the time is spent on the control path, which leads to much faster completion. 
+
+\begin{figure*}[t]
+\begin{tabular}{cc}
+  \begin{subfigure}[t]{0.5\textwidth}
+	\includegraphics[width=\textwidth]{figs/thpt-latency-5.png}
+	\caption[]{Throughput versus latency, transaction size = 5}
+    \label{fig:tl-5}
+  \end{subfigure} &
+
+   \begin{subfigure}[t]{0.5\textwidth}
+	\includegraphics[width=.9\textwidth]{figs/stack-tx5.png}
+	\caption[]{Latency breakdown, transaction size = 5}
+    \label{fig:stack-tx5}
+  \end{subfigure} \\
+  
+    \begin{subfigure}[t]{0.5\textwidth}
+	\includegraphics[width=\textwidth]{figs/thpt-latency-10.png}
+	\caption[]{Throughput versus latency, transaction size = 10}
+    \label{fig:tl-10}
+  \end{subfigure} &
+  
+  \begin{subfigure}[t]{0.5\textwidth}
+	\includegraphics[width=.9\textwidth]{figs/stack-tx10.png}
+	\caption[]{Latency breakdown, transaction size = 10}
+    \label{fig:stack-tx10}
+  \end{subfigure} 
+\end{tabular}  			
+  \caption{Latency versus throughput (left) and latency breakdown (right) for long transactions in random mix workload. }
+  \label{fig:throughput-latency}
+\end{figure*}
+
+The FP takes a toll on the data path, which resorts to atomic check\&mutate operations 
+instead of simple reads and writes. This is exacerbated for long transactions. 
+For example, a 10-access transaction takes 24.4ms with FP \sys, 
+versus 20.8ms with \sys. 
+
 \begin{figure}[h]
 \includegraphics[width=.5\textwidth]{figs/speedup.png}
-\caption{Summary of performance tradeoffs with the fast-path API in {\sys}.}
+\caption{Summary of performance tradeoffs with the fast path API in {\sys}.}
 \label{fig:fp-tradeoff}
 \end{figure}
 
-\remove{
-\Yoni{
-  --background noise
-  --switch order of charts
-  --explain that the LL is better for all TPS so it doesn't matter the point we choose to check}
-}
+
+Figure~\ref{fig:fp-tradeoff} summarizes the performance tradeoffs entailed by the fast path API, by transaction class. 
+We see that the speedup for single-write transactions is 2.3x, whereas the worst slowdown is $14.8\%$. 
+We believe that in systems geared towards real-time processing, this is a reasonable tradeoff, since long transactions 
+are less frequent and less sensitive to extra delay.
+In particular, in the tested workload mix, there are many more short transactions than long ones, and hence the average
+performance over all transactions is closer to the one reported for short transactions than for long ones.  

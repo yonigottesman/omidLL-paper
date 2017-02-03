@@ -4,7 +4,7 @@
 \begin{figure}[!t]
   \centering
   
-  \begin{subfigure}[t]{\columnwidth}
+  \begin{subfigure}[tb]{\columnwidth}
       \centering
     \begin{tabular}{|c|c|c|c|c|}
       \hline
@@ -41,7 +41,7 @@
   \end{subfigure}
 
 
-  \begin{subfigure}[t]{\columnwidth}
+  \begin{subfigure}[tb]{\columnwidth}
     \centering
     \begin{tabular}{|c|c|c|c|c|}
       \hline
@@ -60,8 +60,8 @@
   \end{subfigure}
 
   
-  \caption{Evolution of metadata during a transaction. The transaction receives $ts_r=3$ in the begin stage, 
-  and the $ts_c$ it receives when committing is $7$; its leader is k1.}
+  \caption{Evolution of \sys\ metadata during a transaction. The transaction receives $ts_r=3$ in the begin stage, 
+  and the $ts_c=7$ when committing; its leader is k1.}
   \label{fig:model}
 \end{figure}
 
@@ -125,7 +125,7 @@
   \label{fig:get-pseudocode}
 \end{algorithm} 
 
-The meta-data used by \sys\ for transaction management is stored in two additional columns associated with each object version in the data store:
+The metadata used by \sys\ for transaction management is stored in two additional columns associated with each object version in the data store:
 (1) \emph{commit} holds the status of the transaction that wrote this version -- \emph{nil} if it is pending, its  $ts_c$ if committed, and 
 otherwise \emph{abort}; 
 and
@@ -145,6 +145,9 @@ its implementation details, we avoid repeating these details here.
 Algorithm~\ref{fig:get-pseudocode} describes \sys's implementation of read and commit operations.
 %Begin and write operations follow the template of Algorithm~\ref{alg:schema}. 
 The client's operations proceed as follows:
+
+\paragraph{Begin.}
+The client sends a commit request to the TM, which assigns it a read timestamp $ts_r$.
 
 \paragraph{Write.}
 The client adds a tentative record to the data store, with the written key and value, version number $ts_r$, 
@@ -180,7 +183,7 @@ the data store's check\&mutate function to write $ts_c$ to the leader's commit c
 only if the commit status is still nil.
 
 To avoid an extra read of the leader on every transactional read, once a transaction is committed, the post-commit stage writes 
-the transation's $ts_c$ to the commit columns of all keys in  the transaction's write-set. 
+the transaction's $ts_c$ to the commit columns of all keys in  the transaction's write-set. 
 %Following a successful commit, the client adds $ts_c$ to all data items it wrote to.
 
 

@@ -119,7 +119,7 @@ two FP ones may observe an update of the second and miss an update by the first,
 where FP2 is ordered `in the past'.
 Nevertheless, we continue to enforce real-time order on regular transactions as well as on all updates of the same key.
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \includegraphics[width=\columnwidth]{figs/FP-semantics}
 \caption{Possible violation of real-time order among fast path (FP) transactions. Regular transaction $T_1$
 reads $x$ before it is updated by FP transaction $FP_1$ and reads $y$ after it is updated by FP transaction $FP_2$ even 
@@ -156,71 +156,76 @@ only transactions that  access different data objects can be re-ordered.
 
 
 \begin{algorithm}[htb]
-%\algblock[atomically do]{atomically}{EndAtomic}
-\algblockdefx[atomic]{Atomic}{EndAtomic}
-[0]{{\bf atomically do}}
-[0]{}
-%%%%%%%%
+%\small
+\hspace{10mm}\\
+
+\underline{Client-side logic:}
 \begin{algorithmic}
-\small
-%\State local  \code{ts$_r$} \Comment  read version of ongoing transaction
-%\Statex
+%\small
 \Procedure{brc}{key}
 \State rec  $\leftarrow$ ds.get(last committed record of key) 
 \State  return rec.value
 \EndProcedure
-%
-\Statex
+% \Statex
 \Procedure{bwc}{key, value} 
 	\State old $\leftarrow$ ds.get(last version of key)
-	\If{old = nil}  \Comment found tentative value -- abort 
+	\If{old.commit = nil}  \Comment  tentative value -- abort 
 		\State return abort 
 	\EndIf
-	\State return {\sc writeVersion}(old, key, value)
+	\State return {ds.writeVersion}(old, key, value)
 \EndProcedure
-%
+% \Statex
+\Procedure{br}{key} 
+\State rec  $\leftarrow$ ds.get(last committed record of key) 
+\State  return \tuple{rec.version, rec.value}
+\EndProcedure
+% \Statex
+\Procedure{wc}{h, key, value} 
+\State return {ds.writeVersion}(h, key, value)
+\EndProcedure
 \Statex
+\end{algorithmic}
+
+\underline{Data store logic:}
+\begin{algorithmic}
+%\small
 \Procedure{writeVersion}{old, key, value} 
-%	\State maxVersion $\leftarrow$ key's  maxVersion
-%	\State ver $\leftarrow$ $\max$(old, maxVersion) 
-%	\If{mask(ver, $2^\ell-1$) = $2^\ell-1$} 
-%		\State \Comment cannot increment version locally -- abort
-%		\State return abort 
-%	\EndIf
-%	\State 	ver $\leftarrow$ ver  $+1$ 
-\Atomic 
-	\If{ds.get(last version of key)  = old  }
-	\State ver $\leftarrow$ ds.F\&I(key)  
-	\State ds.put(\tuple{key, ver} with commit = ver)  
+%\Atomic 
+	\If{get(last version of key)  = old  }
+	\State ver $\leftarrow$ F\&I(key)  
+	\State put(\tuple{key, ver} with commit = ver)  
 	\State return commit
 	\Else \State return abort \EndIf
-\EndAtomic
+%\EndAtomic
 \EndProcedure
-%\Statex
+% \Statex
+\Procedure{txGet}{key, $ts_r$} 
+\Statex \Comment used by transactional reads, once per key 
+\State bump(key, $ts_r$)
+\State return get(key)
+\EndProcedure
+% \Statex
+\Procedure{txUpdate}{key, ver, $ts_c$} 
+\Statex \Comment used by transactional post-commit to update commit field 
+\State bump(key, commit)
+\State update commit field of \tuple{key, ver} to $ts_c$
+\EndProcedure
 \remove{
 \Procedure{bumpVersion}{key, $ts$} 
 \Statex \Comment called by transactional read of key with  $ts_r = ts$
 	\State {\bf atomically} set key's maxVersion to
 	\State \hspace{10mm} $\max$($ts$, key's maxVersion) 
 \EndProcedure
-\Statex
 }
-\Procedure{br}{key} 
-\State rec  $\leftarrow$ ds.get(last committed record of key) 
-\State  return \tuple{rec.version, rec.value}
-\EndProcedure
-\Statex
-\Procedure{wc}{h, key, value} 
-\State return {\sc writeVersion}(h, key, value)
-\EndProcedure
-
 \end{algorithmic}
-\caption{Generic support for FP transactions.}
+\caption{Generic support for FP transactions; each data store operation is executed atomically.}
 \label{alg:fp}
 \end{algorithm}
 
-The generic fast  path algorithm is given in Algorithm~\ref{alg:fp}. 
-%
+The generic fast  path algorithm consists of two parts: 
+client side-logic, and new atomic operations implemented in the the underlying data store.
+It is presented in pseudocode in Algorithm~\ref{alg:fp}. 
+
 Singleton reads simply return the value associated with the  latest committed version of the requested key they encounter.  
 They ignore tentative versions, which may lead to missing the latest commit in case its post-commit did not complete, 
 but is allowed by our semantics. 
@@ -251,8 +256,9 @@ In the rare case when the lower $\ell$ bits are all ones, there is a need to inc
 as a regular one. 
 
 It is important to note that the singleton write needs to \emph{atomically} find the latest version and produce a new one that exceeds it, 
-to make sure that no other transaction creates a newer version in the interim.
-Below, we explain how we implement such atomic conditional updates in HBase as part of \sys. 
+to make sure that no other transaction creates a newer version in the interim. This is done by a new \emph{writeVersion} function implemented 
+at the data store level. In Section~\ref{ssec:fast-impl}
+below, we explain how we implement such atomic conditional updates in HBase as part of \sys. 
 
 Next, we address (2), namely conflicts between FP and regular transactions.
 (Note that the atomic conditional write in \code{bwc} takes care of conflicts among singletons.)
@@ -303,7 +309,8 @@ When implementing support for \sys's fast path in HBase,
 we observed that associating a maxVersion field with each key is wasteful,
 both in terms of space, and in terms of the number of updates this field undergoes.
 Instead, we aggregate the maxVersions of many keys in a single variable, 
-which we call the \emph{Local Version Clock (LVC)}.
+which we call the \emph{Local Version Clock (LVC)};
+a similar approach was previously used in Mediator~\cite{mediator}.
 Like many state-of-the-art data stores, HBase data is \emph{sharded} (partitioned) 
 across many \emph{regions}, and is deployed on multiple  \emph{region servers}, each of which serves
 several hundreds of regions. Our solution implements one LVC in each region server. 

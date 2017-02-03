@@ -198,14 +198,19 @@ We will see below that this modification reduces latency
 by up to an order of magnitude on small transactions.
 
 \paragraph{Write intent resolution.}
-As in other TPSs, write intents are resolved via the commit entry.
-If the transaction status is committed, the commit time is checked, and, if smaller, than $ts_r$, it is taken into account; 
-if the transaction is aborted, the value is ignored. 
-If the transaction status is pending, the reader  forces the writing transaction to abort by using 
-an atomic check\&mutate operation to set its status to aborted. Similar scenarios occur in Percolator and CockroachDB, since 
-they update commit entries in a distributed manner. Omid and Tephra, on the other hand, do not need to force such aborts, because they use a single  TM for timestamp allocation, validation, and writing the commit entry in a way that ensures that  if the read sees a write intent by an uncommitted transaction, that transaction will not commit with an earlier timestamp than the read.
-Such tight coupling between validation and timestamp allocation comes at the cost of 
-delaying begin requests in Omid, and sending information about many previous transactions to the client in Omid1 and Tephra.
+
+As in other TPSs, reads resolve write intents via the commit entry.
+If the transaction status is committed, the commit time is checked, and, if smaller than or equal to $ts_r$, it is taken into account;
+if the transaction is aborted, the value is ignored.
+In case the transaction status is pending, \sys, like Percolator and CockroachDB, has the reader
+force the writing transaction to abort. This is done using an atomic check\&mutate operation to set the status in the
+writing transaction's commit entry to aborted.
+
+Omid and Tephra, on the other hand, do not need to force such aborts, because they ensure that  if the read sees a write intent
+by an uncommitted transaction, that transaction will not commit with an earlier timestamp than the read.
+This is achieved by a single TM that allocates timestamps, performs validation, and writes the commit entry,
+and either delays begin requests until all transactions that concurrently attempt to commit complete (as in Omid)
+or sends information about all these transactions to the beginning client (as in Omid1 and Tephra).
 
 \remove{
 

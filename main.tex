@@ -100,14 +100,24 @@ transactional semantics relative to longer transactions.
 \section{Evaluation} \label{sec:eval}
 \input{Evaluation}
 
-%\section{Local Transactions in Additional TPSs} \label{sec:context}
-%\input{context}
-
 \section{Related Work} \label{sec:related}
+\input{related}
 
 \section{Conclusion} \label{sec:conclusions}
 
+As TPSs begin to be used in new application domains, low transaction 
+latency becomes an important consideration. 
+Motivated by such use cases we developed \sys, a highly scalable 
+low-latency transaction processing engine for Apache HBase. 
+We implemented \sys\ based on Apache Incubator Omid, and 
+improved its protocol to reduce latency by an order of magnitude, 
+while also improving throughput. 
 
+We further designed a generic \emph{fast path} for single-key transactions,
+which is applicable to other transaction management systems.
+Our implementation of the fast path in \sys\ processes single-key
+transactions almost as fast as native HBase operations, while preserving
+transactional semantics relative to longer transactions.
 
 %\subsection*{Acknowledgments}
 
@@ -115,6 +125,5 @@ transactional semantics relative to longer transactions.
 
 \bibliographystyle{acm}
 \bibliography{main}
-
 
 \end{document}

@@ -13,14 +13,12 @@ begin and commit requests emulating the remainder of the traffic, to produce ful
 
 \paragraph{Tested systems.}
 
-We evaluate \sys\ compared to a state-of-the art TPS and separately evaluate the effectiveness of it FP mechanism.
+We compare \sys\  to a state-of-the art TPS and separately evaluate the effectiveness of it FP mechanism.
 To this end, we compare three TPSs: 
 \begin{description}
 \item[Vanilla \sys] -- the algorithm described in Section~\ref{sec:ll}, without support for FP transactions.
-\item[FP \sys] -- \sys\ extended to provide the FP API as described in Section~\ref{sec:alg}. Note that 
-our FP support impacts regular transactions as well as FP ones,
-since transactional reads and writes are modified to access the LVC together with the data, 
-inducing higher latency.
+\item[FP \sys] -- supporting the FP API as described in Section~\ref{sec:alg},
+with transactional reads and writes  modified to access the LVC along with the data.
 \item[Omid] -- the Apache Incubator version of Omid, on which we base
 our implementation of \sys. 
 \end{description}
@@ -95,7 +93,7 @@ occur under random key selection with billions of keys (as in our random mix).
 
 \begin{figure}[t]
 \centering
-	\includegraphics[width=0.45\textwidth]{figs/thpt-latency-1.png}
+	\includegraphics[width=0.4\textwidth]{figs/thpt-latency-1.png}
 	\caption{Throughput vs.\ latency, transaction size = 1.}
   \label{fig:tl-1}
 \end{figure}
@@ -149,12 +147,15 @@ commit entry management (penultimate column in Table~\ref{table:design-space}).
 
 The FP API delivers better performance for this traffic. For instance, single writes take an average of 2.4ms using 
 the {\code bwc} API versus 5.4ms using the regular transaction API (consisting of begin, write, and commit). 
-A single read executed using {\code brc} takes 1.5ms versus 2.3ms as a regular transaction. 
+\inred{For comparison, a native HBase write takes roughly 2ms.} 
+A single read executed using {\code brc} takes 1.5ms, \inred{which is the average latency of a native HBase read,} 
+versus 2.3ms as a regular transaction. 
 
 \begin{figure}[htb]
+\centering
 \includegraphics[width=.45\textwidth]{figs/stack-br-wc.png}
 \caption{Latency breakdown of single-key read+write transactions in the BRWC workload,
-at 100K tps throughput.}
+at 100K tps.}
 \label{fig:rmw}
 \end{figure}
 
@@ -174,7 +175,7 @@ $17\%$ of the time is spent on the control path, which leads to much faster comp
 \begin{figure*}[t]
 \begin{tabular}{cc}
   \begin{subfigure}[t]{0.5\textwidth}
-	\includegraphics[width=\textwidth]{figs/thpt-latency-5.png}
+	\includegraphics[width=.8\textwidth]{figs/thpt-latency-5.png}
 	\caption[]{Throughput versus latency, transaction size = 5}
     \label{fig:tl-5}
   \end{subfigure} &
@@ -186,7 +187,7 @@ $17\%$ of the time is spent on the control path, which leads to much faster comp
   \end{subfigure} \\
   
     \begin{subfigure}[t]{0.5\textwidth}
-	\includegraphics[width=\textwidth]{figs/thpt-latency-10.png}
+	\includegraphics[width=.8\textwidth]{figs/thpt-latency-10.png}
 	\caption[]{Throughput versus latency, transaction size = 10}
     \label{fig:tl-10}
   \end{subfigure} &
@@ -197,7 +198,7 @@ $17\%$ of the time is spent on the control path, which leads to much faster comp
     \label{fig:stack-tx10}
   \end{subfigure} 
 \end{tabular}  			
-  \caption{Latency versus throughput (left) and latency breakdown (right) for long transactions in random mix workload. }
+  \caption{Latency vs.\ throughput (left) and latency breakdown (right) for long transactions in random mix workload. }
   \label{fig:throughput-latency}
 \end{figure*}
 
@@ -208,7 +209,8 @@ For example, a 10-access transaction takes 24.4ms with FP \sys,
 versus 20.8ms with \sys. 
 
 \begin{figure}[tbh]
-\includegraphics[width=.5\textwidth]{figs/speedup.png}
+\centering
+\includegraphics[width=.4\textwidth]{figs/speedup.png}
 \caption{Summary of performance tradeoffs with the fast path API in {\sys}.}
 \label{fig:fp-tradeoff}
 \end{figure}

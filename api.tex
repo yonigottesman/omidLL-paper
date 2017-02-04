@@ -11,22 +11,24 @@ then proceed to define  the transaction semantics provided by \sys\ in Section~\
 The  data store holds  \emph{objects} (often referred to as \emph{rows}) identified by unique \emph{keys}.
 We consider multi-versioned objects, where object values are associated with \emph{version numbers}, and
 multiple versions associated with the same key may co-exist in the data store.
+\remove{
 Thus, at any given time, an object holds a tuple \tuple{key,\tuple{version,value}+}, where value
 can be structured to consist of multiple columns.
+}
 We further assume that a write operation can specify the version number it writes to.
 %monotonically increasing ??
 %\paragraph{API} 
 The  data store provides the following API:
 \begin{description}
-\item [\code{get}] -- atomically returns the value with
+\item [\code{get}] --  returns the value with
 the highest version associated with a given key along with its version number.
 \item The API further allows traversing (reading) earlier versions of the same
 key in descending order.
-\item [\code{put}] -- atomically creates or updates an object with a given key and version:
+\item [\code{put}] --  creates or updates an object with a given key and version:
 \remove{If the provided version number is smaller than the key's latest stored version, the update fails.} 
 if the version already exists, its value is updated;
 otherwise, a new version is added. 
-\item [\code{remove}] -- remove an object with a given key and version.
+\item [\code{remove}] -- removes an object with a given key and version.
 \item [\code{check\&mutate}] --  data stores often provide means to atomically read and
 update an object, e.g., HBase exports check\&mutate operations, which are 
 internally implemented using a RW lock.
@@ -49,10 +51,13 @@ snapshot isolation~\cite{DBLP:conf/sigmod/BerensonBGMOO95},
 which is provided by popular database technologies such as Oracle, PostgreSQL, and SQL Server,
 and TPSs such as Percolator, Omid, Tephra, and  CockroachDB.
 
+\remove{
 Intuitively, SI ensures that the data a transaction reads from the database 
 does not mix old and new values. For example, if a task updates the values of two stocks, then no other transaction may observe the old value of one of these stocks and the new value of the other. 
 %
-More precisely, SI enforces a total order on committed transactions according to their commit times so that 
+More precisely, 
+}
+SI enforces a total order on committed transactions according to their commit times so that 
 \begin{enumerate}
     \setlength{\itemsep}{0pt}
     \setlength{\parskip}{0pt}

@@ -5,7 +5,7 @@
   \centering
   
   \begin{subfigure}[tb]{\columnwidth}
-      \centering
+      \centering\small
     \begin{tabular}{|c|c|c|c|c|}
       \hline
       key & value & version & commit& leader\\
@@ -23,7 +23,7 @@
   \end{subfigure}
   
   \begin{subfigure}[t]{\columnwidth}
-    \centering
+    \centering\small
     \begin{tabular}{|c|c|c|c|c|}
       \hline
       key & value & version & commit& leader\\
@@ -42,7 +42,7 @@
 
 
   \begin{subfigure}[tb]{\columnwidth}
-    \centering
+    \centering\small
     \begin{tabular}{|c|c|c|c|c|}
       \hline
       key & value & version & commit& leader\\
@@ -68,7 +68,7 @@
 
 \begin{algorithm}[t]
   \begin{algorithmic}
-    \begin{small}
+    \small
       \Procedure{read}{key} 
       \For{rec $\leftarrow$ ds.get(key, versions down from $ts_r$)}
 		\If{rec.commit $\not \in\{$nil, abort$\}$} \Comment committed
@@ -118,7 +118,6 @@
 	\EndFor
 \EndProcedure
       
-       \end{small}
   \end{algorithmic}
   \caption{\sys's read and commit operations.} 
   %for transaction with read timestamp $ts_r$.}

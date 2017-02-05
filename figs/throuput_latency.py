@@ -50,13 +50,13 @@ def draw_throughput_latency(originalOmid,lorraGeneric,lorraFP,pltnum):
     plt.xticks(fontsize=myfonsize)
     #plt.title("Transaction Size "+ txsize[pltnum],fontsize=myfonsize)
     plt.tight_layout()
-    if pltnum != 3:
-        plt.legend(loc=2,fontsize=myfonsize)
+
+    plt.legend(loc=2,fontsize=myfonsize)
     plt.savefig("throughputLatency"+txsize[pltnum]+".pdf", bbox_inches='tight')
     #plt.show()
 
 breakdowns_names = ['Put','Get','tx5','tx10','rwm']
-operation_names = ['Write','Read','read/\nwrite','read/\nwrite','read/\nwrite']
+operation_names = ['Write','Read','Read/\nWrite','Read/\nWrite','Read/\nWrite']
 def breakdown(originalOmid,lorraGeneric,lorraFP,pltnum):
 
     begin_times = [originalOmid[0],lorraGeneric[0],lorraFP[0]]
@@ -66,7 +66,7 @@ def breakdown(originalOmid,lorraGeneric,lorraFP,pltnum):
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
 
-    lorraGenericLabel = 'valilla\nFragola'
+    lorraGenericLabel = 'Valilla\nFragola'
     lorraFPLabel = 'FP\nFragola'
 
     p3 = ax.bar(range(len(commit_times)), commit_times, bottom=np.array(begin_times)+np.array(hbase_times),
@@ -76,13 +76,16 @@ def breakdown(originalOmid,lorraGeneric,lorraFP,pltnum):
     p1 = ax.bar(range(len(begin_times)), begin_times, label='Begin', alpha=1, color=tableau20[0], align='center')
     plt.xticks(np.arange(3) ,[originalOmidLabel,lorraGenericLabel,lorraFPLabel],fontsize=myfonsize)
 
-    plt.ylim(0, 50)
+    if pltnum == 0 or pltnum == 1 or pltnum == 4:
+        plt.ylim(0, 35)
+    else:
+        plt.ylim(0, 50)
     plt.grid(True)
     plt.yticks(fontsize=20)
 
     plt.ylabel("Latency [msec]", fontsize=myfonsize)
-    if pltnum != 3 and pltnum != 0:
-        plt.legend(loc=0, fontsize=myfonsize)
+
+    plt.legend(loc=0, fontsize=myfonsize)
 
     plt.tight_layout()
     plt.savefig("latency_" + breakdowns_names[pltnum] + ".pdf",

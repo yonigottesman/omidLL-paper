@@ -27,9 +27,9 @@ as in CockroachDB.
 
 As a separate contribution we developed a fast path for single-key transactions,
 which is applicable to any of the aforementioned systems. A similar mechanism 
-was previously developed in Mediator~\cite{mediator}. The latter focused on reconciling 
-transactions with native atomic operations, rather than on a unified FP API, and suggested
-a less efficient implementation.  
+was previously developed in Mediator~\cite{mediator} for Omid1~\cite{OmidICDE2014}. Mediator focused on reconciling 
+transactions with native atomic operations, rather than on a unified FP API. It suggests
+a less efficient implementation as native operation could casue starvation of long transactions.  
 
 \remove{
 

@@ -82,7 +82,7 @@ since all but one of these transactions are doomed to abort.
 It is possible to buffer write intents locally in the course of the transaction, and add the write intents to the data store at commit time~\cite{Percolator2010}.
 
 In some solutions writes check for conflicts before declaring their intents~\cite{cockroach}, whereas in others, 
-all conflict detection is deferred to commit time. 
+all conflict detection is deferred to commit time~\cite{Percolator2010,OmidICDE2014,Omid2017,tephra}. 
 
 \paragraph{Transactional reads.} 
 The reads of a given transaction obtain a consistent snapshot of the data store at logical time (i.e., version) $ts_r$.
@@ -95,7 +95,7 @@ To this end, TPSs keep per-transaction \emph{commit entries}, which are the sour
 (pending, committed, or aborted). 
 This entry is updated in line~\ref{l:commit} of Algorithm~\ref{alg:schema} as we explain below, 
 and is checked in order to resolve write intents in line~\ref{l:resolve}.
-In some cases~\cite{Percolator2010,cockroach}, when the writing transaction status is undetermined, the read may forcefully abort
+In some cases~\cite{Percolator2010,cockroach,Omid2017}, when the writing transaction status is undetermined, the read may forcefully abort
 it by updating the commit entry accordingly.
 
 %Similarly, the solution we implement in \sys\ forces the transaction with the pending write intent to abort. 
@@ -177,7 +177,7 @@ To eliminate the need for such failure detection and recovery, newer systems pre
 a centralized TM for validation~\cite{OmidICDE2014,Omid2017,tephra}.
 
 
-CockroachDB takes a different approach: it performs distributed validation at write time, by replacing writes with atomic validate-and-write operations that can abort either the current transaction or a conflicting one. 
+CockroachDB~\cite{cockroach} takes a different approach: it performs distributed validation at write time, by replacing writes with atomic validate-and-write operations that can abort either the current transaction or a conflicting one. 
 Since CockroachDB's approach slows down transactional writes while Omid's centralized conflict detection is extremely scalable
 (capable of sustaining orders of magnitude higher throughput than the network~\cite{Omid2017}),  
 \sys\ adopts the centralized validation mechanism from Omid. 

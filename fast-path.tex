@@ -243,6 +243,7 @@ A singleton write has two additional concerns: (1) it needs to  produce a new ve
 is smaller than any commit timestamp that will be assigned to a regular transaction in the future.
 (2)  It needs to make sure that conflicts with regular transactions are detected. 
 
+To handle these concerns we use a mechanism similar to the one used in Mediator~\cite{mediator}.
 To support (1), we change the structure of timestamps to consist of two 
 components -- a global version and a locally advancing sequence number.
 Practically, we implement the two components in one long integer, with some number $\ell$ of the less significant bits
@@ -305,11 +306,10 @@ reading the object's latest  version from the data store.
 \subsection{Implementation and optimization}
 \label{ssec:fast-impl}
 
-When implementing support for \sys's fast path in HBase, 
-we observed that associating a maxVersion field with each key is wasteful,
+
+Associating a maxVersion field with each key is wasteful,
 both in terms of space, and in terms of the number of updates this field undergoes.
-Instead, we aggregate the maxVersions of many keys in a single variable, 
-which we call the \emph{Local Version Clock (LVC)};
+Instead, when implementing support for \sys's fast path in HBase, we aggregate the maxVersions of many keys in a single variable, which we call the \emph{Local Version Clock (LVC)};
 a similar approach was previously used in Mediator~\cite{mediator}.
 Like many state-of-the-art data stores, HBase data is \emph{sharded} (partitioned) 
 across many \emph{regions}, and is deployed on multiple  \emph{region servers}, each of which serves

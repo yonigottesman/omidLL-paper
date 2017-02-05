@@ -87,22 +87,33 @@
 
 \Statex
 
-      		\Procedure{checkLeader}{leaderPtr} 
-      			\State leader $\leftarrow$ ds.get(leaderPtr)
-     			 \If{leader $=$ nil} return abort \EndIf
-		     	 \If{ leader.commit $\not=$nil} \Comment transaction is complete
-		     	 	\State return leader.commit 
-		     	 \EndIf
-		     	 \Comment try to abort pending transaction 
-			\State ok $\leftarrow$ ds.check\&mutate(leader.commit, nil, abort)
-			\If{$\neg$ok} \Comment leader status has changed -- recheck  
-				\State return  {\sc checkLeader}({leaderPtr}) \EndIf
-			\State return abort
-	   	\EndProcedure
+%      		\Procedure{checkLeader}{\tuple{k, ts}} 
+%     			\State leader $\leftarrow$ ds.get(\tuple{k, ts})
+%    			 \If{leader $=$ nil} return abort \Comment{leader removed} \EndIf 
+%		     	 \If{ leader.commit $\not=$nil} \Comment transaction is complete
+%		     	 	\State return leader.commit 
+%		     	 \EndIf
+%		     	 \Comment try to abort pending transaction 
+%			\State ok $\leftarrow$ ds.check\&mutate(leader.commit, nil, abort)
+%			\If{$\neg$ok} \Comment leader status has changed -- recheck  
+%				\State return  {\sc checkLeader}({leaderPtr}) \EndIf
+%			\State return abort
+%	   	\EndProcedure
 
+      		\Procedure{checkLeader}{\tuple{k, ts}} 
+		     	 \While{true} 
+      				\State leader $\leftarrow$ ds.get(\tuple{k, ts})
+     				 \If{leader $=$ nil} return abort \Comment{leader removed} \EndIf 		     	 	
+     				 \If{leader.commit $=$ nil}  \Comment{abort transaction} 
+					\State ds.check\&mutate(leader.commit, nil, abort)
+				\Else\ return leader.commit \Comment transaction is complete 
+%					\State return leader.commit \Comment transaction is complete
+				\EndIf 		     	 	
+		     	 \EndWhile
+	   	\EndProcedure
 \Statex
 
-\Procedure{commit}{}
+\Procedure{commit}{$ts_r$, write-set, leader}
       
       	\State $ts_c \leftarrow$ TM.commit($ts_r$, write-set) \Comment may return abort
       	\If{$ts_c \not=$ abort}
@@ -113,7 +124,8 @@
 	\State \Comment post-commit
 	\ForAll{keys k $\in$ write-set}
 			\If{$ts_c =$ abort} ds.remove(\tuple{k, $ts_r$})  	
-			\Else\ update  commit field of \tuple{k, $ts_r$} to $ts_c$  in ds%  $\leftarrow ts_c$ 
+%			\Else\ update  commit field of \tuple{k, $ts_r$} to $ts_c$  in ds%  $\leftarrow ts_c$ 
+			\Else\ ds.update(\tuple{\tuple{k, $ts_r$}, commit}, $ts_c$)
 			\EndIf
 	\EndFor
 \EndProcedure
@@ -135,7 +147,7 @@ Since the transaction commit needs to be an atomic step, the first key in the tr
 refer to the leader to find out whether the value they are attempting to read has been committed or not.
 Figure~\ref{fig:model} shows the metadata of a transaction during its stages of execution. 
 
-\sys's TM is based on Omid's TM, and has the same functionality except that it does not write commit entries.
+\sys's TM is based on Omid's TM, and has the same functionality except that it does not write commit entries (since this is done by the clients at post-commit).
 In particular, it manages a monotonically increasing global clock for allocating read timestamps on begin and commit timestamps on commit,
 and it performs validation (i.e., conflict detection) upon commit using an in-memory hash table. 
 Since the TM algorithm has been reported elsewhere~\cite{Omid2017}, and the \sys\ client need not be aware of 
@@ -146,7 +158,7 @@ Algorithm~\ref{fig:get-pseudocode} describes \sys's implementation of read and c
 The client's operations proceed as follows:
 
 \paragraph{Begin.}
-The client sends a commit request to the TM, which assigns it a read timestamp $ts_r$.
+The client sends a begin request to the TM, which assigns it a read timestamp $ts_r$.
 
 \paragraph{Write.}
 The client adds a tentative record to the data store, with the written key and value, version number $ts_r$, 

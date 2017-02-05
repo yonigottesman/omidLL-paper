@@ -95,7 +95,7 @@ To this end, TPSs keep per-transaction \emph{commit entries}, which are the sour
 (pending, committed, or aborted). 
 This entry is updated in line~\ref{l:commit} of Algorithm~\ref{alg:schema} as we explain below, 
 and is checked in order to resolve write intents in line~\ref{l:resolve}.
-In some cases~\cite{Percolator2010,cockroach,Omid2017}, when the writing transaction status is undetermined, the read may forcefully abort
+In some cases~\cite{Percolator2010,cockroach}, when the writing transaction status is undetermined, the read may forcefully abort
 it by updating the commit entry accordingly.
 
 %Similarly, the solution we implement in \sys\ forces the transaction with the pending write intent to abort. 

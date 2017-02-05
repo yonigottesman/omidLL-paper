@@ -11,11 +11,11 @@
       key & value & version & commit& leader\\
       %\hline
       \hline
-      k1 & a & 3 & nil &k1\\
+      k1 & a & 3 & nil &\tuple{k1,3}\\
       %\hline
-      k2 & b & 3 & nil &k1\\
+      k2 & b & 3 & nil &\tuple{k1,3}\\
       %\hline
-      k3 & c & 3 & nil &k1\\
+      k3 & c & 3 & nil &\tuple{k1,3}\\
       \hline
     \end{tabular}
 	\caption[]{Pending transaction}
@@ -29,11 +29,11 @@
       key & value & version & commit& leader\\
       \hline
       %\hline
-      k1 & a & 3 & 7&k1\\
+      k1 & a & 3 & 7&\tuple{k1,3}\\
       %\hline
-      k2 & b & 3 & nil &k1\\
+      k2 & b & 3 & nil &\tuple{k1,3}\\
       %\hline
-      k3 & c & 3 & nil &k1\\
+      k3 & c & 3 & nil &\tuple{k1,3}\\
       \hline
     \end{tabular}
 	\caption[]{Committed transaction}
@@ -48,11 +48,11 @@
       key & value & version & commit& leader\\
       \hline
       %\hline
-      k1 & a & 3 & 7&k1\\
+      k1 & a & 3 & 7&\tuple{k1,3}\\
       %\hline
-      k2 & b & 3 & 7&k1\\
+      k2 & b & 3 & 7&\tuple{k1,3}\\
       %\hline
-      k3 & c & 3 & 7&k1\\
+      k3 & c & 3 & 7&\tuple{k1,3}\\
       \hline
     \end{tabular}
 	\caption[]{Post-committed transaction}
@@ -61,7 +61,7 @@
 
   
   \caption{Evolution of \sys\ metadata during a transaction. The transaction receives $ts_r=3$ in the begin stage, 
-  and the $ts_c=7$ when committing; its leader is k1.}
+  and $ts_c=7$ when committing; its leader is \tuple{k1,3}.}
   \label{fig:model}
 \end{figure}
 
@@ -113,10 +113,11 @@
 	   	\EndProcedure
 \Statex
 
-\Procedure{commit}{$ts_r$, write-set, leader}
+\Procedure{commit}{$ts_r$, write-set}
       
       	\State $ts_c \leftarrow$ TM.commit($ts_r$, write-set) \Comment may return abort
       	\If{$ts_c \not=$ abort}
+		\State leader  $\leftarrow$ getLeader(write-set)
 	      	 \State  ok $\leftarrow$ ds.check\&mutate(leader.commit, nil,  $ts_c$)
    		\If{$\neg$ok} 
    		 $ts_c \leftarrow$ abort \EndIf
@@ -147,7 +148,7 @@ Since the commit needs to be an atomic step, the first key in the transaction's 
 refer to the leader to find out whether the value they are attempting to read has been committed.
 Figure~\ref{fig:model} shows the metadata of a transaction during its stages of execution. 
 
-\sys's TM is based on Omid's TM, and has the same functionality except that it does not write commit entries (since this is done by the clients at post-commit).
+\sys's TM is based on Omid's TM, and has the same functionality except that it does not write commit entries (since this is done by the clients at post-commit) and it does not block begins/commits until such records are written.
 In particular, it manages a monotonically increasing global clock for allocating read timestamps on begin and commit timestamps on commit,
 and it performs validation (i.e., conflict detection) upon commit using an in-memory hash table. 
 Since the TM algorithm has been reported elsewhere~\cite{Omid2017}, and the \sys\ client need not be aware of 
@@ -178,8 +179,9 @@ of the pending transaction.
 %\Yoni{example here?}. 
 To this end, {\sc checkLeader} attempts to forcefully abort the pending transaction. This is done using the
  {check\&mutate} operation, which atomically reads and sets the commit entry to abort in case its value is still nil.
-If check\&mutate fails, this means that the transaction is no longer pending, and {\sc checkLeader} is recursively called
-to re-read the leader's entry. Note that during the recursive call, the record can no longer be nil, and so the recursive call 
+If check\&mutate fails, this means that the transaction is no longer pending, and the next iteration in the loop 
+%{\sc checkLeader} is recursively called to
+re-reads the leader's entry. Note that during the second iteration, the record can no longer be nil, and so it
 always returns without attempting another check\&mutate.
  
 %When a transaction commits, it atomically checks it hasn't been invalidated before inserting the $ts_c$ to the commit .

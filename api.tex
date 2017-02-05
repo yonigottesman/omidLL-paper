@@ -24,8 +24,7 @@ The  data store provides the following API:
 the highest version associated with a given key along with its version number.
 \item The API further allows traversing (reading) earlier versions of the same
 key in descending order.
-\item [\code{put}] --  creates or updates an object with a given key and version:
-\remove{If the provided version number is smaller than the key's latest stored version, the update fails.} 
+\item [\code{update}] --  creates or updates an object (either the entire object or some of its fields) with a given key and version:
 if the version already exists, its value is updated;
 otherwise, a new version is added. 
 \item [\code{remove}] -- removes an object with a given key and version.

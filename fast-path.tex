@@ -287,7 +287,7 @@ to the reading transaction's $ts_r$.
 Writes consult this field and always select a new version that exceeds the key's {maxVersion}.
 Thus, once $T_1$ reads a key and bumps its {maxVersion}, 
 no FP transaction can write a version of key that should be 
-included in $T_1$'s snapshot.
+included in $T_1$'s snapshot.  
 
 The data store needs to support two atomic operations for updating {maxVersion}.
 The first is \emph{fetch-and-increment, F\&I}, which increments {maxVersion} and returns its
@@ -296,7 +296,7 @@ sequence number part  of
 the version. The second operation, \emph{bump}, takes a new version  as a parameter and
 sets  {maxVersion} to the maximum between this parameter and its old value.
 Singleton writes  increment the version using F\&I, and transactional operations (reads and post-commits)
-perform { bump} together with their operations. 
+perform {bump} together with their operations. 
 
 The \code{br} and \code{wc} operations are  similar to \code{brc} and \code{bwc}, 
 respectively, except that \code{wc} uses the version read by \code{br} instead of 
@@ -307,12 +307,12 @@ reading the latest version from the data store.
 
 Associating a maxVersion field with each key is wasteful,
 both in terms of space, and in terms of the number of updates this field undergoes.
-Instead, when implementing support for \sys's fast path in HBase, we aggregate the maxVersions of many keys in a single variable, which we call the \emph{Local Version Clock (LVC)}.
-%a similar approach was previously used in Mediator~\cite{mediator}.
+Instead, when implementing support for \sys's fast path in HBase, we aggregate the maxVersions of many keys in a single variable, 
+which we call the \emph{Local Version Clock (LVC)}; a similar approach was previously used in Mediator~\cite{mediator}.
+
 Like many state-of-the-art data stores, HBase data is \emph{sharded} (partitioned) 
 across many \emph{regions}, and is deployed on multiple  \emph{region servers}, each of which serves
 several hundreds of regions. Our solution implements one LVC in each region server. 
-
 Using a shared LVC reduces the number of updates:  
 a transactional read modifies the LVC only if its $ts_r$ exceeds it. In particular, 
 a transaction with multiple reads in the same region server needs to bump it only once. 

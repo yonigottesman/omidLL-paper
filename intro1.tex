@@ -36,9 +36,9 @@ which provides reliable and scalable key-value storage. The system's first gener
 was built without transaction support. This exposed  developers to very complex programming scenarios 
 to achieve ACID behavior (e.g., consistent folder listings, atomic updates of multiple counters). 
 %We would like to build the next generation of the system using a transaction API on top of HBase.
-We have looked into building the next generation using 
- Apache Incubator Omid~\cite{omid}, which provides a transactional API on top of HBase, and 
- is already in-use in other Yahoo systems~\cite{Omid2017}.
+We have looked into building the next generation using  Omid~\cite{omid}, 
+an Apache Incubator project which provides a transaction API on top of HBase, and 
+ is already in use at Yahoo~\cite{Omid2017}.
 Unfortunately, while this makes programming much easier, it also jeopardizes 
 the real-time latency SLA for interactive user experience. For example,  
 simple updates and point queries must complete within single-digit milliseconds, 

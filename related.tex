@@ -7,9 +7,9 @@ hardware trends like RDMA and HTM~\cite{Wei2015,Dragojevic2014,Dragojevic2015}.
 These efforts are, by and large, orthogonal to ours.
 
 Our work follows the line of industrial production systems, such as 
-Google’s Spanner~\cite{Spanner2012}, Megastore~\cite{Megastore}, and Percolator~\cite{Percolator2010}, 
-Yahoo’s Omid1~\cite{OmidICDE2014} and Omid~\cite{Omid2017}, 
-Cask’s Tephra\cite{tephra}, and more~\cite{cockroach}.
+Google's Spanner~\cite{Spanner2012}, Megastore~\cite{Megastore}, and Percolator~\cite{Percolator2010}, 
+Yahoo's Omid1~\cite{OmidICDE2014} and Omid~\cite{Omid2017}, 
+Cask's Tephra\cite{tephra}, and more~\cite{cockroach}.
 These systems develop transaction processing engines on top of existing persistent 
 highly-available data stores; for example, Megastore is layered on top of
 Bigtable~\cite{Chang2008}, Warp~\cite{Warp} uses HyperDex~\cite{Escriva2012}, 
@@ -26,9 +26,10 @@ failures as in Percolator or have transactional writes perform conflict detectio
 as in CockroachDB. 
 
 As a separate contribution we developed a fast path for single-key transactions,
-which is applicable to any of the aforementioned systems.
-A similar mechanism was previously developed in Mediator~\cite{mediator}.
-\inred{How Mediator differs from \sys\ FP.}
+which is applicable to any of the aforementioned systems. A similar mechanism 
+was previously developed in Mediator~\cite{mediator}. The latter focused on reconciling 
+transactions with native atomic operations, rather than on a unified FP API, and suggested
+a less efficient implementation.  
 
 \remove{
 
@@ -38,7 +39,7 @@ store and leverage a centralized TM (sometimes
 called oracle) for timestamp allocation and conflict resolution.
 However, Omid1 and Tephra store all the information
 about committed and aborted transactions in the
-TM’s RAM, and proactively duplicate it to every client
+TMï¿½s RAM, and proactively duplicate it to every client
 that begins a transaction (in order to allow the client
 to determine locally which non-committed data should
 be excluded from its reads). This approach is not scalable,
@@ -48,12 +49,12 @@ by storing pertinent information in a metadata table
 that clients can access as needed. Our performance
 measurements in Section 7 below show that Omid significantly
 out-performs Omid1, whose design is very close
-to Tephra’s. For high availability, Tephra and Omid1
+to Tephraï¿½s. For high availability, Tephra and Omid1
 use a write-ahead log, which entails long recovery times
 for replaying the log; Omid, instead, reuses the inherent
 availability of the underlying key-value store, and hence
 recovers quickly from failures.
-Percolator also uses a centralized “oracle” for timestamp
+Percolator also uses a centralized ï¿½oracleï¿½ for timestamp
 allocation but resolves conflicts via two-phase commit,
 whereby clients lock database records rendering
 them inaccessible to other transactions; the Percolator

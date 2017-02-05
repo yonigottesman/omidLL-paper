@@ -177,9 +177,10 @@ To eliminate the need for such failure detection and recovery, newer systems pre
 a centralized TM for validation~\cite{OmidICDE2014,Omid2017,tephra}.
 
 
-CockroachDB takes a different approach: it performs distributed validation at write time, by replacing writes with atomic validate-and-write operations that can abort either the current transaction or a conflicting one. 
-Since CockroachDB's approach slows down transactional writes while Omid's centralized conflict detection is extremely scalable
-(capable of sustaining orders of magnitude higher throughput than the network~\cite{Omid2017}),  
+CockroachDB takes a different approach: it performs distributed validation at write time, by replacing writes with atomic validate-and-write 
+operations that can abort either the current transaction or a conflicting one. Since CockroachDB's approach slows down transactional writes 
+while Omid's centralized conflict detection is extremely scalable~\cite{Omid2017},
+%(capable of sustaining orders of magnitude higher throughput than the network~\cite{Omid2017}),  
 \sys\ adopts the centralized validation mechanism from Omid. 
 
 
@@ -188,8 +189,9 @@ The early generation of Omid~\cite{OmidICDE2014} (referred to as Omid1) and Teph
 of pending transactions among all active clients, 
 which consumes high bandwidth and does not scale. Omid and CockroachDB instead use dedicated tables. CockroachDB updates the table in a distributed manner, 
 while Omid has the centralized TM persist all commits. 
-Our experiments show that the centralized access to commit entries is Omid's principal scalability bottleneck, and while this bottleneck is mitigated via batching commit table updates, this also increases latency.
-Omid chose this  option as it was designed primarily for high throughput. Here, on the other hand, we target  low latency. 
+Our experiments show that the centralized access to commit entries is Omid's main scalability bottleneck, 
+and while this bottleneck is mitigated via batching commit table updates, this also increases latency.
+Omid chose this  option as it was designed for high throughput. Here, on the other hand, we target  low latency. 
 
 We therefore opt to follow the design of Percolator, which stores each transaction's commit entry alongside its first written key,
 which we call the \emph{leader}, and stores pointers to this leader at all other keys written by the transaction. 
@@ -208,9 +210,9 @@ force the writing transaction to abort. This is done using an atomic check\&muta
 writing transaction's commit entry to aborted.
 
 Omid and Tephra, on the other hand, do not need to force such aborts, because they ensure that  if the read sees a write intent
-by an uncommitted transaction, that transaction will not commit with an earlier timestamp than the read.
-This is achieved by a single TM that allocates timestamps, performs validation, and writes the commit entry,
-and either delays begin requests until all transactions that concurrently attempt to commit complete (as in Omid)
+by an uncommitted transaction, the latter will not commit with an earlier timestamp than the read.
+This is achieved by a single TM that allocates timestamps, performs validation, and writes the commit entry.
+It either delays begin requests until all transactions that concurrently attempt to commit complete (as in Omid),
 or sends information about all these transactions to the beginning client (as in Omid1 and Tephra).
 
 \remove{

@@ -244,17 +244,15 @@ is smaller than any commit timestamp that will be assigned to a regular transact
 (2)  It needs to make sure that conflicts with regular transactions are detected. 
 
 To handle these concerns we use a similar approach to the one used in Mediator~\cite{mediator}.
-To support (1), we change the structure of timestamps to consist of two 
+We change the structure of timestamps to consist of two 
 components -- a global version and a locally advancing sequence number.
 Practically, we implement the two components in one long integer, with some number $\ell$ of the less significant bits
 reserved for sequence numbers assigned by FP writes, and the most significant bits representing 
-the global version determined by the TM. Thus, the TM always produces timestamps where the $\ell$ lower bits are zeros,
-and increases the global clock by $2^\ell$ on every begin and commit call.  
+the global version determined by the TM. Thus, the TM always produces timestamps where the $\ell$ lower bits are zeros, and increases the global clock by $2^\ell$ on every begin and commit call  
 
-Singleton writes then read the object's latest committed version and increment it, provided that they can do so 
- without overflowing the sequence number. 
-In the rare case when the lower $\ell$ bits are all ones, there is a need to increment the global clock, and so the FP transaction aborts and is retried
-as a regular one. 
+To support (1), singleton writes read the object's latest committed version and increment it. This is unlike~\cite{mediator} which aggregates multiple timestamps in a local clock and more like~\cite{cockroach} which reads and manipulates versions at the object's level.
+The increment is done provided that it is not overflowing the sequence number. 
+In the rare case when the lower $\ell$ bits are all ones, there is a need to increment the global clock, and so the FP transaction aborts and is retried as a regular one. 
 
 It is important to note that the singleton write needs to \emph{atomically} find the latest version and produce a new one that exceeds it, 
 to make sure that no other transaction creates a newer version in the interim. This is done by a new \emph{writeVersion} function implemented 

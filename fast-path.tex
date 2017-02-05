@@ -233,7 +233,7 @@ FP reads can forgo the begin call since they do not need to obtain a snapshot ti
 They can also forgo the commit call, since they perform a single read, and hence their `snapshot' is trivially valid.
 
 In case  \code{bwc} encounters a tentative version it does not try to resolve it, but rather simply aborts.
-This may cause false aborts in case the transaction that wrote the tentative version has committed or aborted and did not 
+This may cause false aborts in case the transaction that wrote the tentative version has committed and did not 
 complete post-commit, as well as in the case that it will eventually abort. 
 In general, this mechanism prioritizes regular transactions over FP ones. We choose this approach since
 the goal is to complete FP transactions quickly, and if an FP transaction cannot complete quickly, it might as well be 

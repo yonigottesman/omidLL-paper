@@ -5,8 +5,8 @@ from matplotlib.ticker import FuncFormatter
 marksize=10
 my_linewidth = 5
 originalOmidLabel = 'Omid'
-lorraGenericLabel = 'Fragola (vanilla)'
-lorraFPLabel = 'Fragola (fast-path)'
+lorraGenericLabel = 'Vanilla Fragola'
+lorraFPLabel = 'FP Fragola'
 
 
 
@@ -66,10 +66,8 @@ def breakdown(originalOmid,lorraGeneric,lorraFP,pltnum):
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
 
-    lorraGenericLabel = 'Fragola\n(valilla)'
-    lorraFPLabel = 'Fragola\n(fast-path)'
-
-
+    lorraGenericLabel = 'valilla\nFragola'
+    lorraFPLabel = 'FP\nFragola'
 
     p3 = ax.bar(range(len(commit_times)), commit_times, bottom=np.array(begin_times)+np.array(hbase_times),
                 label='Commit', alpha=1, color=tableau20[4],align='center')
@@ -83,7 +81,7 @@ def breakdown(originalOmid,lorraGeneric,lorraFP,pltnum):
     plt.yticks(fontsize=20)
 
     plt.ylabel("Latency [msec]", fontsize=myfonsize)
-    if pltnum != 3:
+    if pltnum != 3 and pltnum != 0:
         plt.legend(loc=0, fontsize=myfonsize)
 
     plt.tight_layout()

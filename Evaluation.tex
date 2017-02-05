@@ -116,27 +116,8 @@ occur under random key selection with billions of keys (as in our random mix).
       \end{subfigure}
 
 \end{tabular}
-       \caption{Transaction size = 1}
+       \caption{Latency vs.\ throughput and latency breakdown for single sized transactions in random mix workload. }
 \end{figure}
-
-%% \begin{figure*}[tb]
-%% \centering  
-%% \begin{tabular}{cc}
-%%       \begin{subfigure}[t]{0.5\textwidth}
-%% 	\includegraphics[width=.9\textwidth]{figs/latency_Get.pdf}
-%%     \caption[]{Single-read transactions}
-%%     \label{fig:stack-brc}
-%%   \end{subfigure} &
-
-%%   \begin{subfigure}[t]{0.5\textwidth}
-%% 	\includegraphics[width=.9\textwidth]{figs/latency_Put.pdf}
-%%     \caption[]{Single-write transactions}
-%%     \label{fig:stack-bwc}
-%%   \end{subfigure}
-%%   \end{tabular}
-%% \caption{Transaction latency breakdown at 100K tps throughput, transaction size = 1.} 
-%% \label{fig:1key-break}
-%% \end{figure*}
 
 
 Recall that \sys\ is motivated by the prevalence of short transactions in production, and is designed with
@@ -201,16 +182,16 @@ $17\%$ of the time is spent on the control path, which leads to much faster comp
     \label{fig:tl-5}
   \end{subfigure} &
 
-   \begin{subfigure}[t]{0.5\textwidth}
-	\includegraphics[width=.9\textwidth]{figs/latency_tx5.pdf}
-	\caption[]{Latency breakdown, transaction size = 5}
-    \label{fig:stack-tx5}
-  \end{subfigure} \\
-  
     \begin{subfigure}[t]{0.5\textwidth}
 	\includegraphics[width=.9\textwidth]{figs/throughputlatency10.pdf}
 	\caption[]{Throughput versus latency, transaction size = 10}
     \label{fig:tl-10}
+  \end{subfigure}\\
+
+   \begin{subfigure}[t]{0.5\textwidth}
+	\includegraphics[width=.9\textwidth]{figs/latency_tx5.pdf}
+	\caption[]{Latency breakdown, transaction size = 5}
+    \label{fig:stack-tx5}
   \end{subfigure} &
   
   \begin{subfigure}[t]{0.5\textwidth}
@@ -219,7 +200,7 @@ $17\%$ of the time is spent on the control path, which leads to much faster comp
     \label{fig:stack-tx10}
   \end{subfigure} 
 \end{tabular}  			
-  \caption{Latency vs.\ throughput (left) and latency breakdown (right) for long transactions in random mix workload. }
+  \caption{Latency vs.\ throughput (up) and latency breakdown (down) for long transactions in random mix workload. }
   \label{fig:throughput-latency}
 \end{figure*}
 

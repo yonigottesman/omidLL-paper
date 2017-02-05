@@ -32,6 +32,10 @@ transactions with native atomic operations, rather than on a unified FP API. It 
 a less efficient and fair implementation -- native operations in Mediator never concede to transactions, 
 which can starve in case of contention. 
 
+The FP API richness potentially complicates development. This drawback can be abstracted 
+away by high-level access semantics. For example, a SQL implementation (e.g., Phoenix~\cite{Phoenix})
+can select the best API in its query optimizer, transparently to the user.  
+
 \remove{
 
 Omid most closely resembles Tephra [6] and

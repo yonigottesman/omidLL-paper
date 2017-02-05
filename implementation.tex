@@ -143,8 +143,8 @@ and
 (2) \emph{leader} is a pointer to the writing transaction's commit entry, namely, the \emph{commit} column of the first key written by the same
 transaction. 
 
-Since the transaction commit needs to be an atomic step, the first key in the transaction's write-set is chosen to be the leader, and the transaction commits via a single atomic write of $ts_c$ to the leader's commit column. Transactional read operations that find a nil commit entry 
-refer to the leader to find out whether the value they are attempting to read has been committed or not.
+Since the commit needs to be an atomic step, the first key in the transaction's write-set is chosen to be the leader, and the transaction commits via a single atomic write of $ts_c$ to the leader's commit column. Transactional read operations that find a nil commit entry 
+refer to the leader to find out whether the value they are attempting to read has been committed.
 Figure~\ref{fig:model} shows the metadata of a transaction during its stages of execution. 
 
 \sys's TM is based on Omid's TM, and has the same functionality except that it does not write commit entries (since this is done by the clients at post-commit).

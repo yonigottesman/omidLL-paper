@@ -243,7 +243,7 @@ A singleton write has two additional concerns: (1) it needs to  produce a new ve
 is smaller than any commit timestamp that will be assigned to a regular transaction in the future.
 (2)  It needs to make sure that conflicts with regular transactions are detected. 
 
-To handle these concerns we use a mechanism similar to the one used in Mediator~\cite{mediator}.
+To handle these concerns we use a similar approach to the one used in Mediator~\cite{mediator}.
 To support (1), we change the structure of timestamps to consist of two 
 components -- a global version and a locally advancing sequence number.
 Practically, we implement the two components in one long integer, with some number $\ell$ of the less significant bits
@@ -261,7 +261,7 @@ to make sure that no other transaction creates a newer version in the interim. T
 at the data store level. In Section~\ref{ssec:fast-impl}
 below, we explain how we implement such atomic conditional updates in HBase as part of \sys. 
 
-Next, we address (2), namely conflicts between FP and regular transactions.
+Next, we address (2) -- conflicts between FP and regular transactions.
 (Note that the atomic conditional write in \code{bwc} takes care of conflicts among singletons.)
 In case an ongoing regular transaction writes to a key before \code{bwc} accesses it, 
 \code{bwc} finds the tentative write and aborts. 
@@ -299,25 +299,24 @@ sets  {maxVersion} to the maximum between this parameter and its old value.
 Singleton writes  increment the version using F\&I, and transactional operations (reads and post-commits)
 perform { bump} together with their operations. 
 
-The  \code{br} and \code{wc} operations are similar to \code{brc} and \code{bwc}, 
+The \code{br} and \code{wc} operations are  similar to \code{brc} and \code{bwc}, 
 respectively, except that \code{wc} uses the version read by \code{br} instead of 
-reading the object's latest  version from the data store.
+reading the latest version from the data store.
 
 \subsection{Implementation and optimization}
 \label{ssec:fast-impl}
 
-
 Associating a maxVersion field with each key is wasteful,
 both in terms of space, and in terms of the number of updates this field undergoes.
-Instead, when implementing support for \sys's fast path in HBase, we aggregate the maxVersions of many keys in a single variable, which we call the \emph{Local Version Clock (LVC)};
-a similar approach was previously used in Mediator~\cite{mediator}.
+Instead, when implementing support for \sys's fast path in HBase, we aggregate the maxVersions of many keys in a single variable, which we call the \emph{Local Version Clock (LVC)}.
+%a similar approach was previously used in Mediator~\cite{mediator}.
 Like many state-of-the-art data stores, HBase data is \emph{sharded} (partitioned) 
 across many \emph{regions}, and is deployed on multiple  \emph{region servers}, each of which serves
 several hundreds of regions. Our solution implements one LVC in each region server. 
 
 Using a shared LVC reduces the number of updates:  
-a transactional read modifies the LVC only if its $ts_r$ exceeds it, and in particular, 
-a transaction performing multiple reads in the same region server needs to bump it only once. 
+a transactional read modifies the LVC only if its $ts_r$ exceeds it. In particular, 
+a transaction with multiple reads in the same region server needs to bump it only once. 
 
 We implement the two required atomic methods - F\&I and bump on the LVC using atomic hardware operations (F\&I and CAS, respectively). 
 In addition, 
@@ -329,13 +328,10 @@ Note that although check\&mutate only holds a lock on the affected key, the join
 because it uses a form of two-phase locking: when check\&mutate begins, its locks the key, then the atomic access to the LVC
 effectively locks the LVC during its update; this is followed by an update of the key's record and the key's lock being released.
 
-
-The LVC is kept in memory, and is not persisted. 
-There are two issues to handle in this context. First,
-Hbase migrates region control from time to time across region servers, to balance load and handle failures. 
-Second, a region server may fail and be restarted. 
-In both cases, we need to ensure that the monotonicity of the LVC associated with the (migrated or recovered) region is preserved.
-To this end, when a region is started in a new server (following migration or recovery), 
+The LVC is kept in memory, and is not persisted. Migration of region control across region servers, which HBase performs 
+to balance load and handle server crashes, must be handled by the LVC management. 
+In both cases, we need to ensure that the monotonicity of the LVC associated with the %(migrated or recovered) 
+region is preserved. To this end, when a region is started in a new server (following migration or recovery), 
 we force the first operation accessing it
 in the new server to accesses the TM to increment the global clock, and then 
 bumps the local clock to the value of the global clock.

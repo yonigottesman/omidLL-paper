@@ -109,7 +109,7 @@ We begin with short transactions.
 Figure~\ref{fig:tl-1} presents the average latency of single-key transactions run as part of the random mix,
 as a function of {system} throughput.
 Figures~\ref{fig:stack-brc} and~\ref{fig:stack-bwc} then zoom in on the latency of such transactions under a throughput of 100K tps,
-and breaks up the different factors contributing to it. 
+and break up the different factors contributing to it. 
 
 As we can see, under light load, \sys\ improves the latency of Omid by 4x to 5x, even without the fast path.
 This is because in Omid, both begin and commit wait for preceding transactions to complete the writes of 

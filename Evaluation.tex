@@ -67,21 +67,22 @@ We vary the system load from 30K to 300K transactions per second (tps).
 and then a write to the same key. 
 \end{description}
 
-We add the BRWC workload since single-key read+write transactions are common in production, and are highly unlikely to 
-occur under random key selection with billions of keys (as in our random mix).
+We add the BRWC workload since single-key read+write transactions are common in production, but are highly unlikely to 
+occur in our random mix, which uses random key selection with billions of keys.
 
-\paragraph{Results.} 
 
-\begin{figure*}[t!]
+
+\begin{figure*}[hbt]
 \centering
 \begin{tabular}{ccc}
-      \begin{subfigure}[t]{0.45\textwidth}
+      \begin{subfigure}[t]{0.48\textwidth}
       	\includegraphics[width=\textwidth]{figs/throughputlatency1.pdf}
 	    \caption{Throughput vs.\ latency, transaction size = 1.}
         \label{fig:tl-1}      
-      \end{subfigure} & 
-
-      \begin{subfigure}[t]{0.45\textwidth}
+      \end{subfigure} 
+    
+& 
+      \begin{subfigure}[t]{0.48\textwidth}
       	\includegraphics[width=\textwidth]{figs/latency_PUTGET.pdf}
         \caption[]{Single-key transaction latency breakdown at 100K tps.}
         \label{fig:stack-brc}
@@ -91,6 +92,7 @@ occur under random key selection with billions of keys (as in our random mix).
        \caption{Latency vs.\ throughput and latency breakdown  for single-key transactions under  random mix workload. }
 \end{figure*}
 
+\paragraph{Results.} 
 
 Recall that \sys\ is motivated by the prevalence of short transactions in production, and is designed with
 the goal of speeding such transactions up.
@@ -126,7 +128,7 @@ versus 2.3ms as a regular transaction.
 
 \begin{figure}[htb]
 \centering
-\includegraphics[width=.4\textwidth]{figs/latency_rwm.pdf}
+\includegraphics[width=.48\textwidth]{figs/latency_rwm.pdf}
 \caption{Latency breakdown of single-key read+write transactions in the BRWC workload,
 at 100K tps.}
 \label{fig:rmw}
@@ -148,32 +150,34 @@ $17\%$ of the time is spent on the control path, which leads to much faster comp
 \begin{figure*}[t]
 \centering{
 \begin{tabular}{cc}
-  \begin{subfigure}[t]{0.45\textwidth}
-	\includegraphics[width=.9\textwidth]{figs/throughputlatency5.pdf}
+\remove{
+    \begin{subfigure}[t]{0.48\textwidth}
+	\includegraphics[width=\textwidth]{figs/throughputlatency5.pdf}
 	\caption[]{Throughput versus latency, transaction size = 5}
     \label{fig:tl-5}
   \end{subfigure} &
-
-    \begin{subfigure}[t]{0.45\textwidth}
-	\includegraphics[width=.9\textwidth]{figs/throughputlatency10.pdf}
+}
+    \begin{subfigure}[t]{0.48\textwidth}
+	\includegraphics[width=\textwidth]{figs/throughputlatency10.pdf}
 	\caption[]{Throughput versus latency, transaction size = 10}
     \label{fig:tl-10}
-  \end{subfigure}\\
+  \end{subfigure} & 
 
-   \begin{subfigure}[t]{0.45\textwidth}
-	\includegraphics[width=.9\textwidth]{figs/latency_tx5.pdf}
+\remove{
+   \begin{subfigure}[t]{0.48\textwidth}
+	\includegraphics[width=\textwidth]{figs/latency_tx5.pdf}
 	\caption[]{Latency breakdown, transaction size = 5}
     \label{fig:stack-tx5}
   \end{subfigure} &
-  
-  \begin{subfigure}[t]{0.45\textwidth}
-	\includegraphics[width=.9\textwidth]{figs/latency_tx10.pdf}
-	\caption[]{Latency breakdown, transaction size = 10}
+  }
+  \begin{subfigure}[t]{0.48\textwidth}
+	\includegraphics[width=\textwidth]{figs/latency_tx10.pdf}
+	\caption[]{Latency breakdown, transaction size = 5, 10}
     \label{fig:stack-tx10}
   \end{subfigure} 
 \end{tabular}  	
 }		
-  \caption{Latency vs.\ throughput (up) and latency breakdown (down) for long transactions in random mix workload. }
+  \caption{Latency vs.\ throughput  and latency breakdown  for long transactions in random mix workload. }
   \label{fig:throughput-latency}
 \end{figure*}
 
@@ -186,13 +190,13 @@ versus 20.8ms with Vanilla \sys.
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=.4\textwidth]{figs/speedup.pdf}
+\includegraphics[width=.48\textwidth]{figs/speedup.pdf}
 \caption{Summary of performance tradeoffs with the fast path API in {\sys}.}
 \label{fig:fp-tradeoff}
 \end{figure}
 
 Figure~\ref{fig:fp-tradeoff} summarizes the performance tradeoffs entailed by the fast path API
-for the different transaction classes. 
+(relative to Vanilla Fragola) for the different transaction classes. 
 We see that the speedup for single-write transactions is 2.3x, whereas the worst slowdown is $14.8\%$. 
 In systems geared towards real-time processing, this is a reasonable tradeoff, since long transactions 
 are infrequent and less sensitive to extra delay. Under the studied workload, e.g.,   FP \sys\/ is more desirable. 
@@ -203,3 +207,4 @@ singleton writes in presence of concurrent tentative writes). However, the abort
 the systems are minor. Here, under the highest contention, FP \sys\/ aborts approximately $0.1\%$ 
 of the transactions vs Vanilla \sys's $0.08\%$ and Omid's $0.07\%$ (the latter  is in line 
 with~\cite{Omid2017}).  
+

@@ -70,7 +70,7 @@ We implemented {\sys\/} based on the open source Omid code\footnote{\url{https:/
 and extended the HBase code to 
 enable fast path transactions. Our experiments show substantial reduction in latency for all transactions--
 even without the fast path, \sys\ transactions are 4x to 5x faster than Omid's under low load. And as system load increases, 
-Omid's latency surges  whereas \sys\ exhibitis excellent scalability. 
+Omid's latency surges  whereas \sys\ exhibits excellent scalability. 
 The fast path further improves the latency of short transactions 
 by 1.8x on average, executing them almost as fast as  native HBase operations. This comes 
 at the cost of a minor (less than 15\%) negative impact on longer transactions. 

@@ -175,22 +175,21 @@ only transactions that  access different data objects can be re-ordered.
 \algrestore{fp}
 %\small
 \Procedure{writeVersion}{old, key, value} 
-\Statex \Comment used by FP writes
+\Statex \Comment used by FP writes (\code{bwc} and \code{wc})
 %\Atomic 
-	\If{key has no tentative version}
-	\If{last committed version of key $\le$ old}
-		\State ver $\leftarrow$ F\&I(key's maxVersion)   \label{l:fi}
+	\If{key has no tentative version $\wedge$\\
+		\hspace{7mm} last committed version of key $\le$ old}
+		\State ver $\leftarrow$ F\&I(key's maxVersion) $+1$   \label{l:fi}
 		\State add \tuple{key, ver} with commit = ver  
 		\State return commit
 	\Else 
 		\State return abort 
 	\EndIf
-	\EndIf
 %\EndAtomic
 \EndProcedure
 % \Statex
 \Procedure{txRead}{key, $ts_r$}   \label{l:txr}
-\Statex \Comment used by transactional reads, once per key 
+\Statex \Comment used by transactional read, once per key 
 \State bump(key's maxVersion, $ts_r$)
 \State return get(key)
 \EndProcedure
@@ -200,12 +199,12 @@ only transactions that  access different data objects can be re-ordered.
  \If{key has a committed version that exceeds $ts_r$} 
  	\State abort 
  \EndIf
- \State add \tuple{key, ver} with commit = nil  
+ \State add \tuple{key, $ts_r$} with commit = nil  
 \EndProcedure
 
 \Procedure{txUpdate}{key, ver, $ts_c$}   \label{l:txu}
 \Statex \Comment used by transactional post-commit 
-\State bump(key's maxVersion, commit)
+\State bump(key's maxVersion, $ts_c$)
 \State update commit field of \tuple{key, ver} to $ts_c$
 \EndProcedure
 \end{algorithmic}
@@ -214,7 +213,7 @@ only transactions that  access different data objects can be re-ordered.
 \end{algorithm}
 
 The generic fast  path algorithm consists of two parts: 
-client side-logic, and new atomic operations implemented in the the underlying data store.
+client side-logic, and new atomic operations implemented in the  underlying data store.
 It is presented in pseudocode in Algorithm~\ref{alg:fp}. 
 
 Singleton reads (line~\ref{l:brc}) simply return the value associated with the  latest committed version of the requested key they encounter.  
@@ -293,7 +292,7 @@ In the example of Figure~\ref{fig:why-bump}, $T_1$'s read bumps $x$'s {maxVersio
 and so $FP_1$, which increments $x$'s maxVersion, writes $1$ with a version that exceeds $ts_r$.
 Thus, $T_1$'s write  detects the conflict on $x$. 
 
- Note that this modification of transactional reads and post-commits incurs an extra cost on
+ Note that this modification of transactional writes incurs an extra cost on
  regular (non-FP) transactions, which we quantify empirically in Section~\ref{sec:eval}.  
 
 The \code{br} and \code{wc} operations are  similar to \code{brc} and \code{bwc}, 

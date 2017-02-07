@@ -28,8 +28,8 @@ classification (e.g., for spam filtering, thread detection, and ``smart view'' t
 %\footnote{\footnotesize{\url{https://yahoohelpcommunity.tumblr.com/post/118485031125/getting-to-know-smart-views-in-yahoo-mail}}}
 and user manipulation (e.g., starring, tagging, and moving between folders).    
 Mail users browse their mail and search for content, issuing many billions of requests a day; they
-expect a consistent experience, where messages never 
-disappear, starred content gets prioritized in search, folder counters are reliable, etc.
+expect a consistent experience, for example, where messages  do not 
+disappear when moved between folders, starred content gets prioritized in search, folder counters are reliable, etc.
 
 The Yahoo! Mail metadata platform is built on top of Apache HBase~\cite{hbase}, 
 which provides reliable and scalable key-value storage. The system's first generation
@@ -58,21 +58,24 @@ Its advantage is maximized for short  transactions, which are prevalent in laten
 %Different aspects of our protocol are inspired by other systems, while their combination is novel.
 %, to the best of our knowledge. 
 
-{\sys\/} further introduces a novel {\em fast path\/} algorithm for short (single-key) transactions 
+As a separate contribution, we introduce a novel {\em fast path\/} algorithm for short single-key transactions 
 that eliminates the begin/commit overhead entirely. 
-The fast path requires minor extensions to the underlying 
-data store. 
+This entails minor extensions to the underlying 
+data store. The fast path is orthogonal to other protocol aspects, and can be  supported in other 
+transaction processing services.
 %, to enable local commits directly within the storage layer and verify the correctness of general 
 %transactions in presence of such commits. 
-This improves the latency of short transactions 
-by 1.8x on average at the cost of minor (less than 15\%) negative impact on longer transactions. 
-The fast path is orthogonal to other protocol aspects, and can be  supported in other 
-transaction processing services.
 
-We implemented {\sys\/} based on the open source Omid code, and also extended the HBase code to 
-enable fast path transactions. Our experiments show substantial reduction in latency for all transactions, 
-as well as near-infinite system scalability. Fast path transactions perform almost as fast as  
-native atomic operations, and their impact on longer transactions is insignificant. 
+We implemented {\sys\/} based on the open source Omid code\footnote{\url{https://omid.incubator.apache.org}}, 
+and extended the HBase code to 
+enable fast path transactions. Our experiments show substantial reduction in latency for all transactions--
+even without the fast path, \sys\ transactions are 4x to 5x faster than Omid's under low load. And as system load increases, 
+Omid's latency surges  whereas \sys\ exhibitis excellent scalability. 
+The fast path further improves the latency of short transactions 
+by 1.8x on average, executing them almost as fast as  native HBase operations. This comes 
+at the cost of a minor (less than 15\%) negative impact on longer transactions. 
+
+
 
 % \Idit{The roadmap below is not essential; maybe replace with summary of contributions.}
 The remainder of this paper is organized as follows:

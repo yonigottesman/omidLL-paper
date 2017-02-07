@@ -73,9 +73,11 @@
 We present \sys, a highly scalable transaction processing engine 
 for Apache HBase. 
 The \sys\ implementation is based on Apache Incubator Omid, but 
-improves its protocol to reduce latency by an order of magnitude, 
-while at the same time improving throughput. 
-\sys\ further implements a \emph{fast path} for single-key transactions,
+improves its protocol to reduce latency 
+while at the same time improving throughput.
+Under light load, \sys\ is 4x to 5x faster than Omid, and under high loads, it is 
+more than an order of magnitude faster. 
+ \sys\ further implements a \emph{fast path} for single-key transactions,
 processing them almost as fast as native HBase operations, while preserving
 transactional semantics relative to longer transactions.
 
@@ -110,7 +112,8 @@ latency becomes an important consideration.
 Motivated by such use cases we developed \sys, a highly scalable 
 low-latency transaction processing engine for Apache HBase. 
 We implemented \sys\ based on Apache Incubator Omid, and 
-improved its protocol to reduce latency by an order of magnitude, 
+improved its protocol to reduce latency (by 4x to 5x under light load
+and an order of magnitude under heavy load), 
 while also improving throughput. 
 
 We further designed a generic \emph{fast path} for single-key transactions,

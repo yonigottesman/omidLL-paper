@@ -79,7 +79,7 @@ In Omid, the version is the transaction's $ts_r$, which exceeds all versions wri
 current transaction began. Note that the version order among concurrent transactions that  attempt to update the same key is immaterial, 
 since all but one of these transactions are doomed to abort. 
 
-It is possible to buffer write intents locally in the course of the transaction, and add the write intents to the data store at commit time~\cite{Percolator2010}.
+It is possible to buffer write intents locally (at the client) in the course of the transaction, and add the write intents to the data store at commit time~\cite{Percolator2010}.
 
 In some solutions writes check for conflicts before declaring their intents~\cite{cockroach}, whereas in others, 
 all conflict detection is deferred to commit time~\cite{Percolator2010,OmidICDE2014,Omid2017,tephra}. 
@@ -95,8 +95,8 @@ To this end, TPSs keep per-transaction \emph{commit entries}, which are the sour
 (pending, committed, or aborted). 
 This entry is updated in line~\ref{l:commit} of Algorithm~\ref{alg:schema} as we explain below, 
 and is checked in order to resolve write intents in line~\ref{l:resolve}.
-In some cases~\cite{Percolator2010,cockroach}, when the writing transaction status is undetermined, the read may forcefully abort
-it by updating the commit entry accordingly.
+In some cases~\cite{Percolator2010,cockroach}, when the writing transaction status is undetermined, the read forcefully aborts
+it by updating the commit entry accordingly, as explained below.
 
 %Similarly, the solution we implement in \sys\ forces the transaction with the pending write intent to abort. 
 

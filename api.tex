@@ -9,6 +9,7 @@ then proceed to define  the transaction semantics provided by \sys\ in Section~\
 \label{ssec:data-model}
 
 The  data store holds  \emph{objects} (often referred to as \emph{rows}) identified by unique \emph{keys}.
+Each row can consist of multiple \emph{fields}, representing different \emph{columns}. 
 We consider multi-versioned objects, where object values are associated with \emph{version numbers}, and
 multiple versions associated with the same key may co-exist in the data store.
 \remove{
@@ -29,19 +30,20 @@ if the version already exists, its value is updated;
 otherwise, a new version is added. 
 \item [\code{remove}] -- removes an object with a given key and version.
 \item [\code{check\&mutate}] --  data stores often provide means to atomically read and
-update an object, e.g., HBase exports check\&mutate operations, which are 
-internally implemented using a RW lock.
+update a single object, e.g., HBase exports check\&mutate operations, which are 
+internally implemented using a per-row RW lock.
 %, whereas BigTable supports row transactions. 
 %We will extend this capability below in order to implement certain atomic operations at the data store level.
 \end{description}
 
 A separate process performs garbage collection of obsolete versions.
-process.
 
 \subsection{Transaction semantics} \label{ssec:transactions}
 
-A \emph{transaction} is a sequence of read and write operations on different objects that ensures the ACID properties:
-\emph{atomicity} (all-or-nothing execution), \emph{consistency} (preserving each object's semantics), 
+TPSs provide \emph{begin} and \emph{commit} APIs for delineating transactions: 
+a \emph{transaction} the sequence of read and write operations on different objects 
+that occur between begin and commit. A TPS  ensures the ACID properties for transactions:
+\emph{atomicity} (all-or-nothing), \emph{consistency} (preserving each object's semantics), 
 \emph{isolation} (in that concurrent transactions do not see each other's partial updates), and 
 \emph{durability} (whereby updates survive crashes).
 
@@ -68,15 +70,14 @@ each transaction's read operations see a consistent snapshot of the database ref
  a transaction commits only if none of the items it updates has been modified since that snapshot.
  \end{enumerate}
 Thus, under SI, two concurrent transactions conflict only if they both \emph{update} the same item.  
-In contrast, under serializability, a transaction that updates an item also conflicts with transactions that \emph{read} that item. Snapshot isolation is thus amenable to implementations (using MVCC) that 
+In contrast, under serializability, a transaction that updates an item also conflicts with transactions that \emph{read} that item. Snapshot isolation is thus amenable to implementations (using multi-versioning) that 
 allow more concurrency than serializable ones, and hence scale better.
 
-TPSs allow programmers to  delineate transactions via the begin and commit APIs: 
-the sequence of read and write operations a client invokes between begin and  commit pertains to one transaction.
 Following a commit call, the transaction may successfully \emph{commit}, whereby all of its operations take effect;
 in case of conflicts, (i.e., when two concurrent transactions attempt to update the same item), the transaction may
-\emph{abort}, in which case none of its changes take effect. An abort may also be initiated by the programmer, e.g., 
-on encountering an error. Applications typically retry a transaction upon  abort. 
+\emph{abort}, in which case none of its changes take effect. 
+%An abort may also be initiated by the programmer, e.g., 
+%on encountering an error. Applications typically retry a transaction upon  abort. 
 
 
 %%%The data is \emph{partitioned} (or sharded), and each object belongs to one region. 

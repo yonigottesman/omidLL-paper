@@ -29,12 +29,12 @@ As a separate contribution we developed a fast path for single-key transactions,
 which is applicable to any of the aforementioned systems. A similar mechanism 
 was previously developed in Mediator~\cite{mediator} for Omid1~\cite{OmidICDE2014}. 
 Mediator focused on reconciling conflicts between transactions and native atomic operations, 
-rather than adding an FP API. It has a less efficient implementation, and moreover, 
-Mediator's  native operations never concede to transactions, which can starve in case 
-of contention with native operations. 
+rather than adding an FP API. It has a less efficient implementation; moreover, 
+transaction in Mediator can starve in case of contention with native operations
+that never concede to transactions.
 
 Our implementation of the fast path uses a local version clock. Similar mechanisms
-were used in Mediator as well as in CockroachDB, which uses 
+were used in Mediator and in CockroachDB, which uses 
 per-region Hybrid Logical Clocks~\cite{Kulkarni2014LogicalPC} for distributed timestamp allocation. 
 
 \remove{

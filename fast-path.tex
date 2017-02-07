@@ -123,10 +123,11 @@ regular transactions (though not FP ones) are ordered in ${\cal T}$  according t
 non-overlapping transactions (regular and FP) that update the same key are ordered in ${\cal T}$  according to their commit times;
 \item
 each regular transaction's read operations see a consistent snapshot of the database reflecting 
-a prefix of  ${\cal T}$ that includes  all transactions committed prior to
+a prefix of  ${\cal T}$ that includes at least all regular transactions committed prior to
 its start time; and 
 \item
- a transaction commits only if none of the items it updates has been modified since that snapshot.
+ a transaction commits only if none of the items it updates is modified by a transaction ordered in ${\cal T}$ after
+ its snapshot time ${\cal T}$.
  \end{enumerate}
 
 Note that  ${\cal T}$  preserves causality because 
@@ -188,13 +189,13 @@ only transactions that  access different data objects can be re-ordered.
 %\EndAtomic
 \EndProcedure
 % \Statex
-\Procedure{txRead}{key, $ts_r$}   \label{l:txr}
+\Procedure{txRead}{$ts_r$, key}   \label{l:txr}
 \Statex \Comment used by transactional read, once per key 
 \State bump(key's maxVersion, $ts_r$)
 \State return get(key)
 \EndProcedure
 % \Statex
-\Procedure{txWrite}{key, $ts_r$}   \label{l:txw}
+\Procedure{txWrite}{$ts_r$, key}   \label{l:txw}
  \Statex \Comment used by transactional write
  \If{key has a committed version that exceeds $ts_r$} 
  	\State abort 
@@ -275,7 +276,7 @@ To this end, we maintain a new field \emph{maxVersion} for each key, which is at
 high as the key's latest committed version. 
 The data store needs to support two atomic operations for updating {maxVersion}.
 The first is \emph{fetch-and-increment, F\&I}, which increments {maxVersion} and returns its
-new value; F\&I throws an abort exception in case of wrap-around of the 
+old value; F\&I throws an abort exception in case of wrap-around of the 
 sequence number part  of  the version. 
 The second operation, \emph{bump}, takes a new version  as a parameter and
 sets  {maxVersion} to the maximum between this parameter and its old value.
@@ -319,7 +320,7 @@ We implement the two required atomic methods - F\&I and bump on the LVC using at
 In addition, 
 HBase   natively supports  a check\&mutate operation, which holds a lock on the affected key for the duration of the operation.
 Our implementation of the singleton write uses  check\&mutate to implement the atomic block, and calls the LVC's F\&I method inside this block.
-Transactional reads and post-commits call bump inside a check\&mutate  block where they perform their read and version update, respectively. 
+Transactional reads and post-commits call bump from inside a check\&mutate  block where they perform their read and version update, respectively. 
 
 Note that although check\&mutate only holds a lock on the affected key, the joint update of the key and the LVC is consistent
 because it uses a form of two-phase locking: when check\&mutate begins, its locks the key, then the atomic access to the LVC

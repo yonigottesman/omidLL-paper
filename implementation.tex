@@ -174,7 +174,7 @@ with a  version smaller than or equal to $ts_r$. Upon
 encountering a tentative record (with commit=nil), the algorithm calls the {\sc checkLeader} function, which
 gets the leader's $ts_c$ from the data store, and again returns the key if that $ts_c$ is smaller than $ts_r$. 
 
-If the commit entry is still nil, read cannot return without determining the final commit timestamp
+If the leader's commit entry is still nil, read cannot return without determining the final commit timestamp
 of the pending transaction. 
 %\Yoni{example here?}. 
 To this end, {\sc checkLeader} attempts to forcefully abort the pending transaction. This is done using the

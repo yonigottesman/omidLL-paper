@@ -75,23 +75,17 @@ occur under random key selection with billions of keys (as in our random mix).
 \begin{figure*}[t!]
 \centering
 \begin{tabular}{ccc}
-      \begin{subfigure}[t]{0.31\textwidth}
+      \begin{subfigure}[t]{0.5\textwidth}
       	\includegraphics[width=\textwidth]{figs/throughputlatency1.pdf}
 	    \caption{Throughput vs.\ latency, transaction size = 1.}
         \label{fig:tl-1}      
       \end{subfigure} & 
 
-      \begin{subfigure}[t]{0.31\textwidth}
-      	\includegraphics[width=\textwidth]{figs/latency_Get.pdf}
-        \caption[]{Single-read transaction latency breakdown at 100K tps.}
+      \begin{subfigure}[t]{0.5\textwidth}
+      	\includegraphics[width=\textwidth]{figs/latency_PUTGET.pdf}
+        \caption[]{Single transaction latency breakdown at 100K tps.}
         \label{fig:stack-brc}
       \end{subfigure}  & 
-
-      \begin{subfigure}[t]{0.31\textwidth}
-	    \includegraphics[width=\textwidth]{figs/latency_Put.pdf}
-        \caption[]{Single-write transaction latency breakdown at 100K tps.}
-        \label{fig:stack-bwc}
-      \end{subfigure}
 
 \end{tabular}
        \caption{Latency vs.\ throughput (a) and latency breakdown (b,c) for single-key transactions under the random mix workload. }

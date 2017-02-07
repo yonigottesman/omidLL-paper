@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
+import datetime
+
 
 marksize=10
 my_linewidth = 5
@@ -70,10 +72,10 @@ def breakdown(originalOmid,lorraGeneric,lorraFP,pltnum):
     lorraFPLabel = 'FP\nFragola'
 
     p3 = ax.bar(range(len(commit_times)), commit_times, bottom=np.array(begin_times)+np.array(hbase_times),
-                label='Commit', alpha=1, color=tableau20[4],align='center')
-    p2 = ax.bar(range(len(hbase_times)), hbase_times, bottom=begin_times, label=operation_names[pltnum], alpha=1, color=tableau20[6],
+                label='Commit', alpha=0.5, color='g',align='center')
+    p2 = ax.bar(range(len(hbase_times)), hbase_times, bottom=begin_times, label=operation_names[pltnum], alpha=1, color='r',
                 align='center', )
-    p1 = ax.bar(range(len(begin_times)), begin_times, label='Begin', alpha=1, color=tableau20[0], align='center')
+    p1 = ax.bar(range(len(begin_times)), begin_times, label='Begin', alpha=1, color='b', align='center')
     plt.xticks(np.arange(3) ,[originalOmidLabel,lorraGenericLabel,lorraFPLabel],fontsize=myfonsize)
 
     if pltnum == 0 or pltnum == 1 or pltnum == 4:
@@ -81,7 +83,7 @@ def breakdown(originalOmid,lorraGeneric,lorraFP,pltnum):
     else:
         plt.ylim(0, 50)
     plt.grid(True)
-    plt.yticks(fontsize=20)
+    plt.yticks(fontsize=myfonsize)
 
     plt.ylabel("Latency [msec]", fontsize=myfonsize)
 
@@ -91,6 +93,58 @@ def breakdown(originalOmid,lorraGeneric,lorraFP,pltnum):
     plt.savefig("latency_" + breakdowns_names[pltnum] + ".pdf",
                 bbox_inches='tight')
     #plt.show()
+
+
+def singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUTlorraGeneric,PUTlorraFP):
+
+    begin_times = [GEToriginalOmid[0], GETlorraGeneric[0], GETlorraFP[0]]
+    hbase_times = [GEToriginalOmid[1], GETlorraGeneric[1], GETlorraFP[1]]
+    commit_times = [GEToriginalOmid[2], GETlorraGeneric[2], GETlorraFP[2]]
+
+    plt.figure(figsize=(10, 7))
+    ax = plt.subplot(1, 1, 1)
+
+    lorraGenericLabel = 'Vanilla\nFragola'
+    lorraFPLabel = 'FP\nFragola'
+
+    p3 = ax.bar([4,5,6],commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
+                label='Commit', alpha=0.5, color='g', align='center')
+    p2 = ax.bar([4,5,6], hbase_times, bottom=begin_times, label=operation_names[2], alpha=1,
+                color='r', align='center', )
+    p1 = ax.bar([4,5,6], begin_times, label='Begin', alpha=1, color='b', align='center')
+
+    begin_times = [PUToriginalOmid[0], PUTlorraGeneric[0], PUTlorraFP[0]]
+    hbase_times = [PUToriginalOmid[1], PUTlorraGeneric[1], PUTlorraFP[1]]
+    commit_times = [PUToriginalOmid[2], PUTlorraGeneric[2], PUTlorraFP[2]]
+
+    p3 = ax.bar([0, 1, 2], commit_times, bottom=np.array(begin_times) + np.array(hbase_times), alpha=0.5, color='g', align='center')
+    p2 = ax.bar([0, 1, 2], hbase_times, bottom=begin_times,  alpha=1, color='r', align='center', )
+    p1 = ax.bar([0, 1, 2], begin_times,  alpha=1, color='b', align='center')
+
+    ax.text(4, 35, 'Single read', fontsize=myfonsize)
+    ax.text(0, 35, 'Single write', fontsize=myfonsize)
+
+    plt.xticks([0,1,2,4,5,6], [originalOmidLabel, lorraGenericLabel, lorraFPLabel,originalOmidLabel, lorraGenericLabel, lorraFPLabel], fontsize=myfonsize)
+
+    for tick in ax.get_xticklabels():
+        tick.set_rotation(45)
+
+    plt.grid(True)
+    plt.yticks(fontsize=myfonsize)
+
+    plt.ylabel("Latency [msec]", fontsize=myfonsize)
+
+    plt.xlim(-1,7)
+    plt.ylim(0,40)
+    lgd = plt.legend(loc=7, fontsize=myfonsize)
+
+
+    plt.tight_layout()
+    plt.savefig("latency_" +'PUTGET' + ".pdf",
+                bbox_inches='tight',bbox_extra_artists=(lgd,))
+    #plt.show()
+
+
 
 
 def summery():
@@ -116,17 +170,21 @@ def summery():
 
 #    plt.show()
 
+
+
 summery()
 
 PUToriginalOmid = [13.36,1.77,13.41]
 PUTlorraGeneric = [0.44,1.96,3.03]
 PUTlorraFP = [0.00,2.34,0.00]
-breakdown(PUToriginalOmid,PUTlorraGeneric,PUTlorraFP,0)
+#breakdown(PUToriginalOmid,PUTlorraGeneric,PUTlorraFP,0)
 
 GEToriginalOmid = [13.36,1.73,0.38]
 GETlorraGeneric = [0.44,1.49,0.38]
 GETlorraFP = [0.00,1.48,0.00]
-breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,1)
+#breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP)
+
+singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUTlorraGeneric,PUTlorraFP)
 
 TX5originalOmid = [13.36,8.76,13.76]
 TX5lorraGeneric = [0.44,8.60,3.08]

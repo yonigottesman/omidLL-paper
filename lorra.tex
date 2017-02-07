@@ -209,11 +209,14 @@ In case the transaction status is pending, \sys, like Percolator and CockroachDB
 force the writing transaction to abort. This is done using an atomic check\&mutate operation to set the status in the
 writing transaction's commit entry to aborted.
 
-Omid and Tephra, on the other hand, do not need to force such aborts, because they ensure that  if the read sees a write intent
+Omid and Tephra, on the other hand, do not need to force such aborts\footnote{Omid's high availabiltiy mechanism, which 
+we do not discuss in this paper, may force such aborts in rare cases of TM failover.}, because they ensure that  if the read sees a write intent
 by an uncommitted transaction, the latter will not commit with an earlier timestamp than the read.
-This is achieved by a single TM that allocates timestamps, performs validation, and writes the commit entry.
-It either delays begin requests until all transactions that concurrently attempt to commit complete (as in Omid),
-or sends information about all these transactions to the beginning client (as in Omid1 and Tephra).
+This is achieved  
+%a single TM that allocates timestamps, performs validation, and writes the commit entry.
+either by delaying begin and commit requests until all transactions that concurrently attempt to commit complete (as in Omid),
+or sending information about all these transactions to the beginning client (as in Omid1 and Tephra).
+\sys\ avoids such costly mechansims by allowing reads to force aborts. 
 
 \remove{
 

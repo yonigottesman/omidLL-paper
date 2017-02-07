@@ -95,7 +95,7 @@ def breakdown(originalOmid,lorraGeneric,lorraFP,pltnum):
     #plt.show()
 
 
-def singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUTlorraGeneric,PUTlorraFP):
+def singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUTlorraGeneric,PUTlorraFP,ylimit,txt):
 
     begin_times = [GEToriginalOmid[0], GETlorraGeneric[0], GETlorraFP[0]]
     hbase_times = [GEToriginalOmid[1], GETlorraGeneric[1], GETlorraFP[1]]
@@ -121,8 +121,8 @@ def singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,P
     p2 = ax.bar([0, 1, 2], hbase_times, bottom=begin_times,  alpha=1, color='r', align='center', )
     p1 = ax.bar([0, 1, 2], begin_times,  alpha=1, color='b', align='center')
 
-    ax.text(4, 35, 'Single read', fontsize=myfonsize)
-    ax.text(0, 35, 'Single write', fontsize=myfonsize)
+    ax.text(4, ylimit-5, txt[0], fontsize=myfonsize)
+    ax.text(0, ylimit-5, txt[1], fontsize=myfonsize)
 
     plt.xticks([0,1,2,4,5,6], [originalOmidLabel, lorraGenericLabel, lorraFPLabel,originalOmidLabel, lorraGenericLabel, lorraFPLabel], fontsize=myfonsize)
 
@@ -135,14 +135,14 @@ def singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,P
     plt.ylabel("Latency [msec]", fontsize=myfonsize)
 
     plt.xlim(-1,7)
-    plt.ylim(0,40)
+    plt.ylim(0,ylimit)
     lgd = plt.legend(loc=7, fontsize=myfonsize)
 
 
     plt.tight_layout()
-    plt.savefig("latency_" +'PUTGET' + ".pdf",
+    plt.savefig("latency_" +txt[2] + ".pdf",
                 bbox_inches='tight',bbox_extra_artists=(lgd,))
-    #plt.show()
+    plt.show()
 
 
 
@@ -184,17 +184,19 @@ GETlorraGeneric = [0.44,1.49,0.38]
 GETlorraFP = [0.00,1.48,0.00]
 #breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP)
 
-singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUTlorraGeneric,PUTlorraFP)
+singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUTlorraGeneric,PUTlorraFP,40,['Single read','Single write','PUTGET'])
 
 TX5originalOmid = [13.36,8.76,13.76]
 TX5lorraGeneric = [0.44,8.60,3.08]
 TX5lorraFP = [0.76,10.52,2.43]
-breakdown(TX5originalOmid,TX5lorraGeneric,TX5lorraFP,2)
+#breakdown(TX5originalOmid,TX5lorraGeneric,TX5lorraFP,2)
 
 TX10originalOmid = [13.36,17.51,14.06]
 TX10lorraGeneric = [0.44,17.20,3.12]
 TX10lorraFP = [0.76,21.05,2.56]
-breakdown(TX10originalOmid,TX10lorraGeneric,TX10lorraFP,3)
+#breakdown(TX10originalOmid,TX10lorraGeneric,TX10lorraFP,3)
+
+singlebreakdown(TX5originalOmid,TX5lorraGeneric,TX5lorraFP,TX10originalOmid,TX10lorraGeneric,TX10lorraFP,60,['TX size 5','TX size 10','5_10'])
 
 RMWoriginalOmid = [13.36,3.50,14.06]
 RMWlorraGeneric = [0.44,3.44,3.12]

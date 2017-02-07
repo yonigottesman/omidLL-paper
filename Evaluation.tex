@@ -72,22 +72,22 @@ occur under random key selection with billions of keys (as in our random mix).
 
 \paragraph{Results.} 
 
-\begin{figure}[t!]
+\begin{figure*}[t!]
 \centering
 \begin{tabular}{ccc}
-      \begin{subfigure}[t]{0.45\textwidth}
+      \begin{subfigure}[t]{0.31\textwidth}
       	\includegraphics[width=\textwidth]{figs/throughputlatency1.pdf}
 	    \caption{Throughput vs.\ latency, transaction size = 1.}
         \label{fig:tl-1}      
-      \end{subfigure}\\
+      \end{subfigure} & 
 
-      \begin{subfigure}[t]{0.45\textwidth}
+      \begin{subfigure}[t]{0.31\textwidth}
       	\includegraphics[width=\textwidth]{figs/latency_Get.pdf}
         \caption[]{Single-read transaction latency breakdown at 100K tps.}
         \label{fig:stack-brc}
-      \end{subfigure} \\
+      \end{subfigure}  & 
 
-      \begin{subfigure}[t]{0.45\textwidth}
+      \begin{subfigure}[t]{0.31\textwidth}
 	    \includegraphics[width=\textwidth]{figs/latency_Put.pdf}
         \caption[]{Single-write transaction latency breakdown at 100K tps.}
         \label{fig:stack-bwc}
@@ -95,7 +95,7 @@ occur under random key selection with billions of keys (as in our random mix).
 
 \end{tabular}
        \caption{Latency vs.\ throughput (a) and latency breakdown (b,c) for single-key transactions under the random mix workload. }
-\end{figure}
+\end{figure*}
 
 
 Recall that \sys\ is motivated by the prevalence of short transactions in production, and is designed with

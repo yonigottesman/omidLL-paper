@@ -66,7 +66,7 @@ def breakdown(originalOmid,lorraGeneric,lorraFP,pltnum):
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
 
-    lorraGenericLabel = 'Valilla\nFragola'
+    lorraGenericLabel = 'Vanilla\nFragola'
     lorraFPLabel = 'FP\nFragola'
 
     p3 = ax.bar(range(len(commit_times)), commit_times, bottom=np.array(begin_times)+np.array(hbase_times),

@@ -21,7 +21,7 @@ and single-key read-writes) do so, whereas other transactions use the standard A
 
 Our experiment testbed consists of eight 12-core Intel Xeon 5 machines with 46GB RAM and 4TB 
 SSD storage, interconnected by 1G Ethernet. We allocate three of these to HBase nodes, 
-one to the TM, one to simulate the client whose performance we measure, and one to simulate background traffic
+one to the TM, three to simulate the client whose performance we measure, and one to simulate background traffic
 as explained below. Each HBase node runs both an HBase region server and the underlying 
 Hadoop File System (HDFS) server within 8GB JVM containers. 
 
@@ -75,20 +75,20 @@ occur under random key selection with billions of keys (as in our random mix).
 \begin{figure*}[t!]
 \centering
 \begin{tabular}{ccc}
-      \begin{subfigure}[t]{0.5\textwidth}
+      \begin{subfigure}[t]{0.45\textwidth}
       	\includegraphics[width=\textwidth]{figs/throughputlatency1.pdf}
 	    \caption{Throughput vs.\ latency, transaction size = 1.}
         \label{fig:tl-1}      
       \end{subfigure} & 
 
-      \begin{subfigure}[t]{0.5\textwidth}
+      \begin{subfigure}[t]{0.45\textwidth}
       	\includegraphics[width=\textwidth]{figs/latency_PUTGET.pdf}
         \caption[]{Single-key transaction latency breakdown at 100K tps.}
         \label{fig:stack-brc}
       \end{subfigure}  & 
 
 \end{tabular}
-       \caption{Latency vs.\ throughput (a) and latency breakdown (b,c) for single-key transactions under the random mix workload. }
+       \caption{Latency vs.\ throughput and latency breakdown  for single-key transactions under  random mix workload. }
 \end{figure*}
 
 
@@ -126,7 +126,7 @@ versus 2.3ms as a regular transaction.
 
 \begin{figure}[htb]
 \centering
-\includegraphics[width=.45\textwidth]{figs/latency_rwm.pdf}
+\includegraphics[width=.4\textwidth]{figs/latency_rwm.pdf}
 \caption{Latency breakdown of single-key read+write transactions in the BRWC workload,
 at 100K tps.}
 \label{fig:rmw}
@@ -186,7 +186,7 @@ versus 20.8ms with Vanilla \sys.
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=.45\textwidth]{figs/speedup.pdf}
+\includegraphics[width=.4\textwidth]{figs/speedup.pdf}
 \caption{Summary of performance tradeoffs with the fast path API in {\sys}.}
 \label{fig:fp-tradeoff}
 \end{figure}

@@ -28,14 +28,14 @@ We now overview the phases a transaction goes through, focusing on Omid's approa
 \Procedure{begin}{}
 \State obtain read timestamp $ts_r$ 
 \EndProcedure
-\Statex
+%\Statex
 
 \Procedure{write}{$ts_r$, key, value} \Comment transactional write
 \State optionally check for conflicts and abort if found 
 \State indicate write intent for key with value and $ts_r$
 \State add key to local write-set
 \EndProcedure
-\Statex
+%\Statex
 
 \Procedure{read}{$ts_r$, key} \Comment transactional read
 \If{key has write intent}
@@ -44,7 +44,7 @@ We now overview the phases a transaction goes through, focusing on Omid's approa
 \State return highest version   $\le ts_r$ of key
 \EndProcedure
 
-\Statex
+%\Statex
 
 \Procedure{commit}{$ts_r$, write-set}
 \Statex \Comment check for write-write conflicts  \label{l:validate}
@@ -103,6 +103,7 @@ it by updating the commit entry accordingly, as explained below.
   \paragraph{Commit.} 
   Commit occurs in four steps:
   \begin{enumerate}
+
   \item
   Obtain a commit timestamp, $ts_c$. 
   In most cases, e.g.,~\cite{Percolator2010,OmidICDE2014,Omid2017,tephra}, 

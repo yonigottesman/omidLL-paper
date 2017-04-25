@@ -191,7 +191,7 @@ First, it allocates begin and commit timestamps by fetching-and-incrementing a m
 Second, it performs validation (i.e., conflict detection) upon commit using an in-memory hash table. 
 Since the conflict detection algorithm has been reported elsewhere~\cite{Omid2017}, and the \sys\ client need not be aware of 
 its implementation details, we refrain from repeating the details of the \emph{conflictDetect} function here. 
-The  \emph{checkRenew} procedure supports the TM's  high availabitliy, and is explained in the next section.
+The  \emph{checkRenew} procedure supports the TM's  high availability, and is explained in the next section.
 
 Algorithm~\ref{fig:get-pseudocode} describes \sys's implementation of read and commit operations.
 %Begin and write operations follow the template of Algorithm~\ref{alg:schema}. 

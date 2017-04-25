@@ -1,0 +1,90 @@
+
+
+The past few years have seen a growing interest in distributed 
+transaction management~\cite{PattersonENAA12,Cowling2012,Aguilera2015,Balakrishnan2013,Thomson2012,eyal2013ordering,Warp}.
+Recently, many efforts have been dedicated to improving performance using advanced 
+hardware trends like RDMA and HTM~\cite{Wei2015,Dragojevic2014,Dragojevic2015}.  
+These efforts are, by and large, orthogonal to ours.
+
+Our work follows the line of industrial production systems, such as 
+Google's Spanner~\cite{Spanner2012}, Megastore~\cite{Megastore}, and Percolator~\cite{Percolator2010}, 
+Yahoo's Omid1~\cite{OmidICDE2014} and Omid~\cite{Omid2017}, 
+Cask's Tephra\cite{tephra}, and more~\cite{cockroach}.
+These systems develop transaction processing engines on top of existing persistent 
+highly-available data stores; for example, Megastore is layered on top of
+Bigtable~\cite{Chang2008}, Warp~\cite{Warp} uses HyperDex~\cite{Escriva2012}, 
+and CockroachDB~\cite{cockroach} uses RocksDB~\cite{rocksdb}.
+Like  Omid~\cite{Omid2017}, we layer \sys\ atop Apache HBase~\cite{hbase}.
+
+As discussed in Section~\ref{sec:ll}, a number of these systems follow a common paradigm
+with different design choices, and \sys\ chooses a new operation point in 
+this design space. In particular, \sys\ eliminates the bottleneck of Omid by
+distributing the commit entry, makes commits and begins faster than Omid's by 
+allowing reads to abort pending transactions, but unlike Percolator and CockroachDB, 
+uses centralized conflict detection. This eliminates the need to detect client 
+failures as in Percolator or have transactional writes perform conflict detection 
+as in CockroachDB. 
+
+As a separate contribution we developed a fast path for single-key transactions,
+which is applicable to any of the aforementioned systems. A similar mechanism 
+was previously developed in Mediator~\cite{mediator} for Omid1~\cite{OmidICDE2014}. 
+Mediator focused on reconciling conflicts between transactions and native atomic operations, 
+rather than adding an FP API. It has a less efficient implementation; moreover, 
+transaction in Mediator can starve in case of contention with native operations
+that never concede to transactions.
+
+Our implementation of the fast path uses a local version clock. Similar mechanisms
+were used in Mediator and in CockroachDB, which uses 
+per-region Hybrid Logical Clocks~\cite{Kulkarni2014LogicalPC} for distributed timestamp allocation. 
+
+\remove{
+
+Omid most closely resembles Tephra [6] and
+Omid1 [25], which also run on top of a distributed key-value
+store and leverage a centralized TM (sometimes
+called oracle) for timestamp allocation and conflict resolution.
+However, Omid1 and Tephra store all the information
+about committed and aborted transactions in the
+TM's RAM, and proactively duplicate it to every client
+that begins a transaction (in order to allow the client
+to determine locally which non-committed data should
+be excluded from its reads). This approach is not scalable,
+as the information sent to clients can consist of
+many megabytes. Omid avoids such bandwidth overhead
+by storing pertinent information in a metadata table
+that clients can access as needed. Our performance
+measurements in Section 7 below show that Omid significantly
+out-performs Omid1, whose design is very close
+to Tephra's. For high availability, Tephra and Omid1
+use a write-ahead log, which entails long recovery times
+for replaying the log; Omid, instead, reuses the inherent
+availability of the underlying key-value store, and hence
+recovers quickly from failures.
+Percolator also uses a centralized oracle for timestamp
+allocation but resolves conflicts via two-phase commit,
+whereby clients lock database records rendering
+them inaccessible to other transactions; the Percolator
+paper does not discuss high availability. Other systems
+like Spanner and CockroachDB allot globally increasing
+timestamps using a (somewhat) synchronized clock
+service. Spanner also uses two-phase commit whereas
+CockroachDB uses distributed conflict resolution where
+read-only transactions can cause concurrent update transactions
+to abort. In contrast, Omid never locks (or prevents
+access to) a database record, and never aborts due
+to conflicts with read-only transactions.
+The use cases production systems serve allow them
+to provide SI [31, 25, 6, 5], at least for read-only transactions
+[17]. It is nevertheless straightforward to extend
+Omid to provide serializability, similarly to a serializable
+extension of Omid1 [35] and Spanner [17]; it is merely
+a matter of extending the conflict analysis to cover read-sets
+[24, 14], which may degrade performance.
+A number of other recent efforts avoid the complexity
+of two-phase commit [26] by serializing transactions using
+a global serialization service such as highly-available
+log [11, 23, 13] or totally-ordered multicast [15]. Omid
+is unique in utilizing a single transaction manager to resolve
+conflicts in a scalable way.
+
+}

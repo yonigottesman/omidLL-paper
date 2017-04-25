@@ -1,0 +1,259 @@
+\subsection{\sys\ algorithm} 
+\label{ssec:ll}
+
+\begin{figure}[!t]
+  \centering
+  
+  \begin{subfigure}[tb]{\columnwidth}
+      \centering\small
+    \begin{tabular}{|c|c|c|c|c|}
+      \hline
+      key & value & version & commit& leader\\
+      %\hline
+      \hline
+      k1 & a & 3 & nil &\tuple{k1,3}\\
+      %\hline
+      k2 & b & 3 & nil &\tuple{k1,3}\\
+      %\hline
+      k3 & c & 3 & nil &\tuple{k1,3}\\
+      \hline
+    \end{tabular}
+	\caption[]{Pending transaction}
+    \label{fig:model:tentative}
+  \end{subfigure}
+  
+  \begin{subfigure}[t]{\columnwidth}
+    \centering\small
+    \begin{tabular}{|c|c|c|c|c|}
+      \hline
+      key & value & version & commit& leader\\
+      \hline
+      %\hline
+      k1 & a & 3 & 7&\tuple{k1,3}\\
+      %\hline
+      k2 & b & 3 & nil &\tuple{k1,3}\\
+      %\hline
+      k3 & c & 3 & nil &\tuple{k1,3}\\
+      \hline
+    \end{tabular}
+	\caption[]{Committed transaction}
+    \label{fig:model:committed}
+  \end{subfigure}
+
+
+  \begin{subfigure}[tb]{\columnwidth}
+    \centering\small
+    \begin{tabular}{|c|c|c|c|c|}
+      \hline
+      key & value & version & commit& leader\\
+      \hline
+      %\hline
+      k1 & a & 3 & 7&\tuple{k1,3}\\
+      %\hline
+      k2 & b & 3 & 7&\tuple{k1,3}\\
+      %\hline
+      k3 & c & 3 & 7&\tuple{k1,3}\\
+      \hline
+    \end{tabular}
+	\caption[]{Post-committed transaction}
+    \label{fig:model:postcommit}
+  \end{subfigure}
+
+  
+  \caption{Evolution of \sys\ metadata during a transaction. The transaction receives $ts_r=3$ in the begin stage, 
+  and $ts_c=7$ when committing; its leader is \tuple{k1,3}.}
+  \label{fig:model}
+\end{figure}
+
+
+
+\begin{algorithm}[htb]
+\begin{algorithmic}[1]
+
+\Procedure{begin}{}
+\State checkRenew()
+\State return Clock.fetchAndIncrement()
+\EndProcedure
+\Statex
+\Procedure{commit}{$txid$, write-set}
+\State checkRenew()
+\If{conflictDetect($txid$, write-set) } 
+ \State return Clock.fetchAndIncrement()
+ \Else
+ \State return {\sc abort}
+\EndIf
+\EndProcedure
+\Statex
+%
+\Procedure{checkRenew}{} \Comment HA support
+\If{lease $<$ now + $\delta'$} \label{l:lease-start} \Comment extend lease
+ \State renew lease for $\delta$ time \Comment atomic operation
+ \If{failed} halt \EndIf 
+\EndIf  \label{l:lease-end}
+\If{Clock $\ge$ epoch}  \label{l:epoch-start} \Comment extend epoch
+\State epoch $\leftarrow$ Clock +  range
+ 
+\If{$\neg$CAS(maxTS, Clock, epoch) } halt \EndIf 
+\EndIf  \label{l:epoch-end}
+\EndProcedure
+
+\end{algorithmic}
+\caption{\sys's TM algorithm with HA support.}
+\label{alg:ha}
+\end{algorithm}
+
+\begin{algorithm}[t]
+  \begin{algorithmic}
+    \small
+      \Procedure{read}{key} 
+      \For{rec $\leftarrow$ ds.get(key, versions down from $ts_r$)}
+		\If{rec.commit $\not \in\{$nil, abort$\}$} \Comment committed
+     			 \If{rec.commit $< ts_r$}  \State return rec.value \EndIf
+      		\ElsIf{rec.commit = nil}  
+ 			\State $ts_c \leftarrow$ {\sc checkLeader}(rec.leader)
+   			\State rec.commit $\leftarrow ts_c$ \Comment helping 
+ 			 \If{$ts_c \not=$ abort  $\wedge\ ts_c <  ts_r$}  \State return  rec.value \EndIf
+      		\EndIf
+      		
+
+
+      \EndFor
+      \State  return nil
+      \EndProcedure
+
+\Statex
+
+%      		\Procedure{checkLeader}{\tuple{k, ts}} 
+%     			\State leader $\leftarrow$ ds.get(\tuple{k, ts})
+%    			 \If{leader $=$ nil} return abort \Comment{leader removed} \EndIf 
+%		     	 \If{ leader.commit $\not=$nil} \Comment transaction is complete
+%		     	 	\State return leader.commit 
+%		     	 \EndIf
+%		     	 \Comment try to abort pending transaction 
+%			\State ok $\leftarrow$ ds.check\&mutate(leader.commit, nil, abort)
+%			\If{$\neg$ok} \Comment leader status has changed -- recheck  
+%				\State return  {\sc checkLeader}({leaderPtr}) \EndIf
+%			\State return abort
+%	   	\EndProcedure
+
+      		\Procedure{checkLeader}{\tuple{k, ts}} 
+		     	 \While{true} 
+      				\State leader $\leftarrow$ ds.get(\tuple{k, ts})
+     				 \If{leader $=$ nil} return abort \Comment{leader removed} \EndIf 		     	 	
+     				 \If{leader.commit $=$ nil}  \Comment{abort transaction} 
+					\State ds.check\&mutate(leader.commit, nil, abort)
+				\Else\ return leader.commit \Comment transaction is complete 
+%					\State return leader.commit \Comment transaction is complete
+				\EndIf 		     	 	
+		     	 \EndWhile
+	   	\EndProcedure
+\Statex
+
+\Procedure{commit}{$ts_r$, write-set}
+      
+      	\State $ts_c \leftarrow$ TM.commit($ts_r$, write-set) \Comment may return abort
+      	\If{$ts_c \not=$ abort}
+		\State leader  $\leftarrow$ getLeader(write-set)
+	      	 \State  ok $\leftarrow$ ds.check\&mutate(leader.commit, nil,  $ts_c$)
+   		\If{$\neg$ok} 
+   		 $ts_c \leftarrow$ abort \EndIf
+	\EndIf
+	\State \Comment post-commit
+	\ForAll{keys k $\in$ write-set}
+			\If{$ts_c =$ abort} ds.remove(\tuple{k, $ts_r$})  	
+%			\Else\ update  commit field of \tuple{k, $ts_r$} to $ts_c$  in ds%  $\leftarrow ts_c$ 
+			\Else\ ds.update(\tuple{\tuple{k, $ts_r$}, commit}, $ts_c$)
+			\EndIf
+	\EndFor
+\EndProcedure
+      
+  \end{algorithmic}
+  \caption{\sys's read and commit operations.} 
+  %for transaction with read timestamp $ts_r$.}
+  \label{fig:get-pseudocode}
+\end{algorithm} 
+
+
+
+The metadata used by \sys\ for transaction management is stored in two additional columns associated with each object version in the data store:
+(1) \emph{commit} holds the status of the transaction that wrote this version -- \emph{nil} if it is pending, its  $ts_c$ if committed, and 
+otherwise \emph{abort}; 
+and
+(2) \emph{leader} is a pointer to the writing transaction's commit entry, namely, the \emph{commit} column of the first key written by the same
+transaction. 
+
+Since the commit needs to be an atomic step, the first key in the transaction's write-set is chosen to be the leader, and the transaction commits via a single atomic write of $ts_c$ to the leader's commit column. Transactional read operations that find a nil commit entry 
+refer to the leader to find out whether the value they are attempting to read has been committed.
+Figure~\ref{fig:model} shows the metadata of a transaction during its stages of execution. 
+
+\sys's TM is a simplified version of Omid's TM, and appears  in Algorithm~\ref{alg:ha}. It has two roles:
+First, it allocates begin and commit timestamps by fetching-and-incrementing a monotonically increasing global clock.
+Second, it performs validation (i.e., conflict detection) upon commit using an in-memory hash table. 
+Since the conflict detection algorithm has been reported elsewhere~\cite{Omid2017}, and the \sys\ client need not be aware of 
+its implementation details, we refrain from repeating the details of the \emph{conflictDetect} function here. 
+The  \emph{checkRenew} procedure supports the TM's  high availabitliy, and is explained in the next section.
+
+Algorithm~\ref{fig:get-pseudocode} describes \sys's implementation of read and commit operations.
+%Begin and write operations follow the template of Algorithm~\ref{alg:schema}. 
+The client's operations proceed as follows:
+
+\paragraph{Begin.}
+The client sends a begin request to the TM, which assigns it a read timestamp $ts_r$.
+
+\paragraph{Write.}
+The client adds a tentative record to the data store, with the written key and value, version number $ts_r$, 
+nil in the commit column, and a pointer to the first key written during the transaction in the leader column.
+It also tracks key in its local write-set.
+
+
+\paragraph{Read.}
+The algorithm traverses data  records (using the data store's ds.get API) pertaining
+to the requested key with a version that does not exceed $ts_r$, latest to earliest, and returns the first value that is committed
+with a  version smaller than or equal to $ts_r$. Upon
+encountering a tentative record (with commit=nil), the algorithm calls the {\sc checkLeader} function, which
+gets the leader's $ts_c$ from the data store, and again returns the key if that $ts_c$ is smaller than $ts_r$. 
+
+If the leader's commit entry is still nil, read cannot return without determining the final commit timestamp
+of the pending transaction. 
+%\Yoni{example here?}. 
+To this end, {\sc checkLeader} attempts to forcefully abort the pending transaction. This is done using the
+ {check\&mutate} operation, which atomically reads and sets the commit entry to abort in case its value is still nil.
+If check\&mutate fails, this means that the transaction is no longer pending, and the next iteration in the loop 
+%{\sc checkLeader} is recursively called to
+re-reads the leader's entry. Note that during the second iteration, the record can no longer be nil, and so it
+always returns without attempting another check\&mutate.
+ 
+%When a transaction commits, it atomically checks it hasn't been invalidated before inserting the $ts_c$ to the commit .
+
+
+\paragraph{Commit.}
+The client sends a commit request to the TM, which assigns it a commit timestamp $ts_c$ and checks for conflicts. 
+If the TM does not return abort, this means that the validation has been successful, and the client 
+attempts to commit the transaction. 
+Note that the transaction can commit only if no read has invalidated it. Therefore, the client uses 
+the data store's check\&mutate function to write $ts_c$ to the leader's commit column 
+only if the commit status is still nil.
+
+To avoid an extra read of the leader on every transactional read, once a transaction is committed, the post-commit stage writes 
+the transaction's $ts_c$ to the commit columns of all keys in  the transaction's write-set. 
+%Following a successful commit, the client adds $ts_c$ to all data items it wrote to.
+
+\paragraph{High availability.} The TM is implemented as a primary-backup process pair to ensure its high availability. 
+The backup detects the primary's failure using timeouts. When it detects a failure, it immediately begins serving new
+transactions, without any recovery procedure. Because the backup may falsely suspect the primary because of
+unexpected network or processing delays (e.g., garbage collection stalls), we take precautions to avoid correctness
+violations in (rare) cases when both primaries are active at the same time.
+
+To this end, we maintain two shared objects, managed in Apache Zookeeper and accessed infrequently.
+The first is \emph{maxTS}, which is the maximum timestamp an active TM is allowed to return to its clients.
+An active (primary) TM periodically allocates a new \emph{epoch} of timestamps that it may return to clients by atomically
+increasing maxTS (using a compare-and-swap (CAS) operation).  
+Following failover, the new primary  allocates a new epoch for itself, and thus all the timestamps it returns to clients
+exceed those returned by previous primary. 
+The second is a locally-checkable \emph{lease}, which is essentially a  limited-time lock. 
+As with locks, at most one TM may hold the lease at a given time (this requires the TMs' clocks to advance roughly at the same rate). 
+This ensures that no client will be able to commit a transaction in an old epoch after the new TM has started 
+using a new one.
+
+
+

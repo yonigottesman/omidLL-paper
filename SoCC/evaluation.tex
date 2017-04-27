@@ -1,5 +1,5 @@
 We compare \sys\  to a state-of-the art TPS and separately evaluate the effectiveness of it FP mechanism.
-To this end, we compare three TPSs: 
+To this end, we compare three TPSs, all of which use HBase as the underlying data store:
 \begin{description}
 \item[Vanilla \sys] -- the algorithm described in Section~\ref{sec:ll}, without support for FP transactions.
 \item[FP \sys] -- the FP API implementation as described in Section~\ref{sec:alg},
@@ -8,8 +8,11 @@ with transactional reads and writes  modified to access the LVC along with the d
 our implementation of \sys. 
 \end{description}
 
-All three use HBase as the underlying data store. To reduce latency,
-we configure the TPSs to perform the post-commit phase asynchronously, 
+{\inred{Direct comparison to other TPSs, e.g., Percolator or CockroachDB, is impossible because the latter
+use 2PC. Doing so would require extreme changes to HBase architecture, and would also be 
+incompatible with Omid.}}
+
+To reduce latency, we configure the TPSs to perform the post-commit phase asynchronously, 
 by a separate thread, after the transaction completes.
 
 In Omid and Vanilla \sys, all transactions use the standard API, namely 

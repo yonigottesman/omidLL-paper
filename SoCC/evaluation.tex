@@ -98,7 +98,7 @@ Recall that \sys\ is motivated by the prevalence of short transactions in produc
 the goal of speeding such transactions up.
 Its advantage is less pronounced for long transactions, where the cost of begin and commit is amortized
 across many reads and writes.
-To make the comparison meaningful, we classify transactions according to their lengths and whether they
+To make the comparison meaningful, we classify transactions by their lengths and whether they
 access a single key, and study each transaction class separately. 
 
 We begin with short transactions. 
@@ -195,7 +195,7 @@ versus 20.8ms with Vanilla \sys.
 \label{fig:fp-tradeoff}
 \end{figure}
 
-Figure~\ref{fig:fp-tradeoff} summarizes the performance tradeoffs entailed by the fast path API
+Figure~\ref{fig:fp-tradeoff} summarizes the tradeoffs entailed by the fast path API
 (relative to Vanilla \sys) for the different transaction classes. 
 We see that the speedup for single-write transactions is 2.3x, whereas the worst slowdown is $14.8\%$. 
 In systems geared towards real-time processing, this is a reasonable tradeoff, since long transactions 

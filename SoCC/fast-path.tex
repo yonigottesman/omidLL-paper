@@ -37,7 +37,7 @@ Read-only transactions never abort, but \code{bwc} and \code{wc} may abort.
 If an FP transaction aborts, it can be retried either via the fast path again, or as a regular transaction.
 
 We note that though the FP API richness can potentially complicate development, this drawback may be abstracted 
-away by high-level access semantics. For example, a SQL implementation (e.g., Phoenix~\cite{Phoenix})
+away by high-level access semantics. For example, a SQL database (e.g., Phoenix~\cite{Phoenix})
 can select the most appropriate API in its query optimizer, transparently to the user.  
 
 
@@ -284,8 +284,8 @@ sets  {maxVersion} to the maximum between this parameter and its old value.
 Singleton writes  increment the version using F\&I  (line~\ref{l:fi}), and  
 the post-commit of transactional writes  (line~\ref{l:txu}) bumps it 
 to reflect the highest committed version.
-In addition, every transactional read bumps the key's {maxVersion}
-to the reading transaction's $ts_r$  (line~\ref{l:txr}), and
+Every transactional read bumps the key's {maxVersion}
+to the reading transaction's $ts_r$  (line~\ref{l:txr}); 
 transactional writes (line~\ref{l:txw}) are modified to check for conflicts, namely, 
 new committed versions exceeding their $ts_r$.
 
@@ -320,7 +320,7 @@ We implement the two required atomic methods - F\&I and bump on the LVC using at
 In addition, 
 HBase   natively supports  a check\&mutate operation, which holds a lock on the affected key for the duration of the operation.
 Our implementation of the singleton write uses  check\&mutate to implement the atomic block, and calls the LVC's F\&I method inside this block.
-Transactional reads and post-commits call bump from inside a check\&mutate  block where they perform their read and version update, respectively. 
+Transactional reads and post-commits call bump from inside a check\&mutate  block where they do their read and version update, respectively. 
 
 Note that although check\&mutate only holds a lock on the affected key, the joint update of the key and the LVC is consistent
 because it uses a form of two-phase locking: when check\&mutate begins, its locks the key, then the atomic access to the LVC

@@ -234,8 +234,9 @@ Such a singleton write has two additional concerns: (1) it needs to  produce a n
 is smaller than any commit timestamp that will be assigned to a regular transaction in the future.
 (2)  It needs to make sure that conflicts with regular transactions are detected. 
 
-We handle these concerns in a way similar to Mediator~\cite{mediator}.
-Namely, we maintain the timestamps as two-component structures, consisting of a global version and a locally advancing sequence number.
+To handle these concerns,  
+%in a way similar to Mediator~\cite{mediator}. Namely, 
+we maintain the timestamps as two-component structures, consisting of a global version and a locally advancing sequence number.
 In practice, we implement the two components in one long integer, with some number $\ell$ least significant bits
 reserved for sequence numbers assigned by FP writes (in our implementation, $\ell=20$).
 The most significant bits represent the global version set by the TM. The latter increases 
@@ -306,8 +307,8 @@ in order to detect conflicting writes that occur between its two calls.
 Associating a maxVersion field with each key is wasteful,
 both in terms of space, and in terms of the number of updates this field undergoes.
 Instead, when implementing support for \sys's fast path in HBase, we aggregate the maxVersions of many keys in a single variable, 
-which we call the \emph{Local Version Clock (LVC)}; (similar local clocks were previously used in Mediator~\cite{mediator}
-and CockroachDB~\cite{cockroach}).
+which we call the \emph{Local Version Clock (LVC)}.
+%; (similar local clocks were previously used in Mediator~\cite{mediator} and CockroachDB~\cite{cockroach}).
 
 Like many state-of-the-art data stores, HBase data is \emph{sharded} (partitioned) 
 across many \emph{regions}, and is deployed on multiple  \emph{region servers}, each of which serves

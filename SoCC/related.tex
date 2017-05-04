@@ -6,13 +6,13 @@ Recently, many efforts have been dedicated to improving performance using advanc
 hardware trends like RDMA and HTM~\cite{Wei2015,Dragojevic2014,Dragojevic2015}.  
 These efforts are, by and large, orthogonal to ours.
 
-Our work follows the line of production systems, such as 
+Our work follows the line of industrial systems, such as 
 Google's Spanner~\cite{Spanner2012}, Megastore~\cite{Megastore}, and Percolator~\cite{Percolator2010}, 
-CockroachDB~\cite{cockroach}, and most recently Apache Phoenix~\cite{Phoenix}. 
-\inred{The latter employs 
-transaction processing services provided by either Omid~\cite{Omid2017}\footnote{\url{https://issues.apache.org/jira/browse/PHOENIX-3623}}
-or Tephra\cite{tephra}}. These systems develop transaction processing engines on top of existing persistent 
-highly-available data stores; for example, Megastore is layered on top of
+CockroachDB~\cite{cockroach}, and most recently Apache Phoenix~\cite{Phoenix}; 
+the latter employs 
+transaction processing services provided by either Tephra~\cite{tephra} or Omid~\cite{Omid2017}\footnote{\url{https://issues.apache.org/jira/browse/PHOENIX-3623}}. 
+Production systems commonly develop transaction processing engines on top of existing persistent 
+highly-available data stores: for example, Megastore is layered on top of
 Bigtable~\cite{Chang2008}, Warp~\cite{Warp} uses HyperDex~\cite{Escriva2012}, 
 and CockroachDB~\cite{cockroach} uses RocksDB~\cite{rocksdb}.
 Similarly to Omid, \sys\ is layered atop Apache HBase~\cite{hbase}.
@@ -30,9 +30,11 @@ As a separate contribution we developed a fast path for single-key transactions,
 which is applicable to any of the aforementioned systems. A similar mechanism 
 was previously developed in Mediator~\cite{mediator} for the earlier generation 
 of Omid~\cite{OmidICDE2014}. Mediator focused on reconciling conflicts between 
-transactions and native atomic operations, rather than adding an FP API. It has a 
-less efficient implementation; moreover, transactions in Mediator can starve in case 
-of contention with native operations that never concede to transactions.
+transactions and native atomic operations rather than adding an FP API as we do here. 
+As a consequence, Mediator is less efficient than our fast path, and moreover, 
+its regular transactions can starve in case 
+of contention with native operations. 
+%that never concede to transactions.
 
 Our implementation of the fast path uses a local version clock. Similar mechanisms
 were used in Mediator and in CockroachDB, which uses 

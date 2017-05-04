@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
 from matplotlib.ticker import FuncFormatter
 import datetime
 
@@ -40,7 +41,7 @@ def draw_throughput_latency(originalOmid,lorraGeneric,lorraFP,pltnum):
 
 
     plt.ylabel("Latency [msec]",fontsize=myfonsize)
-    plt.xlim((30,450))
+    plt.xlim((30,480))
     plt.ylim(0,50)
     plt.grid(True)
     #plt.legend(loc=0)
@@ -55,7 +56,7 @@ def draw_throughput_latency(originalOmid,lorraGeneric,lorraFP,pltnum):
 
     plt.legend(loc=1,fontsize=myfonsize)
     plt.savefig("throughputLatency"+txsize[pltnum]+".pdf", bbox_inches='tight')
-    #plt.show()
+    plt.show()
 
 breakdowns_names = ['Put','Get','tx5','tx10','rwm']
 operation_names = ['Write','Read','Read/\nWrite','Read/\nWrite','Read/\nWrite']
@@ -182,6 +183,93 @@ def singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,P
 
 
 
+def new_breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUTlorraGeneric,PUTlorraFP,RMWoriginalOmid,RMWlorraGeneric,RMWlorraFP,s,txt):
+
+    commit_hatch = ""
+    hbase_hatch = ""
+    begin_hatch = ""
+
+    omid_color='g'
+    generic_colot='r'
+    fp_color='b'
+
+    begin_times = [GEToriginalOmid[0], GETlorraGeneric[0], GETlorraFP[0]]
+    hbase_times = [GEToriginalOmid[1], GETlorraGeneric[1], GETlorraFP[1]]
+    commit_times = [GEToriginalOmid[2], GETlorraGeneric[2], GETlorraFP[2]]
+
+    plt.figure(figsize=(10, 7))
+    ax = plt.subplot(1, 1, 1)
+
+    lorraGenericLabel = 'Vanilla\nFragola'
+    lorraFPLabel = 'FP\nFragola'
+
+    p3 = ax.bar([4,5,6],commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
+                label='Commit', alpha=0.5, color='g', align='center',hatch=commit_hatch)
+
+    p2 = ax.bar([4,5,6], hbase_times, bottom=begin_times, label=operation_names[2], alpha=1,
+                color='r', align='center', hatch=hbase_hatch)
+    p1 = ax.bar([4,5,6], begin_times, label='Begin', alpha=1, color='b', align='center',hatch=begin_hatch)
+
+    begin_times = [PUToriginalOmid[0], PUTlorraGeneric[0], PUTlorraFP[0]]
+    hbase_times = [PUToriginalOmid[1], PUTlorraGeneric[1], PUTlorraFP[1]]
+    commit_times = [PUToriginalOmid[2], PUTlorraGeneric[2], PUTlorraFP[2]]
+
+    p3 = ax.bar([0, 1, 2], commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
+                alpha=0.5, color='g', align='center',hatch=commit_hatch)
+    p2 = ax.bar([0, 1, 2], hbase_times, bottom=begin_times,  alpha=1, color='r', align='center',hatch=hbase_hatch )
+    p1 = ax.bar([0, 1, 2], begin_times,  alpha=1, color='b', align='center',hatch=begin_hatch)
+
+    begin_times = [RMWoriginalOmid[0], RMWlorraGeneric[0], RMWlorraFP[0]]
+    hbase_times = [RMWoriginalOmid[1], RMWlorraGeneric[1], RMWlorraFP[1]]
+    commit_times = [RMWoriginalOmid[2], RMWlorraGeneric[2], RMWlorraFP[2]]
+
+    p3 = ax.bar([8, 9, 10], commit_times, bottom=np.array(begin_times) + np.array(hbase_times), alpha=0.5, color='g', align='center',hatch=commit_hatch)
+    p2 = ax.bar([8, 9, 10], hbase_times, bottom=begin_times,  alpha=1, color='r', align='center',hatch=hbase_hatch )
+    p1 = ax.bar([8, 9, 10], begin_times,  alpha=1, color='b', align='center',hatch=begin_hatch)
+
+
+
+    # ax.text(4, ylimit-5, txt[0], fontsize=myfonsize)
+    # ax.text(0, ylimit-5, txt[1], fontsize=myfonsize)
+
+    plt.xticks([0,1,2,4,5,6,8,9,10], [originalOmidLabel, lorraGenericLabel, lorraFPLabel,originalOmidLabel, lorraGenericLabel, lorraFPLabel,originalOmidLabel, lorraGenericLabel, lorraFPLabel], fontsize=myfonsize-9)
+
+
+    for tick in ax.get_xticklabels():
+        tick.set_rotation(45)
+
+    plt.annotate('Write', (0, 0), (60, -70), xycoords='axes fraction', textcoords='offset points', va='top',
+                 fontsize=myfonsize)
+
+    plt.annotate('Read', (0, 0), (260, -70), xycoords='axes fraction', textcoords='offset points', va='top',
+                 fontsize=myfonsize)
+
+    plt.annotate('RMW', (0, 0), (460, -70), xycoords='axes fraction', textcoords='offset points', va='top',
+                 fontsize=myfonsize)
+
+
+
+    plt.grid(True)
+    plt.yticks(fontsize=myfonsize)
+
+    plt.ylabel("Latency [msec]", fontsize=myfonsize)
+
+    plt.xlim(-1,12)
+    plt.ylim(0,35)
+    lgd = plt.legend(loc=1, fontsize=myfonsize)
+
+
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.2,top=0.9)
+
+    plt.savefig("latency_all" +txt[2] + ".pdf",
+                bbox_inches='',bbox_extra_artists=(lgd,))
+    plt.show()
+
+
+
+
+
 def singlebreakdownHigh(GETlorraGeneric,GETlorraFP,PUTlorraGeneric,PUTlorraFP,RMWlorraGeneric,RMWlorraFP,ylimit,txt):
 
     begin_times = [GETlorraGeneric[0], GETlorraFP[0]]
@@ -191,8 +279,9 @@ def singlebreakdownHigh(GETlorraGeneric,GETlorraFP,PUTlorraGeneric,PUTlorraFP,RM
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
 
-    lorraGenericLabel = 'Vanilla'
-    lorraFPLabel = 'FP'
+
+    lorraGenericLabel = 'Vanilla\nFragola'
+    lorraFPLabel = 'FP\nFragola'
 
     p3 = ax.bar([3,4],commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
                 label='Commit', alpha=0.5, color='g', align='center')
@@ -217,12 +306,7 @@ def singlebreakdownHigh(GETlorraGeneric,GETlorraFP,PUTlorraGeneric,PUTlorraFP,RM
     p2 = ax.bar([6, 7], hbase_times, bottom=begin_times, alpha=1, color='r', align='center', )
     p1 = ax.bar([6, 7], begin_times, alpha=1, color='b', align='center')
 
-    ax.text(3, ylimit-2, txt[0], fontsize=myfonsize)
-    ax.text(0, ylimit-2, txt[1], fontsize=myfonsize)
-    ax.text(6, ylimit - 2, txt[2], fontsize=myfonsize)
-
-
-    plt.xticks([0,1,3,4,6,7], [lorraGenericLabel, lorraFPLabel, lorraGenericLabel, lorraFPLabel,lorraGenericLabel, lorraFPLabel], fontsize=myfonsize-4)
+    plt.xticks([0,1,3,4,6,7], [lorraGenericLabel, lorraFPLabel, lorraGenericLabel, lorraFPLabel,lorraGenericLabel, lorraFPLabel], fontsize=myfonsize-9)
 
     for tick in ax.get_xticklabels():
         tick.set_rotation(45)
@@ -232,20 +316,30 @@ def singlebreakdownHigh(GETlorraGeneric,GETlorraFP,PUTlorraGeneric,PUTlorraFP,RM
 
     plt.ylabel("Latency [msec]", fontsize=myfonsize)
 
-    plt.xlim(-1,10)
+    plt.xlim(-1,8)
     plt.ylim(0,ylimit)
-    lgd = plt.legend(loc=7, fontsize=myfonsize)
+    # lgd = plt.legend(loc=1, fontsize=myfonsize)
+
+    plt.annotate('Write', (0, 0), (60, -70), xycoords='axes fraction', textcoords='offset points', va='top',
+                 fontsize=myfonsize)
+
+    plt.annotate('Read', (0, 0), (260, -70), xycoords='axes fraction', textcoords='offset points', va='top',
+                 fontsize=myfonsize)
+
+    plt.annotate('RMW', (0, 0), (460, -70), xycoords='axes fraction', textcoords='offset points', va='top',
+                 fontsize=myfonsize)
 
 
     plt.tight_layout()
-    plt.savefig("latencyHighThrough_" +txt[3] + ".pdf",
-                bbox_inches='tight',bbox_extra_artists=(lgd,))
-    #plt.show()
+    plt.subplots_adjust(bottom=0.2, top=0.9)
+
+    plt.savefig("latencyHighThrough_" +txt[3] + ".pdf")
+    plt.show()
 
 
 
 
-def summery():
+def high_summery():
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
     speedup = [371,	541,	182,	-19,-11,]
@@ -263,14 +357,41 @@ def summery():
     ax.yaxis.set_major_formatter(formatter)
 
     plt.tight_layout()
-    plt.savefig("speedup.pdf",
+    plt.savefig("high_speedup.pdf",
                 bbox_inches='tight')
 
-    plt.show()
+    #plt.show()
+
+
+def low_summery():
+    plt.figure(figsize=(10, 7))
+    ax = plt.subplot(1, 1, 1)
+    speedup = [132,	56,	81,	-12,-15,]
+
+    ax.plot([-1,0,1,2,3,4,5],[0,0,0,0,0,0,0],linestyle='-', color='black',linewidth = 4)
+    xloc = [0,1,2,3,4]
+    p1 = ax.bar(xloc, speedup, alpha=1, color=tableau20[0], align='center')
+    plt.xticks(xloc ,['Write','Read','Read\n+Write','Tx of\nsize 5','Tx of\nsize 10'],fontsize=myfonsize)
+    plt.ylim(-50, 150)
+    plt.grid(True)
+    plt.yticks(fontsize=myfonsize)
+
+    plt.ylabel("Speedup", fontsize=myfonsize)
+    formatter = FuncFormatter(lambda y, pos: "%d%%" % (y))
+    ax.yaxis.set_major_formatter(formatter)
+
+    plt.tight_layout()
+    plt.savefig("low_speedup.pdf",
+                bbox_inches='tight')
+
+#    plt.show()
 
 
 
-summery()
+
+
+high_summery()
+low_summery()
 
 PUToriginalOmid = [13.36,1.77,13.41]
 PUTlorraGeneric = [0.44,1.96,3.03]
@@ -281,6 +402,15 @@ GEToriginalOmid = [13.36,1.73,0.38]
 GETlorraGeneric = [0.44,1.49,0.38]
 GETlorraFP = [0.00,1.48,0.00]
 #breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP)
+
+RMWoriginalOmid = [13.36,3.50,14.06]
+RMWlorraGeneric = [0.44,3.44,3.12]
+RMWlorraFP = [0.00,3.86,0.00]
+
+new_breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUTlorraGeneric,PUTlorraFP,RMWoriginalOmid,RMWlorraGeneric,RMWlorraFP,40,['Single read','Single write','PUTGET'])
+
+#breakdown(RMWoriginalOmid,RMWlorraGeneric,RMWlorraFP,4)
+
 
 singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUTlorraGeneric,PUTlorraFP,40,['Single read','Single write','PUTGET'])
 
@@ -296,10 +426,7 @@ TX10lorraFP = [0.76,21.05,2.56]
 
 singlebreakdown(TX5originalOmid,TX5lorraGeneric,TX5lorraFP,TX10originalOmid,TX10lorraGeneric,TX10lorraFP,60,['TX size 5','TX size 10','5_10'])
 
-RMWoriginalOmid = [13.36,3.50,14.06]
-RMWlorraGeneric = [0.44,3.44,3.12]
-RMWlorraFP = [0.00,3.86,0.00]
-breakdown(RMWoriginalOmid,RMWlorraGeneric,RMWlorraFP,4)
+
 
 
 TX1originalOmid = [19.66,20.55,22.00,22.69,34.03,40.00,47.53,76.17,None,None]

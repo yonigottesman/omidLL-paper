@@ -161,9 +161,10 @@ For transactions that read and write a single key as part of the BRWC workload,
 %Their latency breakdown under a 100K tps throughput is shown in Figure~\ref{fig:rmw}.
 the fast path implementation (consisting of \code{br} and \code{wc} calls) completes within 3.9ms,
 versus 7ms for Vanilla \sys\ and 30.9ms for Omid. 
-
-Under high load (Figure~\ref{fig:hightx}), the fast path is more beneficial: it reduces the latency of write, read, and brwc from
-ms, ms, and ms to ms, ms, and ms respectively. 
+%
+Under high load (Figure~\ref{fig:hightx}), the fast path is more beneficial: it reduces the latency of write
+by nearly a factor of five, from 11.24ms  to 2.4ms, and the read latency by a factor of six, from  8.24ms to 1.29ms.
+%, read, and brwc from 11.24ms, 8.24ms, and 11.85ms to 2.4ms, 1.29ms, and 4.19ms respectively. 
 
 
 
@@ -215,12 +216,14 @@ versus 20.8ms with Vanilla \sys.
 \includegraphics[width=.9\textwidth]{figs/low_speedup.pdf}
 }
 \caption{Low load (100 tps)} 
+\label{fig:slowdown-low}
 \end{subfigure} 
 \begin{subfigure}[t]{0.48\textwidth}
 \centerline{
 \includegraphics[width=.9\textwidth]{figs/high_speedup.pdf}
 }
 \caption{High load (500 tps)} 
+\label{fig:slowdown-high}
 \end{subfigure} 
 \caption{Latency speedup with  fast path API in {\sys}.}
 \label{fig:fp-tradeoff}
@@ -230,9 +233,13 @@ versus 20.8ms with Vanilla \sys.
 
 Figure~\ref{fig:fp-tradeoff} summarizes the tradeoffs entailed by the fast path API
 (relative to Vanilla \sys) for the different transaction classes. 
-We see that the speedup for single-write transactions is 2.3x, whereas the worst slowdown is $14.8\%$. 
+We see that under low load (Figure~\ref{fig:slowdown-low}),
+the speedup for single-write transactions is 2.3x, whereas the worst slowdown is $14.8\%$. 
 In systems geared towards real-time processing, this is a reasonable tradeoff, since long transactions 
-are infrequent and less sensitive to extra delay. Under the studied workload, e.g.,   FP \sys\/ is more desirable. 
+are infrequent and less sensitive to extra delay.
+Under high load (Figure~\ref{fig:slowdown-high}), the fast path is clearly advantageous, most notably, the speedup for reads exceeds $500\%$.
+%In systems geared towards real-time processing, this is a reasonable tradeoff, since long transactions 
+%are infrequent and less sensitive to extra delay. Under the studied workload, e.g.,   FP \sys\/ is more desirable. 
 
 
 

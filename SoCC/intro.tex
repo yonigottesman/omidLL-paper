@@ -14,7 +14,7 @@ For example, the developers of Google Spanner~\cite{Spanner2012} wrote: ``We bel
 is better to have application programmers deal with performance problems due to overuse 
 of transactions as bottlenecks arise, rather than always coding around the lack of transactions''. 
 Yet the expectation for high performance is rapidly picking up. %For instance, 
-Whereas early transaction systems were throughput-oriented~\cite{Percolator2010, Omid2017}, 
+Whereas early transaction systems were not latency-sensitive~\cite{Percolator2010, Omid2017}, 
 with the thrust into new interactive domains like messaging~\cite{Borthakur:2011} and algorithmic 
 trading~\cite{opentsdb}, latency becomes essential. This paper is motivated by such  applications.
 
@@ -38,10 +38,10 @@ is already in use at large scale at Yahoo~\cite{Omid2017}.
 Unfortunately, while this makes programming much easier, it also jeopardizes 
 the real-time latency SLA for interactive user experience. For example,  
 simple updates and point queries must complete within single-digit milliseconds, 
-whereas Omid, which was designed for high-throughput data pipelines~\cite{Omid2017}, 
+whereas Omid, which was designed for throughput-oriented data pipelines~\cite{Omid2017}, 
 can induce latencies of tens to hundreds of milliseconds under high loads. 
 
-Motivated by this example, we have developed {\sys\/} -- a low-latency {\em and\/} high-throughput 
+Motivated by this example, we have developed {\sys\/}~-- a low-latency {\em and\/} high-throughput 
 transaction processing system for HBase. Similarly to other modern transaction 
 managers~\cite{Percolator2010,Spanner2012,Omid2017,cockroach},
 {\sys\/} provides a variant of \emph{snapshot isolation (SI)}~\cite{DBLP:conf/sigmod/BerensonBGMOO95},
@@ -49,7 +49,7 @@ which scales better than traditional serializability implementations. {\sys\/} i
 but dissipates the principal bottleneck present therein.
 %in the prior implementations the overhead of begin and commit operations. 
 Its advantage is maximized for short  transactions, which are prevalent in latency-sensitive applications.
-\sys\ processes  such transactions in a handful of milliseconds. The new protocol is also favorable for system 
+\sys\ processes  such transactions in a handful of milliseconds. The new protocol  also doubles the system 
 throughput.
 %Moreover, it is amenable to a simpler high availability solution than the original design. 
 %, which is \inred{an order of magnitude higher than} previously achievable limits. 
@@ -57,7 +57,8 @@ throughput.
 %, to the best of our knowledge. 
 
 As a separate contribution, we introduce a novel {\em fast path\/} algorithm for short single-key transactions 
-that eliminates the begin/commit overhead entirely. This entails minor extensions to the underlying 
+that eliminates the begin/commit overhead entirely, and executes short transactions 
+ almost as fast as native HBase operations. This entails minor extensions to the underlying 
 data store. The fast path is orthogonal to other protocol aspects, and can be  supported in other 
 transaction processing services. 
 %, to enable local commits directly within the storage layer and verify the correctness of general 
@@ -66,14 +67,19 @@ transaction processing services.
 We have implemented {\sys\/}\footnote{\url{https://github.com/yonigottesman/incubator-omid/tree/localTransactions}} 
 based on the open source Omid code\footnote{\url{https://omid.incubator.apache.org}}, 
 and extended the HBase code to enable fast path transactions\footnote{\url{https://github.com/yonigottesman/hbase_local_transactions/tree/0.98-add-rmw}}. 
-Our experiments show substantial reduction in latency for all transactions --
-even without the fast path, \sys\ transactions are 4x to 5x faster than Omid's under low load. And as system load increases, 
-Omid's latency surges  whereas \sys's is virtually unaffected. 
-The fast path further improves the latency of short transactions 
-by 1.8x on average, executing them almost as fast as  native HBase operations. This comes 
-at the cost of a minor (less than 15\%) negative impact on longer transactions. 
-{\inred{The system scales beyond 1M transactions per second on medium-end hardware,
-which surpasses Omid at least 4x. Finally, \sys\ has no material impact on the transaction abort rates.}}
+Our experiments on mid-rage hardware show substantial performance improvements.
+Under low load,
+even without the fast path, \sys\ transactions are 4x to 5x faster than Omid's, 
+and the fast path further reduces the latency of short transactions by 1.8x on average.
+As system load increases, Omid's latency surges (at  $\sim\!\!\!150$K tps in our tests),  
+whereas \sys's remains stable until we generate a higher load ($\sim\!\!\!250$K tps), and 
+increases four-fold at 500K tps.  Fast path transactions incur no scalability
+bottlenecks, and continue to execute at the low latency of native HBase operations regardless of system load,  
+(thanks to HBase's near perfect scalability).
+This comes at the cost of a minor (less than 15\%) negative impact on longer transactions. 
+%{\inred{The system scales beyond 1M transactions per second on medium-end hardware,
+%which surpasses Omid at least 4x.}} 
+Additionally, \sys\ has negligible impact on  transaction abort rates.
 
 % \Idit{The roadmap below is not essential; maybe replace with summary of contributions.}
 The remainder of this paper is organized as follows:

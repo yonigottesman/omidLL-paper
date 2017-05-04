@@ -7,8 +7,8 @@ import datetime
 marksize=10
 my_linewidth = 5
 originalOmidLabel = 'Omid'
-lorraGenericLabel = 'Vanilla Fragola'
-lorraFPLabel = 'FP Fragola'
+lorraGenericLabel = 'Omid LL'
+lorraFPLabel = 'Fragola'
 
 
 
@@ -68,8 +68,8 @@ def breakdown(originalOmid,lorraGeneric,lorraFP,pltnum):
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
 
-    lorraGenericLabel = 'Vanilla\nFragola'
-    lorraFPLabel = 'FP\nFragola'
+    lorraGenericLabel = 'Omid\nLL'
+    lorraFPLabel = 'Fragola'
 
     p3 = ax.bar(range(len(commit_times)), commit_times, bottom=np.array(begin_times)+np.array(hbase_times),
                 label='Commit', alpha=0.5, color='g',align='center')
@@ -104,8 +104,8 @@ def singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,P
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
 
-    lorraGenericLabel = 'Vanilla\nFragola'
-    lorraFPLabel = 'FP\nFragola'
+    lorraGenericLabel = 'Omid\nLL'
+    lorraFPLabel = 'Fragola'
 
     p3 = ax.bar([4,5,6],commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
                 label='Commit', alpha=0.5, color='g', align='center')

@@ -134,6 +134,15 @@ at 100K tps.}
 \label{fig:rmw}
 \end{figure}
 
+\begin{figure}[htb]
+	\centering
+	\includegraphics[width=.48\textwidth]{figs/latencyHighThrough_PUTGETRMW.pdf}
+	\caption{Fragola Latency breakdown of single-key transactions in a high throughput workload,
+		at 500K tps.}
+	\label{fig:hightx}
+\end{figure}
+
+
 We next focus on transactions that read and write a single key as part of the BRWC workload. 
 Their latency breakdown under a 100K tps throughput is shown in Figure~\ref{fig:rmw}.
 The fast path implementation (consisting of \code{br} and \code{wc} calls) completes within 3.9ms,
@@ -190,7 +199,7 @@ versus 20.8ms with Vanilla \sys.
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=.48\textwidth]{figs/speedup.pdf}
+igure 7\includegraphics[width=.48\textwidth]{figs/speedup.pdf}
 \caption{Summary of performance tradeoffs with the fast path API in {\sys}.}
 \label{fig:fp-tradeoff}
 \end{figure}

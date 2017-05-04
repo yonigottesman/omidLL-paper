@@ -29,7 +29,7 @@ for i in range(len(tableau20)):
 throughputs = [32.55, 63.97, 84.37, 108.56, 162.35, 204.09, 254.77, 272.08, 278.05,477.94]
 
 txsize = ['0','1','5','10']
-def draw_throughput_latency(originalOmid,lorraGeneric,lorraFP,pltnum):
+def draw_throughput_latency(originalOmid,lorraGeneric,lorraFP,pltnum,ylim=50):
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
     plt.plot(throughputs, originalOmid, linestyle='-', label=originalOmidLabel, marker='^', color=tableau20[6],
@@ -42,7 +42,7 @@ def draw_throughput_latency(originalOmid,lorraGeneric,lorraFP,pltnum):
 
     plt.ylabel("Latency [msec]",fontsize=myfonsize)
     plt.xlim((30,480))
-    plt.ylim(0,50)
+    plt.ylim(0,ylim)
     plt.grid(True)
     #plt.legend(loc=0)
 
@@ -56,7 +56,7 @@ def draw_throughput_latency(originalOmid,lorraGeneric,lorraFP,pltnum):
 
     plt.legend(loc=1,fontsize=myfonsize)
     plt.savefig("throughputLatency"+txsize[pltnum]+".pdf", bbox_inches='tight')
-    plt.show()
+    #plt.show()
 
 breakdowns_names = ['Put','Get','tx5','tx10','rwm']
 operation_names = ['Write','Read','Read/\nWrite','Read/\nWrite','Read/\nWrite']
@@ -244,7 +244,7 @@ def new_breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUT
     plt.annotate('Read', (0, 0), (260, -70), xycoords='axes fraction', textcoords='offset points', va='top',
                  fontsize=myfonsize)
 
-    plt.annotate('RMW', (0, 0), (460, -70), xycoords='axes fraction', textcoords='offset points', va='top',
+    plt.annotate('BRWC', (0, 0), (460, -70), xycoords='axes fraction', textcoords='offset points', va='top',
                  fontsize=myfonsize)
 
 
@@ -256,15 +256,15 @@ def new_breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUT
 
     plt.xlim(-1,12)
     plt.ylim(0,35)
-    lgd = plt.legend(loc=1, fontsize=myfonsize)
+#    lgd = plt.legend(loc=1, fontsize=myfonsize)
 
 
     plt.tight_layout()
     plt.subplots_adjust(bottom=0.2,top=0.9)
 
     plt.savefig("latency_all" +txt[2] + ".pdf",
-                bbox_inches='',bbox_extra_artists=(lgd,))
-    plt.show()
+                bbox_inches='')
+    #plt.show()
 
 
 
@@ -318,7 +318,7 @@ def singlebreakdownHigh(GETlorraGeneric,GETlorraFP,PUTlorraGeneric,PUTlorraFP,RM
 
     plt.xlim(-1,8)
     plt.ylim(0,ylimit)
-    # lgd = plt.legend(loc=1, fontsize=myfonsize)
+    lgd = plt.legend( prop={'size':20},ncol=3,loc=9, fontsize=myfonsize)
 
     plt.annotate('Write', (0, 0), (60, -70), xycoords='axes fraction', textcoords='offset points', va='top',
                  fontsize=myfonsize)
@@ -326,7 +326,7 @@ def singlebreakdownHigh(GETlorraGeneric,GETlorraFP,PUTlorraGeneric,PUTlorraFP,RM
     plt.annotate('Read', (0, 0), (260, -70), xycoords='axes fraction', textcoords='offset points', va='top',
                  fontsize=myfonsize)
 
-    plt.annotate('RMW', (0, 0), (460, -70), xycoords='axes fraction', textcoords='offset points', va='top',
+    plt.annotate('BRWC', (0, 0), (460, -70), xycoords='axes fraction', textcoords='offset points', va='top',
                  fontsize=myfonsize)
 
 
@@ -347,7 +347,7 @@ def high_summery():
     ax.plot([-1,0,1,2,3,4,5],[0,0,0,0,0,0,0],linestyle='-', color='black',linewidth = 4)
     xloc = [0,1,2,3,4]
     p1 = ax.bar(xloc, speedup, alpha=1, color=tableau20[0], align='center')
-    plt.xticks(xloc ,['Write','Read','Read\n+Write','Tx of\nsize 5','Tx of\nsize 10'],fontsize=myfonsize)
+    plt.xticks(xloc ,['Write','Read','BRWC','Tx of\nsize 5','Tx of\nsize 10'],fontsize=myfonsize)
     plt.ylim(-50, 600)
     plt.grid(True)
     plt.yticks(fontsize=myfonsize)
@@ -371,7 +371,7 @@ def low_summery():
     ax.plot([-1,0,1,2,3,4,5],[0,0,0,0,0,0,0],linestyle='-', color='black',linewidth = 4)
     xloc = [0,1,2,3,4]
     p1 = ax.bar(xloc, speedup, alpha=1, color=tableau20[0], align='center')
-    plt.xticks(xloc ,['Write','Read','Read\n+Write','Tx of\nsize 5','Tx of\nsize 10'],fontsize=myfonsize)
+    plt.xticks(xloc ,['Write','Read','BRWC','Tx of\nsize 5','Tx of\nsize 10'],fontsize=myfonsize)
     plt.ylim(-50, 150)
     plt.grid(True)
     plt.yticks(fontsize=myfonsize)
@@ -445,7 +445,7 @@ draw_throughput_latency(TX5originalOmid,TX5lorraGeneric,TX5lorraFP,2)
 TX10originalOmid =[40.25, 42.28, 44.0, 45.04, 52.7, 64.0, 77.73, 125.42,None,None]
 TX10lorraGeneric = [21.0, 21.0, 20.32, 21.0, 21.0, 19.8, 21.0, 21.0,20.70,24.85]
 TX10lorraFP =[24.0, 24.0, 24.22, 24.0, 23.0, 23.23, 24.0, 26.0,27,28]
-draw_throughput_latency(TX10originalOmid,TX10lorraGeneric,TX10lorraFP,3)
+draw_throughput_latency(TX10originalOmid,TX10lorraGeneric,TX10lorraFP,3,100)
 
 #High Throughput
 
@@ -458,7 +458,7 @@ GETlorraFPHigh = [0.00,1.29,0.00]
 
 RMWlorraGenericHigh = [3.46,3.07,5.32]
 RMWlorraFPHigh = [0,4.19,0]
-singlebreakdownHigh(GETlorraGenericHigh,GETlorraFPHigh,PUTlorraGenericHigh,PUTlorraFPHigh,RMWlorraGenericHigh,RMWlorraFPHigh,15,['Single read','Single write','RMW','PUTGETRMW'])
+singlebreakdownHigh(GETlorraGenericHigh,GETlorraFPHigh,PUTlorraGenericHigh,PUTlorraFPHigh,RMWlorraGenericHigh,RMWlorraFPHigh,15,['Single read','Single write','BRWC','PUTGETRMW'])
 
 
 

@@ -77,8 +77,9 @@
 \Statex
 \Procedure{commit}{$txid$, write-set}
 \State checkRenew()
-\If{conflictDetect($txid$, write-set) } 
- \State return Clock.fetchAndIncrement()
+\State $ts_c \leftarrow$ Clock.fetchAndIncrement()
+\If{conflictDetect($txid$, write-set, $ts_c$) } 
+ \State return $ts_c$
  \Else
  \State return {\sc abort}
 \EndIf
@@ -90,7 +91,7 @@
  \State renew lease for $\delta$ time \Comment atomic operation
  \If{failed} halt \EndIf 
 \EndIf  \label{l:lease-end}
-\If{Clock $\ge$ epoch}  \label{l:epoch-start} \Comment extend epoch
+\If{Clock $=$ epoch}  \label{l:epoch-start} \Comment extend epoch
 \State epoch $\leftarrow$ Clock +  range
  
 \If{$\neg$CAS(maxTS, Clock, epoch) } halt \EndIf 
@@ -188,7 +189,8 @@ Figure~\ref{fig:model} shows the metadata of a transaction during its stages of 
 
 \sys's TM is a simplified version of Omid's TM, and appears  in Algorithm~\ref{alg:ha}. It has two roles:
 First, it allocates begin and commit timestamps by fetching-and-incrementing a monotonically increasing global clock.
-Second, it performs validation (i.e., conflict detection) upon commit using an in-memory hash table. 
+Second, it performs validation (i.e., conflict detection) upon commit using an in-memory hash table, 
+and updates the table with the write-set of the new transaction and its $ts_c$. 
 Since the conflict detection algorithm has been reported elsewhere~\cite{Omid2017}, and the \sys\ client need not be aware of 
 its implementation details, we refrain from repeating the details of the \emph{conflictDetect} function here. 
 The  \emph{checkRenew} procedure supports the TM's  high availability, and is explained in the next section.

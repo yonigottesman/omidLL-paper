@@ -123,20 +123,25 @@ transactional semantics relative to longer transactions.
 
 \section{Conclusion} \label{sec:conclusions}
 
-As TPSs begin to be used in new application domains, low transaction 
-latency becomes an important consideration. 
+As transaction processing services begin to be used in new application domains, low 
+transaction latency becomes an important consideration. 
 Motivated by such use cases we developed \sys, a highly scalable 
 low-latency transaction processing engine for Apache HBase. 
 We implemented \sys\ based on Omid, and 
 improved its protocol to reduce latency (by 4x to 5x under light load
-and an order of magnitude under heavy load), 
-while also improving throughput. 
+and an order of magnitude under heavy load), while also improving the 
+throughput {\inred{to 1M transactions per second}}.  
 
 We further designed a generic \emph{fast path} for single-key transactions,
 which is applicable to other transaction management systems.
 Our implementation of the fast path in \sys\ processes single-key
 transactions almost as fast as native HBase operations, while preserving
 transactional semantics relative to longer transactions.
+
+\inred{{We are working on contributing the \sys\/ algorithms back to Omid. 
+We believe they will become instrumental for modern cloud-based, large-scale, 
+latency-sensitive services - e.g., the Phoenix OLTP system that is designed 
+to harness up to ten thousand nodes.}}
 
 %\subsection*{Acknowledgments}
 

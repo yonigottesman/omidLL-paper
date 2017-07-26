@@ -63,13 +63,12 @@
 
 \date{}
 
-\title{Low-Latency Transactions in Distributed Data Stores}
+\title{\sys: Low-Latency Transactions in Distributed Data Stores}
 
 \author{
 {\rm Yonatan Gottesman\footnotemark[1]\tb Aran Bergman\footnotemark[2]\tb   Edward Bortnikov\footnotemark[1] }\\ 
 {\rm Eshcar Hillel\footnotemark[1]\tb Idit Keidar\footnotemark[1] \footnotemark[2]\tb Ohad Shacham\footnotemark[1]}\\
 	\footnotemark[1] Yahoo Research\ \ \footnotemark[2] Technion  \\ [2mm]
-\small Submission Type: Research	
 } % end author
 
 
@@ -81,6 +80,7 @@
 %  Abstract
 %=========================================================================
 
+\remove{
 \begin{abstract}
 We present \sys, a highly scalable transaction processing engine 
 for Apache HBase. 
@@ -94,50 +94,66 @@ processing them almost as fast as native HBase operations, while preserving
 transactional semantics relative to longer transactions.
 
 \end{abstract}
-
+}
 %========================
-
-\section{Introduction} \label{sec:intro}
-\input{intro} 
-
-\section{Service API and Semantics} \label{sec:api}
-\input{api}
-
-\section{Fast Transactions with \sys} \label{sec:ll}
-\input{lorra}
-\input{implementation}
-
-\section{Fast Path Transactions}
-\label{sec:alg}
-\input{fast-path}
-
-\section{Evaluation} \label{sec:eval}
-\input{evaluation}
-
-\section{Related Work} \label{sec:related}
-\input{related}
-
-\section{Conclusion} \label{sec:conclusions}
 
 As transaction processing services begin to be used in new application domains, low 
 transaction latency becomes an important consideration. 
 Motivated by such use cases we developed \sys, a highly scalable 
-low-latency transaction processing engine for Apache HBase. 
-We implemented \sys\ based on Omid, and 
-improved its protocol to reduce latency (by 4x to 5x under light load
-and an order of magnitude under heavy load), while also improving the 
-throughput twofold.  
+low-latency  {\em and\/} high-throughput  transaction processing engine for Apache HBase. 
+Similarly to other modern transaction 
+managers, 
+{\sys\/} provides a variant of \emph{generalized snapshot isolation (SI)},
+which scales better than traditional serializability implementations. 
 
-We further designed a generic \emph{fast path} for single-key transactions, 
-which executes them  almost as fast as native HBase operations (in terms of 
-both throughput and latency), while preserving
-transactional semantics relative to longer transactions.
-Our fast path algorithm is not \sys-specific, and can be similarly supported in 
-other transaction management systems.
-Our implementation of the fast path in \sys\ can process single-key
-transactions  at a virtually unbounded rate (thanks to HBase's horizontal 
-scalability), and improves the latency of \sys's short transactions
-by another 3x--5x under high load.
+{\sys\/} is based on Apache Omid~\cite{Omid2017}, 
+but dissipates the principal bottleneck present therein.
+%in the prior implementations the overhead of begin and commit operations. 
+Its advantage is maximized for short  transactions, which are prevalent in latency-sensitive applications.
+\sys\ processes  such transactions in a handful of milliseconds. The new protocol  also doubles the system 
+throughput.
+%Moreover, it is amenable to a simpler high availability solution than the original design. 
+%, which is \inred{an order of magnitude higher than} previously achievable limits. 
+%Different aspects of our protocol are inspired by other systems, while their combination is novel.
+%, to the best of our knowledge. 
+
+As a separate contribution, we introduce a novel {\em fast path\/} algorithm for short single-key transactions 
+that eliminates the begin/commit overhead entirely, and executes short transactions 
+ almost as fast as native HBase operations. This entails minor extensions to the underlying 
+data store. The fast path is orthogonal to other protocol aspects, and can be  supported in other 
+transaction processing services. 
+%, to enable local commits directly within the storage layer and verify the correctness of general 
+%transactions in presence of such commits. 
+
+We have implemented {\sys\/}\ %\footnote{\url{https://github.com/yonigottesman/incubator-omid/tree/localTransactions}} 
+based on the open source Omid code\footnote{\url{https://omid.incubator.apache.org}}, 
+and extended the HBase code to enable fast path 
+transactions\footnote{\url{https://github.com/yonigottesman/hbase_local_transactions/tree/0.98-add-rmw}}. 
+Our experiments on mid-range hardware show substantial performance improvements.
+For example, Figure~\ref{fig:tl-1} shows the performance of single-operation transactions using 
+Omid and two variants of \sys: Vanilla \sys, which does not include the fast path support,
+and FP \sys, which includes the fast path. We can see that under low load (left side of the graph),
+even without the fast path, \sys\ transactions are 4x to 5x faster than Omid's, 
+and the fast path further reduces the latency of short transactions by another $55\%$ on average.
+As system load increases, Omid's latency surges (at  $\sim\!\!\!150$K tps in our tests),  
+whereas \sys's remains stable until we generate a higher load ($\sim\!\!250$K tps), and 
+increases four-fold at 500K tps.
+%; and the fast path further improves latency by 2x-5x. 
+Overall fast path transactions incur no scalability
+bottlenecks, and continue to execute at the low latency of native HBase operations regardless of system load
+(thanks to HBase's near perfect horizontal scalability).
+This comes at the cost of a minor (less than 15\%) negative impact on longer transactions. 
+%{\inred{The system scales beyond 1M transactions per second on medium-end hardware,
+%which surpasses Omid at least 4x.}} 
+Additionally, \sys\ has negligible impact on  transaction abort rates.
+
+
+\begin{figure}[htb]
+	\centering
+      	\includegraphics[width=0.48\textwidth]{figs/throughputlatency1.pdf}
+	    \caption{Throughput vs.\ latency, transaction size = 1. Vanilla \sys\ does not include the fast path.}
+        \label{fig:tl-1}      
+\end{figure}
 
 The \sys\ code is publicly available\footnote{\url{https://github.com/yonigottesman/incubator-omid/tree/localTransactions}}, and 
 we are working to contribute it back to Omid. 
@@ -146,8 +162,6 @@ latency-sensitive services, e.g., the Phoenix OLTP system, which is designed
 to harness up to ten thousand nodes.
 
 %\subsection*{Acknowledgments}
-
-\newpage
 
 \bibliographystyle{abbrv}
 \bibliography{refs}

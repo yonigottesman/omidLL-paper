@@ -1,0 +1,149 @@
+\documentclass[letterpaper,twocolumn,10pt]{article}
+%\usepackage{times}
+\usepackage{usenix,epsfig,endnotes}
+
+%========================
+%  Packages
+%========================
+
+\usepackage{graphicx,url,color}
+\usepackage{amsmath}
+\usepackage{amssymb}
+%\usepackage{amsthm}  %<---- for a different "look" in theorems (theorem word in bold, etc.) %ACM conflict with proof definition?
+%\usepackage{subfigure}
+%\usepackage[tight,footnotesize]{subfigure}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{times}
+
+%\usepackage{todonotes}
+%\usepackage[normalem]{ulem} %strikethrough: \sout{Hello World}
+%\usepackage{lastpage} %for number of pages
+%\usepackage{xspace}
+%\usepackage{multirow}
+%\usepackage{balance}
+
+\usepackage[colorlinks=true,allcolors=blue,breaklinks]{hyperref}   % hyperlinks, including DOIs and URLs in bibliography
+\usepackage{subcaption}
+\usepackage{graphicx}
+%\usepackage{caption}
+\usepackage{float}
+
+%========================
+%  Macros
+%========================
+
+\newcommand{\code}[1]{\textsf{\fontsize{9}{11}\selectfont #1}}
+
+\newcommand{\inred}[1]{{\color{red}{#1}}}
+\newcommand{\remove}[1]{}
+\newcommand{\Idit}[1]{[[\inred{Idit: #1}]]}
+\newcommand{\Yoni}[1]{[\inred{Yoni: #1}]}
+\newcommand{\tb}{\hspace{5mm}}
+
+\newcommand{\sys}{Fragola}
+
+
+\newcommand{\speedup}[1]{#1$\times$}
+\newcommand{\tuple}[1]{\ensuremath{\langle \mbox{#1} \rangle}}
+
+%========================
+\begin{document}
+
+\date{}
+
+\title{\Large \bf \sys: Low-Latency Transactions in Distributed Data Stores}
+
+
+\author{
+\remove{
+{\rm Yonatan Gottesman\footnotemark[1]\tb Aran Bergman\footnotemark[2]\tb   Edward Bortnikov\footnotemark[1] }\\ 
+{\rm Eshcar Hillel\footnotemark[1]\tb Idit Keidar\footnotemark[1] \footnotemark[2]\tb Ohad Shacham\footnotemark[1]}\\
+	\footnotemark[1] Yahoo Research\ \ \footnotemark[2] Technion  \\ [2mm]
+\small Submission Type: Research	
+}
+} % end author
+
+
+\maketitle
+
+
+
+%=========================================================================
+%  Abstract
+%=========================================================================
+
+\subsection*{Abstract}
+
+We present \sys, a highly scalable transaction processing engine 
+for Apache HBase. 
+The \sys\ implementation is based on Apache Incubator Omid, but 
+improves its protocol to reduce latency 
+while at the same time improving throughput.
+Under light load, \sys\ is 4x to 5x faster than Omid, and under high loads, it is 
+more than an order of magnitude faster. 
+ \sys\ further implements a \emph{fast path} for single-key transactions,
+processing them almost as fast as native HBase operations, while preserving
+transactional semantics relative to longer transactions.
+
+
+
+%========================
+
+\section{Introduction} \label{sec:intro}
+\input{intro} 
+
+\section{Service API and Semantics} \label{sec:api}
+\input{api}
+
+\section{Fast Transactions with \sys} \label{sec:ll}
+\input{lorra}
+\input{implementation}
+
+\section{Fast Path Transactions}
+\label{sec:alg}
+\input{fast-path}
+
+\section{Evaluation} \label{sec:eval}
+\input{evaluation}
+
+\section{Related Work} \label{sec:related}
+\input{related}
+
+\section{Conclusion} \label{sec:conclusions}
+
+As transaction processing services begin to be used in new application domains, low 
+transaction latency becomes an important consideration. 
+Motivated by such use cases we developed \sys, a highly scalable 
+low-latency transaction processing engine for Apache HBase. 
+We implemented \sys\ based on Omid, and 
+improved its protocol to reduce latency (by 4x to 5x under light load
+and an order of magnitude under heavy load), while also improving the 
+throughput twofold.  
+
+We further designed a generic \emph{fast path} for single-key transactions, 
+which executes them  almost as fast as native HBase operations (in terms of 
+both throughput and latency), while preserving
+transactional semantics relative to longer transactions.
+Our fast path algorithm is not \sys-specific, and can be similarly supported in 
+other transaction management systems.
+Our implementation of the fast path in \sys\ can process single-key
+transactions  at a virtually unbounded rate (thanks to HBase's horizontal 
+scalability), and improves the latency of \sys's short transactions
+by another 3x--5x under high load.
+
+The \sys\ code is publicly available\footnote{\url{https://github.com/yonigottesman/incubator-omid/tree/localTransactions}}, and 
+we are working to contribute it back to Omid. 
+We believe our improvements will become instrumental for modern cloud-based, large-scale, 
+latency-sensitive services, e.g., the Phoenix OLTP system, which is designed 
+to harness up to ten thousand nodes.
+
+%\subsection*{Acknowledgments}
+
+\newpage
+
+{\footnotesize \bibliographystyle{acm}
+
+\bibliography{refs}
+
+\end{document}

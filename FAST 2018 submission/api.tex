@@ -1,0 +1,95 @@
+
+
+\sys\ is a \emph{Transaction Processing System (TPS)}, namely a service that runs atop an underlying data store and 
+allows users to bundle multiple data store operations into a single atomic transaction. 
+The TPS architecture is depicted in Figure~\ref{fig:components}.
+We describe the data model and API of the underlying data store in Section~\ref{ssec:data-model}, and 
+then proceed to define  the transaction semantics provided by \sys\ in Section~\ref{ssec:transactions}. 
+
+\begin{figure}
+\includegraphics[width=0.48\textwidth]{FragolaComponents.jpg}
+\caption{Transaction processing architecture: A client library exposes an  API for  executing transactions of data store operations. 
+A centralized Transaction Manager handles transaction begin and commit requests, while data is written directly to the underlying data store.
+The TM has a backup for high availability.}
+\label{fig:components}
+\end{figure}
+
+\subsection{Data store}
+\label{ssec:data-model}
+
+The  data store holds  \emph{objects} (often referred to as \emph{rows}) identified by unique \emph{keys}.
+Each row can consist of multiple \emph{fields}, representing different \emph{columns}. 
+We consider multi-versioned objects, where object values are associated with \emph{version numbers}, and
+multiple versions associated with the same key may co-exist in the data store.
+\remove{
+Thus, at any given time, an object holds a tuple \tuple{key,\tuple{version,value}+}, where value
+can be structured to consist of multiple columns.
+}
+We further assume that a write operation can specify the version number it writes to.
+%monotonically increasing ??
+%\paragraph{API} 
+The  data store provides the following API:
+\begin{description}
+\item [\code{get(key, versions,}]{\bf[field])} --  Returns the value of field in requested version(s) of the requested key; 
+%if no version is provided, returns the latest; 
+if no field is provided returns the entire record. 
+%\item The API further allows traversing (reading) earlier versions of the same key in descending order.
+\item [\code{update}(key, version, fields, values)] -- 
+creates or updates an object, setting the specified fields to the specified values. 
+If the version already exists, its value is updated; otherwise, a new version is added. 
+\item [\code{remove(key, version)}] -- removes an object with the given key and version.
+\item [\code{check\&mutate}(key, version, field, old, new)] -- checks the record associated with key and version. 
+If field holds old, replace it with new   and return true; otherwise return false.
+%data stores often provide means to atomically read and update a single object, e.g., HBase exports check\&mutate operations, which are 
+%internally implemented using a per-row RW lock.
+%, whereas BigTable supports row transactions. 
+%We will extend this capability below in order to implement certain atomic operations at the data store level.
+\end{description}
+
+A separate process performs garbage collection of obsolete versions.
+
+\subsection{Transaction semantics} \label{ssec:transactions}
+
+TPSs provide \emph{begin} and \emph{commit} APIs for delineating transactions: 
+a \emph{transaction} the sequence of read and write operations on different objects 
+that occur between begin and commit. A TPS  ensures the ACID properties for transactions:
+\emph{atomicity} (all-or-nothing), \emph{consistency} (preserving each object's semantics), 
+\emph{isolation} (in that concurrent transactions do not see each other's partial updates), and 
+\emph{durability} (whereby updates survive crashes).
+
+Different isolation levels can be considered for the third property. We consider 
+snapshot isolation~\cite{DBLP:conf/sigmod/BerensonBGMOO95}, 
+which is provided by popular database technologies such as Oracle, PostgreSQL, and SQL Server,
+and TPSs such as Percolator, Omid, Tephra, and  CockroachDB.
+
+\remove{
+Intuitively, SI ensures that the data a transaction reads from the database 
+does not mix old and new values. For example, if a task updates the values of two stocks, then no other transaction may observe the old value of one of these stocks and the new value of the other. 
+%
+More precisely, 
+}
+SI enforces a total order on committed transactions according to their commit times so that 
+\begin{enumerate}
+    \setlength{\itemsep}{0pt}
+    \setlength{\parskip}{0pt}
+    \setlength{\parsep}{2pt}  
+\item
+each transaction's read operations see a consistent snapshot of the database reflecting write operations by
+ exactly those transactions that committed prior to the transaction's start time; and 
+\item
+ a transaction commits only if none of the items it updates has been modified since that snapshot.
+ \end{enumerate}
+Thus, under SI, two concurrent transactions conflict only if they both \emph{update} the same item.  
+In contrast, under serializability, a transaction that updates an item also conflicts with transactions that \emph{read} that item. Snapshot isolation is thus amenable to implementations (using multi-versioning) that 
+allow more concurrency than serializable ones, and hence scale better.
+
+Following a commit call, the transaction may successfully \emph{commit}, whereby all of its operations take effect;
+in case of conflicts, (i.e., when two concurrent transactions attempt to update the same item), the transaction may
+\emph{abort}, in which case none of its changes take effect. 
+%An abort may also be initiated by the programmer, e.g., 
+%on encountering an error. Applications typically retry a transaction upon  abort. 
+
+
+%%%The data is \emph{partitioned} (or sharded), and each object belongs to one region. 
+%%%%Global transactions may span multiple regions, and atomically commit or abort on all. 
+%%%\emph{Local transactions} are ones that access a single region.

@@ -112,7 +112,8 @@ though $FP_2$ occurs after $FP_1$.
 \label{fig:ltx-rt}
 \end{figure}
 
-Formally, the system enforces a total order ${\cal T}$ on all committed transactions, so that
+%Formally, 
+The system enforces a total order ${\cal T}$ on all committed transactions, so that
 \begin{enumerate}
     \setlength{\itemsep}{0pt}
     \setlength{\parskip}{0pt}
@@ -127,7 +128,9 @@ a prefix of  ${\cal T}$ that includes at least all regular transactions committe
 its start time; and 
 \item
  a transaction commits only if none of the items it updates is modified by a transaction ordered in ${\cal T}$ after
- its snapshot time ${\cal T}$.
+ its snapshot time 
+ %${\cal T}$.
+ and before its commit time.
  \end{enumerate}
 
 Note that  ${\cal T}$  preserves causality because 

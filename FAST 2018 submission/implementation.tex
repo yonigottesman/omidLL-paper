@@ -106,12 +106,12 @@
 \begin{algorithm}[t]
   \begin{algorithmic}
     \small
-      \Procedure{read}{key} 
+      \Procedure{read}{$ts_r$, key} 
       \For{rec $\leftarrow$ ds.get(key, versions down from $ts_r$)}
 		\If{rec.commit $\not \in\{$nil, abort$\}$} \Comment committed
      			 \If{rec.commit $< ts_r$}  \State return rec.value \EndIf
       		\ElsIf{rec.commit = nil}  
- 			\State $ts_c \leftarrow$ {\sc checkLeader}(rec.leader, $ts_r$)
+ 			\State $ts_c \leftarrow$ {\sc checkStatus}(rec.leader, $ts_r$)
    			\State rec.commit $\leftarrow ts_c$ \Comment helping 
  			 \If{$ts_c \not=$ abort  $\wedge\ ts_c <  ts_r$}  \State return  rec.value \EndIf
       		\EndIf
@@ -137,27 +137,34 @@
 %			\State return abort
 %	   	\EndProcedure
 
-      		\Procedure{checkLeader}{k, ts} 
-		     	 \While{true} 
-      				\State leader $\leftarrow$ ds.get(k, ts, commit)
-     				 \If{leader $=$ nil} 
+      		\Procedure{checkStatus}{k, ts} 
+	%	     	 \While{true} \Comment at most two iterations 
+      				\State rec $\leftarrow$ ds.get(k, ts) 
+     				 \If{rec $=$ nil} 
      				 	 return abort \Comment{leader removed} 
      				 \EndIf 		
-     				 leaderCommit $\leftarrow$ get(leader, ts, commit)       	 	
-     				 \If{leaderCommit $=$ nil}  \Comment{abort transaction} 
-					\State ds.check\&mutate(leader, ts, commit, nil, abort)
-				\Else\ return get(leader, ts, commit)  %\Comment transaction is complete 
+     				 
+     				 \If{rec.commit $=$ nil}  \Comment{abort transaction} 
+     				 	\State ok $\leftarrow$ ds.check\&mutate(k, ts, commit, nil, abort)
+					\If{ok}
+						\State return abort	
+					\Else \Comment commit  no longer nil, retry
+						\State return {\sc checkStatus}(k, ts)
+	     				 \EndIf 			
+				\EndIf
+%				\Else\ 
+				\State return rec.commit  %\Comment transaction is complete 
 %					\State return leader.commit \Comment transaction is complete
-				\EndIf 		     	 	
-		     	 \EndWhile
+%				\EndIf 		     	 	
+%		     	 \EndWhile
 	   	\EndProcedure
 \Statex
 
 \Procedure{commit}{$ts_r$, write-set}
-      
+      	\State ds.flush
       	\State $ts_c \leftarrow$ TM.commit($ts_r$, write-set) \Comment may return abort
       	\If{$ts_c \not=$ abort}
-		\State leader  $\leftarrow$ getLeader(write-set)
+		\State leader  $\leftarrow$ first written key in write-set %getLeader(write-set)
 	      	 \State  ok $\leftarrow$ ds.check\&mutate(leader, $ts_r$, commit, nil,  $ts_c$)
    		\If{$\neg$ok} 
    		 $ts_c \leftarrow$ abort \EndIf
@@ -183,8 +190,8 @@ The metadata used by \sys\ for transaction management is stored in two additiona
 (1) \emph{commit} holds the status of the transaction that wrote this version -- \emph{nil} if it is pending, its  $ts_c$ if committed, and 
 otherwise \emph{abort}; 
 and
-(2) \emph{leader} is a pointer to the writing transaction's commit entry, namely, the \emph{commit} column of the first key written by the same
-transaction. 
+(2) \emph{leader} is the key of the record holding the transaction's commit entry.
+%, namely, the first key written by the same transaction. 
 
 Since the commit needs to be an atomic step, the first key in the transaction's write-set is chosen to be the leader, and the transaction commits via a single atomic write of $ts_c$ to the leader's commit column. Transactional read operations that find a nil commit entry 
 refer to the leader to find out whether the value they are attempting to read has been committed.
@@ -192,11 +199,13 @@ Figure~\ref{fig:model} shows the metadata of a transaction during its stages of 
 
 \sys's TM is a simplified version of Omid's TM, and appears  in Algorithm~\ref{alg:ha}. It has two roles:
 First, it allocates begin and commit timestamps by fetching-and-incrementing a monotonically increasing global clock.
-Second, it performs validation (i.e., conflict detection) upon commit using an in-memory hash table, 
-and updates the table with the write-set of the new transaction and its $ts_c$. 
-Since the conflict detection algorithm has been reported elsewhere~\cite{Omid2017}, and the \sys\ client need not be aware of 
-its implementation details, we refrain from repeating the details of the \emph{conflictDetect} function here. 
-The  \emph{checkRenew} procedure supports the TM's  high availability, and is explained in the next section.
+Second, upon commit, it calls the \emph{conflictDetect} function, which 
+performs validation (i.e., conflict detection) using an in-memory hash table
+by checking, for each key in the write-set, that its commit timestamp in the hash-table is smaller than the 
+committing transaction's $ts_r$. If there are no conflicts, it 
+updates the hash table with the write-set of the new transaction and its $ts_c$. 
+%(For more details see~\cite{Omid2017}).
+The  \emph{checkRenew} procedure supports the TM's  high availability, and is explained at the end of this section.
 
 Algorithm~\ref{fig:get-pseudocode} describes \sys's implementation of read and commit operations.
 %Begin and write operations follow the template of Algorithm~\ref{alg:schema}. 
@@ -206,36 +215,35 @@ The client's operations proceed as follows:
 The client sends a begin request to the TM, which assigns it a read timestamp $ts_r$.
 
 \paragraph{Write.}
-The client adds a tentative record to the data store, with the written key and value, version number $ts_r$, 
-nil in the commit column, and a pointer to the first key written during the transaction in the leader column.
+The client uses the data store's update API to add a tentative record to the data store, with the written key and value, 
+version number $ts_r$, nil in the commit column, and the first key written during the transaction in the leader column.
 It also tracks key in its local write-set.
-
 
 \paragraph{Read.}
 The algorithm traverses data  records (using the data store's ds.get API) pertaining
 to the requested key with a version that does not exceed $ts_r$, latest to earliest, and returns the first value that is committed
 with a  version smaller than or equal to $ts_r$. Upon
-encountering a tentative record (with commit=nil), the algorithm calls the {\sc checkLeader} function, which
+encountering a tentative record (with commit=nil), the algorithm calls the {\sc checkStatus} function, which
 gets the leader's $ts_c$ from the data store, and again returns the key if that $ts_c$ is smaller than $ts_r$. 
 
 If the leader's commit entry is still nil, read cannot return without determining the final commit timestamp
 of the pending transaction. 
 %\Yoni{example here?}. 
-To this end, {\sc checkLeader} attempts to forcefully abort the pending transaction. This is done using the
+To this end, {\sc checkStatus} attempts to forcefully abort the pending transaction. This is done using the
  {check\&mutate} operation, which atomically reads and sets the commit entry to abort in case its value is still nil.
-If check\&mutate fails, this means that the transaction is no longer pending, and the next iteration in the loop 
-%{\sc checkLeader} is recursively called to
-re-reads the leader's entry. Note that during the second iteration, the record can no longer be nil, and so it
+If check\&mutate fails, this means that the transaction is no longer pending, and {\sc checkStatus} is recursively called to
+re-read the leader's entry. Note that during the nested call, the commit status can no longer be nil, and so it
 always returns without attempting another check\&mutate.
  
 %When a transaction commits, it atomically checks it hasn't been invalidated before inserting the $ts_c$ to the commit .
 
 
 \paragraph{Commit.}
-The client sends a commit request to the TM, which assigns it a commit timestamp $ts_c$ and checks for conflicts. 
-If the TM does not return abort, this means that the validation has been successful, and the client 
-attempts to commit the transaction. 
-Note that the transaction can commit only if no read has invalidated it. Therefore, the client uses 
+The client first flushes all its writes to the data store and then sends a commit request to the TM. 
+If the TM detects conflicts then the transaction aborts, and otherwise the TM provides the transaction with its commit  timestamp $ts_c$. 
+Flushing before calling the TM ensures that transactions with read timestamps exceeding $ts_c$ 
+will find the committing transaction's records in the data store.
+The client then proceeds to commit the transaction, provided that no read has invalidated it. To ensure the latter, the client uses 
 the data store's check\&mutate function to write $ts_c$ to the leader's commit column 
 only if the commit status is still nil.
 

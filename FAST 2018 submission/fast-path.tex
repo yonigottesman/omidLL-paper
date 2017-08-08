@@ -12,11 +12,10 @@ We proceed, in Section~\ref{ssec:fast-algorithm}, to explain a high-level genera
 Finally, in Section~\ref{ssec:fast-impl}, we describe our implementation of the fast path in \sys, and 
 important practical optimizations we applied in this context.
  
-
-\subsection{API and semantics}
+\subsection{API}
 \label{ssec:fast-api}
 
-\paragraph{API.}
+%\paragraph{API.}
 For brevity, we refer to the TPS's API calls  begin, read, write, and commit as \code{b, r, w}, and \code{c} respectively, and 
 we combine them to allow fast processing.
 The basic FP transactions are singletons, i.e., transactions that perform a single
@@ -87,54 +86,6 @@ That is, the \code{w} calls would need to indicate write intents, and  to be ato
 Given the limited benefit and extra complexity of allowing many writes in FP transactions, we do not support this option in our solution.
 
 }
-
-\paragraph{Semantics.}
-%\label{ssec:fast-semantics}
-
-With FP transactions, 
-\sys\ continues to establish a total order on all update transactions, both fast and regular ones, 
-and transactions continue to observe snapshots that reflect a prefix of this total order.
-However, we relax the real-time order guarantee of SI for FP transactions relative to regular ones. 
-For example, an FP transaction may return 
-an older value than the latest one committed by a regular transaction, essentially serializing the FP transaction `in the past'. 
-Similarly, a regular transaction overlapping
-two FP ones may observe an update of the second and miss an update by the first,  as illustrated in Figure~\ref{fig:ltx-rt},
-where FP2 is ordered `in the past'.
-Yet we do enforce real-time order on regular transactions as well as on all updates of the same key.
-
-\begin{figure}[ht]
-\includegraphics[width=\columnwidth]{figs/FP-semantics}
-\caption{Possible violation of real-time order among fast path (FP) transactions. Regular transaction $T_1$
-reads $x$ before it is updated by FP transaction $FP_1$ and reads $y$ after it is updated by FP transaction $FP_2$ even 
-though $FP_2$ occurs after $FP_1$. 
-%$T1$'s global version is $10$, and its skips the local version clocks of the regions holding $x$ and $y$ to $10$ when reading from them.
-}
-\label{fig:ltx-rt}
-\end{figure}
-
-%Formally, 
-The system enforces a total order ${\cal T}$ on all committed transactions, so that
-\begin{enumerate}
-    \setlength{\itemsep}{0pt}
-    \setlength{\parskip}{0pt}
-    \setlength{\parsep}{2pt}  
-\item
-regular transactions (though not FP ones) are ordered in ${\cal T}$  according to their commit times;
-\item
-non-overlapping transactions (regular and FP) that update the same key are ordered in ${\cal T}$  according to their commit times;
-\item
-each regular transaction's read operations see a consistent snapshot of the database reflecting 
-a prefix of  ${\cal T}$ that includes at least all regular transactions committed prior to
-its start time; and 
-\item
- a transaction commits only if none of the items it updates is modified by a transaction ordered in ${\cal T}$ after
- its snapshot time 
- %${\cal T}$.
- and before its commit time.
- \end{enumerate}
-
-Note that  ${\cal T}$  preserves causality because 
-only transactions that  access different data objects can be re-ordered.
 
 
 \subsection{Generic fast path algorithm}

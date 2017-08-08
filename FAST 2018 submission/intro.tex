@@ -44,7 +44,7 @@ can induce latencies of tens to hundreds of milliseconds under high loads.
 Motivated by this example, we have developed {\sys\/}~-- a low-latency {\em and\/} high-throughput 
 transaction processing system for HBase. Similarly to other modern transaction 
 managers~\cite{Percolator2010,Spanner2012,Omid2017,cockroach},
-{\sys\/} provides a variant of \emph{snapshot isolation (SI)}~\cite{DBLP:conf/sigmod/BerensonBGMOO95},
+{\sys\/} provides a (somewhat relaxed) variant of \emph{snapshot isolation (SI)}~\cite{DBLP:conf/sigmod/BerensonBGMOO95},
 which scales better than traditional serializability implementations. {\sys\/} is based on Omid~\cite{omid}, 
 but dissipates the principal bottleneck present therein.
 %in the prior implementations the overhead of begin and commit operations. 

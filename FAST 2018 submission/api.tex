@@ -55,22 +55,64 @@ A separate process performs garbage collection of obsolete versions.
 
 TPSs provide \emph{begin} and \emph{commit} APIs for delineating transactions: 
 a \emph{transaction} the sequence of read and write operations on different objects 
-that occur between begin and commit. A TPS  ensures the ACID properties for transactions:
+that occur between begin and commit. Two transactions are said to be \emph{concurrent} if 
+their executions overlap, i.e., one of them begins between the begin time and commit time of the other;
+otherwise, we say that they are \emph{non-overlapping}.
+
+A TPS  ensures the ACID properties for transactions:
 \emph{atomicity} (all-or-nothing), \emph{consistency} (preserving each object's semantics), 
 \emph{isolation} (in that concurrent transactions do not see each other's partial updates), and 
 \emph{durability} (whereby updates survive crashes).
 
-Different isolation levels can be considered for the third property. We consider 
-snapshot isolation~\cite{DBLP:conf/sigmod/BerensonBGMOO95}, 
-which is provided by popular database technologies such as Oracle, PostgreSQL, and SQL Server,
-and TPSs such as Percolator, Omid, Tephra, and  CockroachDB.
+Different isolation levels can be considered for the third property. We consider a variant of 
+snapshot isolation~\cite{DBLP:conf/sigmod/BerensonBGMOO95} that, similarly to \emph{generlized snapshot isolation}~\cite{DBLP:conf/srds/ElniketyZP05}, relaxes  the real-time order requirement. 
+Our corrctness condition satisfies the key ``snapshot'' property of SI, which ensures that a transaction 
+that reads from the database does not mix old and new values. For example, if a task updates the values of two stocks, 
+then no other transaction may observe the old value of one of these stocks and the new value of the other.
+However, it relaxes the real-time order guarantee of SI, and allows transactions to take effect `in the past'.  
+In fact, our implementation only relaxes the ordering of fast path  transactions (described in Section~\ref{sec:alg}) 
+relative to regular ones (that do not use the fast path); regular transactions continue to satisfy SI amongst themselves. 
+ \remove{ 
+Similarly, a regular transaction overlapping
+two fast path ones may observe an update of the second and miss an update by the first,  as illustrated in 
+}
+Figure~\ref{fig:ltx-rt}, shows an example where fast path transaction FP2 is ordered `in the past'.
+%Yet we do enforce real-time order on regular transactions as well as on all updates of the same key.
+
+\begin{figure}[ht]
+\includegraphics[width=\columnwidth]{figs/FP-semantics}
+\caption{Possible violation of real-time order among fast path transactions. Regular transaction $T_1$
+reads $x$ before it is updated by fast path transaction $FP_1$ and reads $y$ after it is updated by fast path transaction $FP_2$ even 
+though $FP_2$ occurs after $FP_1$. 
+%$T1$'s global version is $10$, and its skips the local version clocks of the regions holding $x$ and $y$ to $10$ when reading from them.
+}
+\label{fig:ltx-rt}
+\end{figure}
+
+Specifically, our correctness condition stipulates that
+the system enforces a total order ${\cal T}$ on all committed transactions, so that
+\begin{enumerate}
+    \setlength{\itemsep}{0pt}
+    \setlength{\parskip}{0pt}
+    \setlength{\parsep}{2pt}  
+%\item
+%regular transactions (though not FP ones) are ordered in ${\cal T}$  according to their commit times;
+\item
+non-overlapping transactions 
+%(regular and FP) 
+that update the same key are ordered in ${\cal T}$  according to their commit times;
+\item
+each  transaction's read operations see a consistent snapshot of the database reflecting 
+a prefix of  ${\cal T}$; and  
+%that includes at least all regular transactions committed prior to its start time; and 
+\item
+ a transaction commits only if none of the items it updates is modified by a transaction ordered in ${\cal T}$ after
+ its snapshot time and before its commit time.
+ \end{enumerate}
 
 \remove{
-Intuitively, SI ensures that the data a transaction reads from the database 
-does not mix old and new values. For example, if a task updates the values of two stocks, then no other transaction may observe the old value of one of these stocks and the new value of the other. 
-%
+% OLD SI definition - no relaxation of RTO
 More precisely, 
-}
 SI enforces a total order on committed transactions according to their commit times so that 
 \begin{enumerate}
     \setlength{\itemsep}{0pt}
@@ -82,13 +124,21 @@ each transaction's read operations see a consistent snapshot of the database ref
 \item
  a transaction commits only if none of the items it updates has been modified since that snapshot.
  \end{enumerate}
-Thus, under SI, two concurrent transactions conflict only if they both \emph{update} the same item.  
-In contrast, under serializability, a transaction that updates an item also conflicts with transactions that \emph{read} that item. Snapshot isolation is thus amenable to implementations (using multi-versioning) that 
+ }
+ 
+Note that under SI (and its variants), two concurrent transactions conflict only if they both \emph{update} the same item.  
+In contrast, under serializability, a transaction that updates an item also conflicts with transactions that \emph{read} that item. 
+Snapshot isolation is thus amenable to implementations (using multi-versioning) that 
 allow more concurrency than serializable ones, and hence scale better.
+It is therefore provided by popular database technologies such as Oracle, PostgreSQL, and SQL Server,
+and TPSs such as Percolator, Omid, Tephra, and  CockroachDB.
 
 Following a commit call, the transaction may successfully \emph{commit}, whereby all of its operations take effect;
 in case of conflicts, (i.e., when two concurrent transactions attempt to update the same item), the transaction may
 \emph{abort}, in which case none of its changes take effect. 
+
+
+
 %An abort may also be initiated by the programmer, e.g., 
 %on encountering an error. Applications typically retry a transaction upon  abort. 
 

@@ -35,10 +35,11 @@ Returns the read value along with a version ver.
 Read-only transactions never abort, but \code{bwc} and \code{wc} may abort. 
 If an FP transaction aborts, it can be retried either via the fast path again, or as a regular transaction.
 
+\remove{
 We note that though the FP API richness can potentially complicate development, this drawback may be abstracted 
 away by high-level access semantics. For example, a SQL database (e.g., Phoenix~\cite{Phoenix})
 can select the most appropriate API in its query optimizer, transparently to the user.  
-
+}
 
 \remove{
 A more elaborate example is a read-modify-write API: 

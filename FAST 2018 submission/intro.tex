@@ -74,8 +74,9 @@ Under low load,
 even without the fast path, \sys\ transactions are 4x to 5x faster than Omid's, 
 and the fast path further reduces the latency of short transactions by another $55\%$ on average.
 As system load increases, Omid's latency surges (at  $\sim\!\!\!150$K tps in our tests),  
-whereas \sys's remains stable until we generate a higher load ($\sim\!\!250$K tps), and 
-increases four-fold at 500K tps.  Fast path transactions incur no scalability
+whereas \sys's remains stable until we generate a higher load ($\sim\!\!250$K tps)
+%, and increases four-fold at 500K tps.  
+Fast path transactions incur no scalability
 bottlenecks, and continue to execute at the low latency of native HBase operations regardless of system load
 (thanks to HBase's near perfect horizontal scalability).
 This comes at the cost of a minor (less than 15\%) negative impact on longer transactions. 

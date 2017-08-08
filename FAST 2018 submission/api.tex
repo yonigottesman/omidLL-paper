@@ -54,8 +54,10 @@ A separate process performs garbage collection of obsolete versions.
 \subsection{Transaction semantics} \label{ssec:transactions}
 
 TPSs provide \emph{begin} and \emph{commit} APIs for delineating transactions: 
-a \emph{transaction} the sequence of read and write operations on different objects 
-that occur between begin and commit. Two transactions are said to be \emph{concurrent} if 
+a \emph{transaction} the sequence of \emph{read} and \emph{write} operations on different objects 
+that occur between begin and commit. Note that transactional reads and writes are implemented using the 
+datastore's get and put operations.
+Two transactions are said to be \emph{concurrent} if 
 their executions overlap, i.e., one of them begins between the begin time and commit time of the other;
 otherwise, we say that they are \emph{non-overlapping}.
 
@@ -66,12 +68,13 @@ A TPS  ensures the ACID properties for transactions:
 
 Different isolation levels can be considered for the third property. We consider a variant of 
 snapshot isolation~\cite{DBLP:conf/sigmod/BerensonBGMOO95} that, similarly to \emph{generlized snapshot isolation}~\cite{DBLP:conf/srds/ElniketyZP05}, relaxes  the real-time order requirement. 
-Our corrctness condition satisfies the key ``snapshot'' property of SI, which ensures that a transaction 
-that reads from the database does not mix old and new values. For example, if a task updates the values of two stocks, 
-then no other transaction may observe the old value of one of these stocks and the new value of the other.
-However, it relaxes the real-time order guarantee of SI, and allows transactions to take effect `in the past'.  
-In fact, our implementation only relaxes the ordering of fast path  transactions (described in Section~\ref{sec:alg}) 
+Nevertheless, our implementation only relaxes the ordering of fast path  transactions (described in Section~\ref{sec:alg}) 
 relative to regular ones (that do not use the fast path); regular transactions continue to satisfy SI amongst themselves. 
+
+Our corrctness condition satisfies the key ``snapshot'' property of SI, which ensures that a transaction reading from the  database
+does not see a mix old and new values. For example, if a task updates the values of two stocks, 
+then no other transaction may observe the old value of one of these stocks and the new value of the other.
+However, it relaxes the real-time order guarantee of SI by allowing (fast-path) transactions to take effect `in the past'.  
  \remove{ 
 Similarly, a regular transaction overlapping
 two fast path ones may observe an update of the second and miss an update by the first,  as illustrated in 

@@ -3,6 +3,7 @@
 We now describe \sys, a scalable low-latency TPS.
 % on top of HBase. 
 \sys\ is an evolution of the open-source Omid TPS, redesigned to reduce latency.
+In this section we consider \sys\ without the fast-path; this protocol satisfies unrelaxed SI semantics.
 We begin in Section~\ref{ssec:schema} with some background on the modus operandi of existing TPSs that support SI, including Omid. 
 We will see that, while many TPSs follow a similar schema,  they make different design choices when implementing this schema. 
 We discuss the design choices of \sys\ in Section~\ref{ssec:ll-txns}. 
@@ -142,6 +143,8 @@ Validation can be centralized~\cite{OmidICDE2014,Omid2017,tephra} or distributed
 \label{ssec:ll-txns}
 
 We now discuss our design choices, which are summarized and compared with other TPSs in  Table~\ref{table:design-space}. 
+We are not familiar with another TPS that makes the same design choices as \sys. 
+
 
 \begin{table*}[htb]
 \small

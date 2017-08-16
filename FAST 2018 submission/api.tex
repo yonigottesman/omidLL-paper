@@ -67,11 +67,11 @@ A TPS  ensures the ACID properties for transactions:
 \emph{durability} (whereby updates survive crashes).
 
 Different isolation levels can be considered for the third property. We consider a variant of 
-snapshot isolation~\cite{DBLP:conf/sigmod/BerensonBGMOO95} that, similarly to \emph{generlized snapshot isolation}~\cite{DBLP:conf/srds/ElniketyZP05}, relaxes  the real-time order requirement. 
+snapshot isolation~\cite{DBLP:conf/sigmod/BerensonBGMOO95} that, similarly to \emph{generalized snapshot isolation}~\cite{DBLP:conf/srds/ElniketyZP05}, relaxes  the real-time order requirement. 
 Nevertheless, our implementation only relaxes the ordering of fast path  transactions (described in Section~\ref{sec:alg}) 
 relative to regular ones (that do not use the fast path); regular transactions continue to satisfy SI amongst themselves. 
 
-Our corrctness condition satisfies the key ``snapshot'' property of SI, which ensures that a transaction reading from the  database
+Our correctness condition satisfies the key ``snapshot'' property of SI, which ensures that a transaction reading from the  database
 does not see a mix old and new values. For example, if a task updates the values of two stocks, 
 then no other transaction may observe the old value of one of these stocks and the new value of the other.
 However, it relaxes the real-time order guarantee of SI by allowing (fast-path) transactions to take effect `in the past'.  

@@ -103,18 +103,18 @@ the system enforces a total order ${\cal T}$ on all committed transactions, so t
 \item
 non-overlapping transactions 
 %(regular and FP) 
-that update the same key are ordered in ${\cal T}$  according to their commit times;
+that update the same key occur in ${\cal T}$  in order of their commit times;
 \item
 each  transaction's read operations see a consistent snapshot of the database reflecting 
-a prefix of  ${\cal T}$; and  
+a prefix of  ${\cal T}$; 
+%and  
 %that includes at least all regular transactions committed prior to its start time; and 
 \item
  a transaction commits only if none of the items it updates is modified by a transaction ordered in ${\cal T}$ after
  its snapshot time and before its commit time.
  \end{enumerate}
 
-\remove{
-% OLD SI definition - no relaxation of RTO
+\remove{ % OLD SI definition - no relaxation of RTO
 More precisely, 
 SI enforces a total order on committed transactions according to their commit times so that 
 \begin{enumerate}
@@ -127,9 +127,9 @@ each transaction's read operations see a consistent snapshot of the database ref
 \item
  a transaction commits only if none of the items it updates has been modified since that snapshot.
  \end{enumerate}
- }
+ } %Remove
  
-Note that under SI (and its variants), two concurrent transactions conflict only if they both \emph{update} the same item.  
+Note that as with SI, two concurrent transactions conflict only if they both \emph{update} the same item.  
 In contrast, under serializability, a transaction that updates an item also conflicts with transactions that \emph{read} that item. 
 Snapshot isolation is thus amenable to implementations (using multi-versioning) that 
 allow more concurrency than serializable ones, and hence scale better.

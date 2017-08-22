@@ -45,8 +45,8 @@ background traffic as explained below. Each HBase node runs both an HBase region
 the underlying Hadoop File System (HDFS) server within 8GB JVM containers. 
 
 Note that the only scalability bottleneck in the tested systems is the centralized TM.
-HBase, on the other hand, scales horizontally across an unbounded number of nodes, each of which processes a small fraction of the total load. 
-Since each node typically serves millions of different keys, data access rates remain load-balanced across nodes 
+HBase, on the other hand, scales horizontally across thousands of nodes, each of which processes a small fraction of the total load. 
+Since each node typically serves millions of  keys, data access rates remain load-balanced across nodes 
 even when access to individual keys is highly skewed.  And since read/write requests are processed independently by each HBase node, 
 their performance remains constant as the workload and  system size are scaled by the same factor. 
 
@@ -76,7 +76,7 @@ The values are 2K big, yielding roughly 46GB of actual data, replicated three-wa
 across the servers. The data accesses are 50\% reads and 
 50\% writes. The key access frequencies follow a Zipf distribution, generated following 
 the description in~\cite{Gray:1994:QGB:191839.191886}, with $\theta=0.8$, which we derive from production 
-workloads. 
+workloads. \inred{In this distribution, the first key is accessed XXX\% of the  time.}
 %in Yahoo's deployment of Omid~\cite{Omid2017}. 
 %Note that under this access distribution, data requests are load-balanced across nodes.
 

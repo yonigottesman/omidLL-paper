@@ -119,7 +119,7 @@ If write intent indications are buffered, they are added at this point~\cite{Per
 Validation can be centralized~\cite{OmidICDE2014,Omid2017,tephra} or distributed~\cite{Percolator2010,cockroach}. 
 
 
-\item \emph{Commit} or abort in one  irrevocable atomic step. This is achieved by persistently writing to the \emph{commit entry}, 
+\item \emph{Commit} or abort in one  irrevocable atomic step by persistently writing to the \emph{commit entry}, 
   which can reside in a global table~\cite{Omid2017,cockroach} or alongside the first  key written by 
   the transaction~\cite{Percolator2010}.  
   
@@ -177,19 +177,12 @@ CockroachDB	& {\bf D} & write     & {\bf C} & {\bf D} & yes\\
 
 \paragraph{Centralized validation.}
 
-Percolator, the first TPS in this vein, used a distributed commit protocol that locked all written objects during validation. 
-Unfortunately, while an object is locked, other transactions attempting to access it are blocked.
-Since clients may stall or fail while holding a lock, Percolator detects failures of unresponsive 
-clients and aborts transactions on their behalf. 
-To eliminate the need for such failure detection and recovery, newer systems prefer to rely on 
-a centralized TM for validation~\cite{OmidICDE2014,Omid2017,tephra}.
-
-
-CockroachDB~\cite{cockroach}  takes a different approach: it performs distributed validation at write time, by replacing writes with atomic validate-and-write 
-operations that can abort either the current transaction or a conflicting one. Since CockroachDB's approach slows down transactional writes 
-while Omid's centralized conflict detection is extremely scalable~\cite{Omid2017},
-%(capable of sustaining orders of magnitude higher throughput than the network~\cite{Omid2017}),  
-\sys\ adopts the centralized validation mechanism from Omid. 
+Percolator, the first TPS in this vein, used a two-phase commit protocol that locked all written objects during validation.
+While Percolator did this at commit time, CockroachDB~\cite{cockroach} performs distributed validation at write time, 
+by replacing writes with atomic validate-and-write operations that can abort either the current transaction or a conflicting one. 
+This approach slows down either commits (in case of commit-time validation as in Percolator) or 
+transactional writes (in case of write-time validation). 
+In \sys, we instead adopt Omid's centralized conflict detection mechanism, which is extremely scalable~\cite{Omid2017}. 
 
 
 \paragraph{Distributed commit entry.}

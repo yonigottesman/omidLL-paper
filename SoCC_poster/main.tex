@@ -1,4 +1,5 @@
-\documentclass[letterpaper,twocolumn,10pt]{article}
+\documentclass[sigconf]{acmart}
+%\documentclass[letterpaper,twocolumn,10pt]{article}
 \usepackage{times}
 
 % do not change these values
@@ -34,7 +35,7 @@
 %\usepackage{multirow}
 %\usepackage{balance}
 
-\usepackage[colorlinks=true,allcolors=blue,breaklinks]{hyperref}   % hyperlinks, including DOIs and URLs in bibliography
+%\usepackage[colorlinks=true,allcolors=blue,breaklinks]{hyperref}   % hyperlinks, including DOIs and URLs in bibliography
 \usepackage{subcaption}
 \usepackage{graphicx}
 %\usepackage{caption}
@@ -59,6 +60,10 @@
 \newcommand{\tuple}[1]{\ensuremath{\langle \mbox{#1} \rangle}}
 
 %========================
+
+
+
+
 \begin{document}
 
 \date{}
@@ -68,8 +73,17 @@
 \author{
 {\rm Yonatan Gottesman\footnotemark[1]\tb Aran Bergman\footnotemark[2]\tb   Edward Bortnikov\footnotemark[1] }\\ 
 {\rm Eshcar Hillel\footnotemark[1]\tb Idit Keidar\footnotemark[1] \footnotemark[2]\tb Ohad Shacham\footnotemark[1]}\\
-	\footnotemark[1] Yahoo Research\ \ \footnotemark[2] Technion  \\ [2mm]
+	\footnotemark[1] Yahoo Research\ \ \footnotemark[2] Technion  
 } % end author
+
+
+
+\copyrightyear{2017} 
+\acmYear{2017} 
+\setcopyright{rightsretained} 
+\acmConference{SoCC '17}{September 24--27, 2017}{Santa Clara, CA, USA}
+\acmDOI{10.1145/3127479.3132686}
+\acmISBN{978-1-4503-5028-0/17/09}
 
 
 \maketitle

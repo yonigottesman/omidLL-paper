@@ -1,0 +1,10 @@
+;; This buffer is for text that is not saved, and for Lisp evaluation.
+;; To create a file, visit it with C-x C-f and enter text in its buffer.
+
+
+
+"Abstract","Fragola: Low-Latency Transactions in Distributed Data Stores", "Yonatang Gottesman:Yahoo Research;Aran Bergman:Technion;Edward Bortnikov:Yahoo Research;Eshcar Hillel:Yahoo Research;Idit Keidar:Technion;Ohad Shacham:Yahoo Research;","yonatang@yahoo-inc.com","aranb@campus.technion.ac.il;ebortnik@yahoo-inc.com;eshcar@yahoo-inc.com;idish@yahoo-inc.com;ohads@yahoo-inc.com"
+
+
+
+

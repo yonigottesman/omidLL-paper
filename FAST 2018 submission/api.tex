@@ -38,11 +38,11 @@ The API further allows traversing (reading) earlier versions of the same key in 
 \item [\code{update}(key, version, fields, values)] -- 
 creates or updates an object, setting the specified fields to the specified values. 
 If the version already exists, its value is updated; otherwise, a new version is added. 
-The data store may buffer the write in memory until an ensuing flush. 
+\remove{The data store may buffer the write in memory until an ensuing flush. }
 \item [\code{remove(key, version)}] -- removes an object with the given key and version.
 \item [\code{check\&mutate}(key, version, field, old, new)] -- checks the record associated with key and version. 
 If field holds old, replace it with new   and return true; otherwise return false.
-\item [\code{flush}] -- persists all previous updates to disk.
+\remove{ \item [\code{flush}] -- persists all previous updates to disk.}
 %data stores often provide means to atomically read and update a single object, e.g., HBase exports check\&mutate operations, which are 
 %internally implemented using a per-row RW lock.
 %, whereas BigTable supports row transactions. 

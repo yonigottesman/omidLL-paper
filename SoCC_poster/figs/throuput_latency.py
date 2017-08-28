@@ -3,7 +3,10 @@ import matplotlib.pyplot as plt
 import sys
 from matplotlib.ticker import FuncFormatter
 import datetime
+import matplotlib
 
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype'] = 42
 
 marksize=10
 my_linewidth = 5

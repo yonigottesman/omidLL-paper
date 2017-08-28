@@ -207,16 +207,14 @@ updates the hash table with the write-set of the new transaction and its $ts_c$.
 %(For more details see~\cite{Omid2017}).
 The  \emph{checkRenew} procedure supports the TM's  high availability, and is explained at the end of this section.
 
-Algorithm~\ref{fig:get-pseudocode} describes \sys's implementation of read and commit operations.
-%Begin and write operations follow the template of Algorithm~\ref{alg:schema}. 
-The client's operations proceed as follows:
+\sys's client operations proceed as follows (see Algorithm~\ref{fig:get-pseudocode}):
 
 \paragraph{Begin.}
 The client sends a begin request to the TM, which assigns it a read timestamp $ts_r$.
 
 \paragraph{Write.}
 The client uses the data store's update API to add a tentative record to the data store, with the written key and value, 
-version number $ts_r$, nil in the commit column, and the first key written during the transaction in the leader column.
+version number $ts_r$, nil in the commit column, and the first key written during the transaction as the leader.
 It also tracks key in its local write-set.
 
 \paragraph{Read.}

@@ -67,11 +67,11 @@ A TPS  ensures the ACID properties for transactions:
 \emph{durability} (whereby updates survive crashes).
 
 Different isolation levels can be considered for the third property. We consider a variant of 
-snapshot isolation~\cite{DBLP:conf/sigmod/BerensonBGMOO95} that, similarly to \emph{generlized snapshot isolation}~\cite{DBLP:conf/srds/ElniketyZP05}, relaxes  the real-time order requirement. 
+snapshot isolation~\cite{DBLP:conf/sigmod/BerensonBGMOO95} that, similarly to \emph{generalized snapshot isolation}~\cite{DBLP:conf/srds/ElniketyZP05}, relaxes  the real-time order requirement. 
 Nevertheless, our implementation only relaxes the ordering of fast path  transactions (described in Section~\ref{sec:alg}) 
 relative to regular ones (that do not use the fast path); regular transactions continue to satisfy SI amongst themselves. 
 
-Our corrctness condition satisfies the key ``snapshot'' property of SI, which ensures that a transaction reading from the  database
+Our correctness condition satisfies the key ``snapshot'' property of SI, which ensures that a transaction reading from the  database
 does not see a mix old and new values. For example, if a task updates the values of two stocks, 
 then no other transaction may observe the old value of one of these stocks and the new value of the other.
 However, it relaxes the real-time order guarantee of SI by allowing (fast-path) transactions to take effect `in the past'.  
@@ -103,18 +103,18 @@ the system enforces a total order ${\cal T}$ on all committed transactions, so t
 \item
 non-overlapping transactions 
 %(regular and FP) 
-that update the same key are ordered in ${\cal T}$  according to their commit times;
+that update the same key occur in ${\cal T}$  in order of their commit times;
 \item
 each  transaction's read operations see a consistent snapshot of the database reflecting 
-a prefix of  ${\cal T}$; and  
+a prefix of  ${\cal T}$; 
+%and  
 %that includes at least all regular transactions committed prior to its start time; and 
 \item
  a transaction commits only if none of the items it updates is modified by a transaction ordered in ${\cal T}$ after
  its snapshot time and before its commit time.
  \end{enumerate}
 
-\remove{
-% OLD SI definition - no relaxation of RTO
+\remove{ % OLD SI definition - no relaxation of RTO
 More precisely, 
 SI enforces a total order on committed transactions according to their commit times so that 
 \begin{enumerate}
@@ -127,9 +127,9 @@ each transaction's read operations see a consistent snapshot of the database ref
 \item
  a transaction commits only if none of the items it updates has been modified since that snapshot.
  \end{enumerate}
- }
+ } %Remove
  
-Note that under SI (and its variants), two concurrent transactions conflict only if they both \emph{update} the same item.  
+Note that as with SI, two concurrent transactions conflict only if they both \emph{update} the same item.  
 In contrast, under serializability, a transaction that updates an item also conflicts with transactions that \emph{read} that item. 
 Snapshot isolation is thus amenable to implementations (using multi-versioning) that 
 allow more concurrency than serializable ones, and hence scale better.

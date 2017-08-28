@@ -10,7 +10,7 @@ my_linewidth = 5
 originalOmidLabel = 'Omid'
 lorraGenericLabel = 'Vanilla Fragola'
 lorraFPLabel = 'FP Fragola'
-
+lorra2PhLabel = '2 Phase Fragola'
 
 
 myfonsize = 25
@@ -26,22 +26,29 @@ for i in range(len(tableau20)):
     r, g, b = tableau20[i]
     tableau20[i] = (r / 255., g / 255., b / 255.)
 
-throughputs = [32.55, 63.97, 84.37, 108.56, 162.35, 204.09, 254.77, 272.08, 278.05,477.94]
 
+throughputs = [31.62	,63.08	,97.04	,129.67,	158.14	,229.04	,229.65,	377.96	,561.57]
 txsize = ['0','1','5','10']
-def draw_throughput_latency(originalOmid,lorraGeneric,lorraFP,pltnum,ylim=50):
+def draw_throughput_latency(originalOmid,lorraGeneric,lorraFP,lorra2phase,pltnum,ylim=50):
+
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
+
     plt.plot(throughputs, originalOmid, linestyle='-', label=originalOmidLabel, marker='^', color=tableau20[6],
              linewidth=my_linewidth, markersize=marksize, markeredgewidth=2)
+
     plt.plot(throughputs, lorraGeneric, marker='o', linestyle='-', color=tableau20[0], label=lorraGenericLabel,
              linewidth=my_linewidth, markersize=marksize, markeredgewidth=2)
+
     plt.plot(throughputs, lorraFP, label=lorraFPLabel, marker='s', linestyle='-', color=tableau20[2], linewidth=my_linewidth,
              markersize=marksize, markeredgewidth=2)
 
+    plt.plot(throughputs, lorra2phase, label=lorra2PhLabel, marker='x', linestyle='-', color=tableau20[4],
+             linewidth=my_linewidth-1, markersize=marksize, markeredgewidth=1)
+
 
     plt.ylabel("Latency [msec]",fontsize=myfonsize)
-    plt.xlim((30,480))
+    plt.xlim((30,550))
     plt.ylim(0,ylim)
     plt.grid(True)
     #plt.legend(loc=0)
@@ -132,36 +139,37 @@ def breakdownHighTX(originalOmid,lorraGeneric,lorraFP,pltnum):
 
 
 
-def singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUTlorraGeneric,PUTlorraFP,ylimit,txt):
+def singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,two_phase5,PUToriginalOmid,PUTlorraGeneric,PUTlorraFP,two_phase10,ylimit,txt):
 
-    begin_times = [GEToriginalOmid[0], GETlorraGeneric[0], GETlorraFP[0]]
-    hbase_times = [GEToriginalOmid[1], GETlorraGeneric[1], GETlorraFP[1]]
-    commit_times = [GEToriginalOmid[2], GETlorraGeneric[2], GETlorraFP[2]]
+    begin_times = [GEToriginalOmid[0], GETlorraGeneric[0], GETlorraFP[0],two_phase5[0]]
+    hbase_times = [GEToriginalOmid[1], GETlorraGeneric[1], GETlorraFP[1],two_phase5[1]]
+    commit_times = [GEToriginalOmid[2], GETlorraGeneric[2], GETlorraFP[2],two_phase5[2]]
 
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
 
-    lorraGenericLabel = 'Vanilla\nFragola'
-    lorraFPLabel = 'FP\nFragola'
+    lorraGenericLabel = 'Vanilla'
+    lorraFPLabel = 'Fast Path'
+    twoPhaselabel = '2 Phase '
 
-    p3 = ax.bar([4,5,6],commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
+    p3 = ax.bar([5,6,7,8],commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
                 label='Commit', alpha=0.5, color='g', align='center')
-    p2 = ax.bar([4,5,6], hbase_times, bottom=begin_times, label=operation_names[2], alpha=1,
+    p2 = ax.bar([5,6,7,8], hbase_times, bottom=begin_times, label=operation_names[2], alpha=1,
                 color='r', align='center', )
-    p1 = ax.bar([4,5,6], begin_times, label='Begin', alpha=1, color='b', align='center')
+    p1 = ax.bar([5,6,7,8], begin_times, label='Begin', alpha=1, color='b', align='center')
 
-    begin_times = [PUToriginalOmid[0], PUTlorraGeneric[0], PUTlorraFP[0]]
-    hbase_times = [PUToriginalOmid[1], PUTlorraGeneric[1], PUTlorraFP[1]]
-    commit_times = [PUToriginalOmid[2], PUTlorraGeneric[2], PUTlorraFP[2]]
+    begin_times = [PUToriginalOmid[0], PUTlorraGeneric[0], PUTlorraFP[0],two_phase10[0]]
+    hbase_times = [PUToriginalOmid[1], PUTlorraGeneric[1], PUTlorraFP[1],two_phase10[1]]
+    commit_times = [PUToriginalOmid[2], PUTlorraGeneric[2], PUTlorraFP[2],two_phase10[2]]
 
-    p3 = ax.bar([0, 1, 2], commit_times, bottom=np.array(begin_times) + np.array(hbase_times), alpha=0.5, color='g', align='center')
-    p2 = ax.bar([0, 1, 2], hbase_times, bottom=begin_times,  alpha=1, color='r', align='center', )
-    p1 = ax.bar([0, 1, 2], begin_times,  alpha=1, color='b', align='center')
+    p3 = ax.bar([0, 1, 2,3], commit_times, bottom=np.array(begin_times) + np.array(hbase_times), alpha=0.5, color='g', align='center')
+    p2 = ax.bar([0, 1, 2,3], hbase_times, bottom=begin_times,  alpha=1, color='r', align='center', )
+    p1 = ax.bar([0, 1, 2,3], begin_times,  alpha=1, color='b', align='center')
 
     ax.text(4, ylimit-5, txt[0], fontsize=myfonsize)
     ax.text(0, ylimit-5, txt[1], fontsize=myfonsize)
 
-    plt.xticks([0,1,2,4,5,6], [originalOmidLabel, lorraGenericLabel, lorraFPLabel,originalOmidLabel, lorraGenericLabel, lorraFPLabel], fontsize=myfonsize)
+    plt.xticks([0,1,2,3,5,6,7,8], [originalOmidLabel, lorraGenericLabel, lorraFPLabel,twoPhaselabel,originalOmidLabel, lorraGenericLabel, lorraFPLabel,twoPhaselabel], fontsize=myfonsize)
 
     for tick in ax.get_xticklabels():
         tick.set_rotation(45)
@@ -171,7 +179,7 @@ def singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,P
 
     plt.ylabel("Latency [msec]", fontsize=myfonsize)
 
-    plt.xlim(-1,7)
+    plt.xlim(-1,9)
     plt.ylim(0,ylimit)
     lgd = plt.legend(loc=7, fontsize=myfonsize)
 
@@ -183,7 +191,7 @@ def singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,P
 
 
 
-def new_breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUTlorraGeneric,PUTlorraFP,RMWoriginalOmid,RMWlorraGeneric,RMWlorraFP,s,txt):
+def new_breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUTlorraGeneric,PUTlorraFP,RMWoriginalOmid,RMWlorraGeneric,RMWlorraFP,GET2phase,PUT2phase,RMW2phase,s,txt):
 
     commit_hatch = ""
     hbase_hatch = ""
@@ -193,46 +201,50 @@ def new_breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUT
     generic_colot='r'
     fp_color='b'
 
-    begin_times = [GEToriginalOmid[0], GETlorraGeneric[0], GETlorraFP[0]]
-    hbase_times = [GEToriginalOmid[1], GETlorraGeneric[1], GETlorraFP[1]]
-    commit_times = [GEToriginalOmid[2], GETlorraGeneric[2], GETlorraFP[2]]
+    begin_times = [GEToriginalOmid[0], GETlorraGeneric[0], GETlorraFP[0],GET2phase[0]]
+    hbase_times = [GEToriginalOmid[1], GETlorraGeneric[1], GETlorraFP[1],GET2phase[1]]
+    commit_times = [GEToriginalOmid[2], GETlorraGeneric[2], GETlorraFP[2],GET2phase[2]]
 
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
 
-    lorraGenericLabel = 'Vanilla\nFragola'
-    lorraFPLabel = 'FP\nFragola'
+    # lorraGenericLabel = 'Vanilla\nFragola'
+    # lorraFPLabel = 'FP\nFragola'
 
-    p3 = ax.bar([4,5,6],commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
+    lorraGenericLabel = 'Vanilla'
+    lorraFPLabel = 'Fast Path'
+    twoPhaselabel = '2 Phase'
+
+    p3 = ax.bar([5,6,7,8],commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
                 label='Commit', alpha=0.5, color='g', align='center',hatch=commit_hatch)
 
-    p2 = ax.bar([4,5,6], hbase_times, bottom=begin_times, label=operation_names[2], alpha=1,
+    p2 = ax.bar([5,6,7,8], hbase_times, bottom=begin_times, label=operation_names[2], alpha=1,
                 color='r', align='center', hatch=hbase_hatch)
-    p1 = ax.bar([4,5,6], begin_times, label='Begin', alpha=1, color='b', align='center',hatch=begin_hatch)
+    p1 = ax.bar([5,6,7,8], begin_times, label='Begin', alpha=1, color='b', align='center',hatch=begin_hatch)
 
-    begin_times = [PUToriginalOmid[0], PUTlorraGeneric[0], PUTlorraFP[0]]
-    hbase_times = [PUToriginalOmid[1], PUTlorraGeneric[1], PUTlorraFP[1]]
-    commit_times = [PUToriginalOmid[2], PUTlorraGeneric[2], PUTlorraFP[2]]
+    begin_times = [PUToriginalOmid[0], PUTlorraGeneric[0], PUTlorraFP[0],PUT2phase[0]]
+    hbase_times = [PUToriginalOmid[1], PUTlorraGeneric[1], PUTlorraFP[1],PUT2phase[1]]
+    commit_times = [PUToriginalOmid[2], PUTlorraGeneric[2], PUTlorraFP[2],PUT2phase[2]]
 
-    p3 = ax.bar([0, 1, 2], commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
+    p3 = ax.bar([0, 1, 2,3], commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
                 alpha=0.5, color='g', align='center',hatch=commit_hatch)
-    p2 = ax.bar([0, 1, 2], hbase_times, bottom=begin_times,  alpha=1, color='r', align='center',hatch=hbase_hatch )
-    p1 = ax.bar([0, 1, 2], begin_times,  alpha=1, color='b', align='center',hatch=begin_hatch)
+    p2 = ax.bar([0, 1, 2,3], hbase_times, bottom=begin_times,  alpha=1, color='r', align='center',hatch=hbase_hatch )
+    p1 = ax.bar([0, 1, 2,3], begin_times,  alpha=1, color='b', align='center',hatch=begin_hatch)
 
-    begin_times = [RMWoriginalOmid[0], RMWlorraGeneric[0], RMWlorraFP[0]]
-    hbase_times = [RMWoriginalOmid[1], RMWlorraGeneric[1], RMWlorraFP[1]]
-    commit_times = [RMWoriginalOmid[2], RMWlorraGeneric[2], RMWlorraFP[2]]
+    begin_times = [RMWoriginalOmid[0], RMWlorraGeneric[0], RMWlorraFP[0],RMW2phase[0]]
+    hbase_times = [RMWoriginalOmid[1], RMWlorraGeneric[1], RMWlorraFP[1],RMW2phase[1]]
+    commit_times = [RMWoriginalOmid[2], RMWlorraGeneric[2], RMWlorraFP[2],RMW2phase[2]]
 
-    p3 = ax.bar([8, 9, 10], commit_times, bottom=np.array(begin_times) + np.array(hbase_times), alpha=0.5, color='g', align='center',hatch=commit_hatch)
-    p2 = ax.bar([8, 9, 10], hbase_times, bottom=begin_times,  alpha=1, color='r', align='center',hatch=hbase_hatch )
-    p1 = ax.bar([8, 9, 10], begin_times,  alpha=1, color='b', align='center',hatch=begin_hatch)
+    p3 = ax.bar([10,11,12,13], commit_times, bottom=np.array(begin_times) + np.array(hbase_times), alpha=0.5, color='g', align='center',hatch=commit_hatch)
+    p2 = ax.bar([10,11,12,13], hbase_times, bottom=begin_times,  alpha=1, color='r', align='center',hatch=hbase_hatch )
+    p1 = ax.bar([10,11,12,13], begin_times,  alpha=1, color='b', align='center',hatch=begin_hatch)
 
 
 
     # ax.text(4, ylimit-5, txt[0], fontsize=myfonsize)
     # ax.text(0, ylimit-5, txt[1], fontsize=myfonsize)
 
-    plt.xticks([0,1,2,4,5,6,8,9,10], [originalOmidLabel, lorraGenericLabel, lorraFPLabel,originalOmidLabel, lorraGenericLabel, lorraFPLabel,originalOmidLabel, lorraGenericLabel, lorraFPLabel], fontsize=myfonsize-9)
+    plt.xticks([0,1,2,3,5,6,7,8,10,11,12,13], [originalOmidLabel, lorraGenericLabel, lorraFPLabel,twoPhaselabel,originalOmidLabel, lorraGenericLabel, lorraFPLabel,twoPhaselabel,originalOmidLabel, lorraGenericLabel, lorraFPLabel,twoPhaselabel], fontsize=myfonsize-9)
 
 
     for tick in ax.get_xticklabels():
@@ -254,8 +266,8 @@ def new_breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUT
 
     plt.ylabel("Latency [msec]", fontsize=myfonsize)
 
-    plt.xlim(-1,12)
-    plt.ylim(0,35)
+    plt.xlim(-1,14)
+    plt.ylim(0,40)
 #    lgd = plt.legend(loc=1, fontsize=myfonsize)
 
 
@@ -270,43 +282,47 @@ def new_breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUT
 
 
 
-def singlebreakdownHigh(GETlorraGeneric,GETlorraFP,PUTlorraGeneric,PUTlorraFP,RMWlorraGeneric,RMWlorraFP,ylimit,txt):
+def singlebreakdownHigh(GETlorraGeneric,GETlorraFP,GET2phase,PUTlorraGeneric,PUTlorraFP,PUT2phase,RMWlorraGeneric,RMWlorraFP,RMW2phase,ylimit,txt):
 
-    begin_times = [GETlorraGeneric[0], GETlorraFP[0]]
-    hbase_times = [GETlorraGeneric[1], GETlorraFP[1]]
-    commit_times = [GETlorraGeneric[2], GETlorraFP[2]]
+    begin_times = [GETlorraGeneric[0], GETlorraFP[0],GET2phase[0]]
+    hbase_times = [GETlorraGeneric[1], GETlorraFP[1],GET2phase[1]]
+    commit_times = [GETlorraGeneric[2], GETlorraFP[2],GET2phase[2]]
 
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
 
 
-    lorraGenericLabel = 'Vanilla\nFragola'
-    lorraFPLabel = 'FP\nFragola'
+    # lorraGenericLabel = 'Vanilla\nFragola'
+    # lorraFPLabel = 'FP\nFragola'
 
-    p3 = ax.bar([3,4],commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
+    lorraGenericLabel = 'Vanilla'
+    lorraFPLabel = 'Fast Path'
+    twoPhaselabel = '2 Phase'
+
+    p3 = ax.bar([4,5,6],commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
                 label='Commit', alpha=0.5, color='g', align='center')
-    p2 = ax.bar([3,4], hbase_times, bottom=begin_times, label=operation_names[2], alpha=1,
+    p2 = ax.bar([4,5,6], hbase_times, bottom=begin_times, label=operation_names[2], alpha=1,
                 color='r', align='center', )
-    p1 = ax.bar([3,4], begin_times, label='Begin', alpha=1, color='b', align='center')
+    p1 = ax.bar([4,5,6], begin_times, label='Begin', alpha=1, color='b', align='center')
 
-    begin_times = [PUTlorraGeneric[0], PUTlorraFP[0]]
-    hbase_times = [PUTlorraGeneric[1], PUTlorraFP[1]]
-    commit_times = [PUTlorraGeneric[2], PUTlorraFP[2]]
+    begin_times = [PUTlorraGeneric[0], PUTlorraFP[0],PUT2phase[0]]
+    hbase_times = [PUTlorraGeneric[1], PUTlorraFP[1],PUT2phase[1]]
+    commit_times = [PUTlorraGeneric[2], PUTlorraFP[2],PUT2phase[2]]
 
-    p3 = ax.bar([0, 1], commit_times, bottom=np.array(begin_times) + np.array(hbase_times), alpha=0.5, color='g', align='center')
-    p2 = ax.bar([0, 1], hbase_times, bottom=begin_times,  alpha=1, color='r', align='center', )
-    p1 = ax.bar([0, 1], begin_times,  alpha=1, color='b', align='center')
+    p3 = ax.bar([0, 1,2], commit_times, bottom=np.array(begin_times) + np.array(hbase_times), alpha=0.5, color='g', align='center')
+    p2 = ax.bar([0, 1,2], hbase_times, bottom=begin_times,  alpha=1, color='r', align='center', )
+    p1 = ax.bar([0, 1,2], begin_times,  alpha=1, color='b', align='center')
 
-    begin_times = [RMWlorraGenericHigh[0], RMWlorraFPHigh[0]]
-    hbase_times = [RMWlorraGenericHigh[1], RMWlorraFPHigh[1]]
-    commit_times = [RMWlorraGenericHigh[2], RMWlorraFPHigh[2]]
+    begin_times = [RMWlorraGenericHigh[0], RMWlorraFPHigh[0],RMW2phase[0]]
+    hbase_times = [RMWlorraGenericHigh[1], RMWlorraFPHigh[1],RMW2phase[1]]
+    commit_times = [RMWlorraGenericHigh[2], RMWlorraFPHigh[2],RMW2phase[2]]
 
-    p3 = ax.bar([6, 7], commit_times, bottom=np.array(begin_times) + np.array(hbase_times), alpha=0.5, color='g',
+    p3 = ax.bar([8,9,10], commit_times, bottom=np.array(begin_times) + np.array(hbase_times), alpha=0.5, color='g',
                 align='center')
-    p2 = ax.bar([6, 7], hbase_times, bottom=begin_times, alpha=1, color='r', align='center', )
-    p1 = ax.bar([6, 7], begin_times, alpha=1, color='b', align='center')
+    p2 = ax.bar([8,9,10], hbase_times, bottom=begin_times, alpha=1, color='r', align='center', )
+    p1 = ax.bar([8,9,10], begin_times, alpha=1, color='b', align='center')
 
-    plt.xticks([0,1,3,4,6,7], [lorraGenericLabel, lorraFPLabel, lorraGenericLabel, lorraFPLabel,lorraGenericLabel, lorraFPLabel], fontsize=myfonsize-9)
+    plt.xticks([0,1,2,4,5,6,8,9,10], [lorraGenericLabel, lorraFPLabel, twoPhaselabel,lorraGenericLabel, lorraFPLabel,twoPhaselabel,lorraGenericLabel, lorraFPLabel,twoPhaselabel], fontsize=myfonsize-9)
 
     for tick in ax.get_xticklabels():
         tick.set_rotation(45)
@@ -316,7 +332,7 @@ def singlebreakdownHigh(GETlorraGeneric,GETlorraFP,PUTlorraGeneric,PUTlorraFP,RM
 
     plt.ylabel("Latency [msec]", fontsize=myfonsize)
 
-    plt.xlim(-1,8)
+    plt.xlim(-1,11)
     plt.ylim(0,ylimit)
     lgd = plt.legend( prop={'size':20},ncol=3,loc=9, fontsize=myfonsize)
 
@@ -342,13 +358,13 @@ def singlebreakdownHigh(GETlorraGeneric,GETlorraFP,PUTlorraGeneric,PUTlorraFP,RM
 def high_summery():
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
-    speedup = [371,	541,	182,	-19,-11,]
+    speedup = [170,	121,	150,	-20,-25,]
 
     ax.plot([-1,0,1,2,3,4,5],[0,0,0,0,0,0,0],linestyle='-', color='black',linewidth = 4)
     xloc = [0,1,2,3,4]
     p1 = ax.bar(xloc, speedup, alpha=1, color=tableau20[0], align='center')
     plt.xticks(xloc ,['Write','Read','BRWC','Tx of\nsize 5','Tx of\nsize 10'],fontsize=myfonsize)
-    plt.ylim(-50, 600)
+    plt.ylim(-50, 180)
     plt.grid(True)
     plt.yticks(fontsize=myfonsize)
 
@@ -366,7 +382,7 @@ def high_summery():
 def low_summery():
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
-    speedup = [132,	56,	81,	-12,-15,]
+    speedup = [133,	68,	63,	-8,-13,]
 
     ax.plot([-1,0,1,2,3,4,5],[0,0,0,0,0,0,0],linestyle='-', color='black',linewidth = 4)
     xloc = [0,1,2,3,4]
@@ -384,7 +400,7 @@ def low_summery():
     plt.savefig("low_speedup.pdf",
                 bbox_inches='tight')
 
-#    plt.show()
+
 
 
 
@@ -393,73 +409,89 @@ def low_summery():
 high_summery()
 low_summery()
 
-PUToriginalOmid = [13.36,1.77,13.41]
-PUTlorraGeneric = [0.44,1.96,3.03]
-PUTlorraFP = [0.00,2.34,0.00]
-#breakdown(PUToriginalOmid,PUTlorraGeneric,PUTlorraFP,0)
+PUToriginalOmid = [18.60,1.89,16.50]
+PUTlorraGeneric = [0.48,2.00,3.17]
+PUTlorraFP = [0.00,2.43,0.00]
+PUT2phase = [0.60,0.03,5.29]
 
-GEToriginalOmid = [13.36,1.73,0.38]
-GETlorraGeneric = [0.44,1.49,0.38]
-GETlorraFP = [0.00,1.48,0.00]
-#breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP)
+GEToriginalOmid = [18.60,1.47,0.39]
+GETlorraGeneric = [0.48,1.59,0.39]
+GETlorraFP = [0.00,1.46,0.00]
+GET2phase = [0.60,1.60,0.46]
 
-RMWoriginalOmid = [13.36,3.50,14.06]
-RMWlorraGeneric = [0.44,3.44,3.12]
-RMWlorraFP = [0.00,3.86,0.00]
+RMWoriginalOmid = [18.60,3.36,15.61]
+RMWlorraGeneric = [0.48,3.57,2.43]
+RMWlorraFP = [0.00,3.97,0.00]
+RMW2phase = [0.60,1.62,4.85]
 
-new_breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUTlorraGeneric,PUTlorraFP,RMWoriginalOmid,RMWlorraGeneric,RMWlorraFP,40,['Single read','Single write','PUTGET'])
+
+new_breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUTlorraGeneric,PUTlorraFP,RMWoriginalOmid,RMWlorraGeneric,RMWlorraFP,GET2phase,PUT2phase,RMW2phase,40,['Single read','Single write','PUTGET'])
+
+
 
 #breakdown(RMWoriginalOmid,RMWlorraGeneric,RMWlorraFP,4)
 
 
-singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUTlorraGeneric,PUTlorraFP,40,['Single read','Single write','PUTGET'])
+#singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUTlorraGeneric,PUTlorraFP,40,['Single read','Single write','PUTGET'])
 
-TX5originalOmid = [13.36,8.76,13.76]
-TX5lorraGeneric = [0.44,8.60,3.08]
-TX5lorraFP = [0.76,10.52,2.43]
-#breakdown(TX5originalOmid,TX5lorraGeneric,TX5lorraFP,2)
+TX5originalOmid = [18.60,8.40,18.64]
+TX5lorraGeneric = [0.48,8.92,3.24]
+TX5lorraFP = [0.48,10.81,2.51]
+TX52phase = [0.60,4.05,10.43]
 
-TX10originalOmid = [13.36,17.51,14.06]
-TX10lorraGeneric = [0.44,17.20,3.12]
-TX10lorraFP = [0.76,21.05,2.56]
-#breakdown(TX10originalOmid,TX10lorraGeneric,TX10lorraFP,3)
-
-singlebreakdown(TX5originalOmid,TX5lorraGeneric,TX5lorraFP,TX10originalOmid,TX10lorraGeneric,TX10lorraFP,60,['TX size 5','TX size 10','5_10'])
+TX10originalOmid = [18.60,16.80,17.33]
+TX10lorraGeneric = [0.48,17.85,3.32]
+TX10lorraFP = [0.48,21.62,2.65]
+TX102phase = [0.60,8.09,16.87]
 
 
-
-
-TX1originalOmid = [19.66,20.55,22.00,22.69,34.03,40.00,47.53,76.17,None,None]
-TX1lorraGeneric = [4.0, 4.0, 4.24, 4.0, 4.0, 3.82, 5.0, 5.0,5.20,10.04]
-TX1lorraFP = [2.1, 2.1, 2.13, 2.1, 2.1, 2.12, 2.1, 2.1,2.45,2 ]
-draw_throughput_latency(TX1originalOmid,TX1lorraGeneric,TX1lorraFP,1)
-
-
-TX5originalOmid = [31.59, 33.05, 34.0, 34.47, 52.69, 65.0, 80.0, 100.87,None,None]
-TX5lorraGeneric = [12.0, 12.0, 11.91, 12.0, 12.0, 11.24, 12.0, 12.0,12.45,17]
-TX5lorraFP = [13.0, 13.0, 13.23, 13.15, 13.15, 13.15, 14.0, 14.0,14.04,21]
-draw_throughput_latency(TX5originalOmid,TX5lorraGeneric,TX5lorraFP,2)
+singlebreakdown(TX5originalOmid,TX5lorraGeneric,TX5lorraFP,TX52phase,TX10originalOmid,TX10lorraGeneric,TX10lorraFP,TX102phase,60,['TX size 5','TX size 10','5_10'])
 
 
 
-TX10originalOmid =[40.25, 42.28, 44.0, 45.04, 52.7, 64.0, 77.73, 125.42,None,None]
-TX10lorraGeneric = [21.0, 21.0, 20.32, 21.0, 21.0, 19.8, 21.0, 21.0,20.70,24.85]
-TX10lorraFP =[24.0, 24.0, 24.22, 24.0, 23.0, 23.23, 24.0, 26.0,27,28]
-draw_throughput_latency(TX10originalOmid,TX10lorraGeneric,TX10lorraFP,3,100)
+
+
+TX1originalOmid = [21.91	,23.32,	28.57,	30.00,	34.57	,50.00	,70.05,None,None]
+TX1lorraGeneric = [4.00	,4.00	,4.00	,4.47	,4.00,	3.86,	3.90	,3.91	,5.48]
+TX1lorraFP = [ 2.00,	2.00,	2.00,	2.26,	2.06,	2.06	,2.21	,2.21	,2.50]
+TX12phase = [4.00	,4.00,	4.00	,4.29,	4.00,	3.96	,4.0,	4.77	,4.70]
+draw_throughput_latency(TX1originalOmid,TX1lorraGeneric,TX1lorraFP,TX12phase,1)
+
+
+
+TX5originalOmid = [33.52,	38.56	,43.39	,50.00,	52.93,	100.00,	111.64,None,None]
+TX5lorraGeneric = [12.00,	12.00	,12.00	,12.26,	12.00,	11.80,	11.80	,11.14,	13.64]
+TX5lorraFP = [13.00	,13.00	,13.00,	13.66,	13.79,	13.79	,14.00,	14.23,	16.52]
+TX52phase = [15.00,	15.00	,15.00,	15.41	,15.00	,13.46	,14.00	,13.69,14.77]
+draw_throughput_latency(TX5originalOmid,TX5lorraGeneric,TX5lorraFP,TX52phase,2)
+
+
+TX10originalOmid =[44.08	,48.24,	48.28,	55.00,	62.73	,80.00	,101.00,None,None]
+TX10lorraGeneric = [19.00	,19.00	,19.00	,23.66,	20.00	,19.89	,19.00,	18.51	,20.81]
+TX10lorraFP =[24.00	,24.00,	24.00,	24.36,	24.00	,23.24,	25.00	,25.44,	27.99]
+TX102phase = [25.00	,25.00,	25.00,	25.51	,25.00,	24.30	,25.50,	25.50,	27.94]
+draw_throughput_latency(TX10originalOmid,TX10lorraGeneric,TX10lorraFP,TX102phase,3,100)
+
 
 #High Throughput
 
 
-PUTlorraGenericHigh = [3.46,1.73,6.04]
-PUTlorraFPHigh = [0.00,2.39,0.00]
-
-GETlorraGenericHigh = [3.46,1.33,3.44]
-GETlorraFPHigh = [0.00,1.29,0.00]
-
-RMWlorraGenericHigh = [3.46,3.07,5.32]
-RMWlorraFPHigh = [0,4.19,0]
-singlebreakdownHigh(GETlorraGenericHigh,GETlorraFPHigh,PUTlorraGenericHigh,PUTlorraFPHigh,RMWlorraGenericHigh,RMWlorraFPHigh,15,['Single read','Single write','BRWC','PUTGETRMW'])
+PUTlorraGenericHigh = [1.11,1.78,4.02]
+PUTlorraFPHigh = [0.00,2.56,0.00]
+PUT2phaseFPHigh = [0.52,0.01,6.08]
 
 
+GETlorraGenericHigh = [1.11,1.51,1.04]
+GETlorraFPHigh = [0.00,1.65,0.00]
+GET2phaseFPHigh = [0.52,1.63,0.46]
 
+RMWlorraGenericHigh = [1.11,3.29,3.21]
+RMWlorraFPHigh = [0.00,3.04,0.00]
+RMW2phaseFPHigh = [0.52,1.65,5.04]
+
+singlebreakdownHigh(GETlorraGenericHigh,GETlorraFPHigh,GET2phaseFPHigh, PUTlorraGenericHigh,PUTlorraFPHigh,PUT2phaseFPHigh,RMWlorraGenericHigh,RMWlorraFPHigh,RMW2phaseFPHigh,15,['Single read','Single write','BRWC','PUTGETRMW'])
+
+
+plt.show()
+sys.exit()
 

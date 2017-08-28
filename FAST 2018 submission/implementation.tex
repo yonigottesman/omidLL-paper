@@ -161,7 +161,7 @@
 \Statex
 
 \Procedure{commit}{$ts_r$, write-set}
-      	\State ds.flush
+      	\remove{\State ds.flush}
       	\State $ts_c \leftarrow$ TM.commit($ts_r$, write-set) \Comment may return abort
       	\If{$ts_c \not=$ abort}
 		\State leader  $\leftarrow$ first written key in write-set %getLeader(write-set)
@@ -237,10 +237,12 @@ always returns without attempting another check\&mutate.
 
 
 \paragraph{Commit.}
-The client first flushes all its writes to the data store and then sends a commit request to the TM. 
+The client first 
+\remove{flushes all its writes to the data store and then} 
+sends a commit request to the TM. 
 If the TM detects conflicts then the transaction aborts, and otherwise the TM provides the transaction with its commit  timestamp $ts_c$. 
-Flushing before calling the TM ensures that transactions with read timestamps exceeding $ts_c$ 
-will find the committing transaction's records in the data store.
+\remove{Flushing before calling the TM ensures that transactions with read timestamps exceeding $ts_c$ 
+will find the committing transaction's records in the data store.}
 The client then proceeds to commit the transaction, provided that no read has invalidated it. To ensure the latter, the client uses 
 the data store's check\&mutate function to write $ts_c$ to the leader's commit column 
 only if the commit status is still nil.

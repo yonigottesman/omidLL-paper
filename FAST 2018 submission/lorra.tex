@@ -181,8 +181,10 @@ Percolator, the first TPS in this vein, used a two-phase commit protocol that lo
 While Percolator did this at commit time, CockroachDB~\cite{cockroach} performs distributed validation at write time, 
 by replacing writes with atomic validate-and-write operations that can abort either the current transaction or a conflicting one. 
 This approach slows down either commits (in case of commit-time validation as in Percolator) or 
-transactional writes (in case of write-time validation). 
-In \sys, we instead adopt Omid's centralized conflict detection mechanism, which is extremely scalable~\cite{Omid2017}. 
+transactional writes (in case of write-time validation). Moreover, it may hold locks for a long period (in case of a long transaction),
+during which conflicts lead to aborts.  
+In \sys, we instead adopt Omid's centralized conflict detection mechanism, which eliminates the need for locking objects,
+and is extremely scalable~\cite{Omid2017}. 
 
 
 \paragraph{Distributed commit entry.}

@@ -1,21 +1,21 @@
 % Transactions in big-data platforms
-In recent years, transaction processing~\cite{Gray:1992:TPC:573304} technologies have paved their way into many-petabyte big data 
+In recent years, transaction processing~\cite{Gray:1992:TPC:573304} technologies have paved their way into multi-petabyte big data 
 platforms~\cite{Percolator2010,Spanner2012,Omid2017}. 
 %In some cases, they are built into the storage system itself~\cite{Spanner2012} whereas in the others they are standalone services~\cite{Omid2017}. 
-Modern industrial transaction processing systems~\cite{Percolator2010,Omid2017,tephra,cockroach} complement 
-existing underlying key-value storage with {\em atomicity}, {\em consistency}, {\em isolation\/} and 
-{\em durability} (ACID) semantics that enable programmers to perform 
-complex data manipulation without over-complicating their applications. 
-For instance, Google's Percolator~\cite{Percolator2010} runs ACID transactions atop BigTable, 
-Apache's Phoenix, Tephra, and Omid support transactions over Apache HBase~\cite{hbase}, and CockroachDB~\cite{cockroach} is based on RocksDB. 
+Modern industrial transaction processing systems~\cite{Percolator2010, Omid2017, tephra, cockroach} complement 
+existing underlying NoSQL key-value storage with {\em atomicity}, {\em consistency}, {\em isolation\/} and {\em durability} (ACID) 
+semantics that enable programmers to perform complex data manipulation without over-complicating their applications. 
+Google's Percolator~\cite{Percolator2010} pioneered a transaction processing API atop the Bigtable storage. Apache 
+Tephra and Omid followed similar paths with Apache HBase~\cite{hbase}. 
+
+Transaction support in huge-scale applications was initially motivated by specific use cases like real-time content indexing for 
+web search~\cite{Percolator2010, Omid2017} but since then rapidly evolved into a wealth of OLTP and operational analytics 
+applications (e.g.,~\cite{Borthakur:2011, F1-2013}). In recent years, data management platforms provide ACID transactions as part of full-fledged 
+SQL interface, e.g., Google Spanner~\cite{Spanner2012}, Apache Phoenix~\cite{phoenix}, and CockroachDB~\cite{cockroach}. 
 %This allows for  reuse, and affords them the flexibility to continue to offer capabilities from the NoSQL world alongside new functionalities. 
 
-Transaction support in web-scale applications started from specific use cases like real-time content indexing~\cite{Percolator2010,
-Omid2017} but has since expanded to full-scale SQL-compliant OLTP and operational analytics~\cite{Phoenix, F1-2013}.
-
-
 Similarly to many technologies, the adoption of transactions took a  ``functionality-first" trajectory. 
-For example, the developers of Google Spanner~\cite{Spanner2012} wrote: ``We believe it
+For example, the developers of Spanner~\cite{Spanner2012} wrote: ``We believe it
 is better to have application programmers deal with performance problems due to overuse 
 of transactions as bottlenecks arise, rather than always coding around the lack of transactions''. 
 Yet the expectation for high performance is rapidly picking up. 
@@ -70,7 +70,7 @@ can induce latencies of tens to hundreds of milliseconds under high loads.
 %, to the best of our knowledge. 
 
 The performance improvement  is achieved by two design changes.
-  First, we distribute persistent writes of transaction commit records, which is a centralized bottleneck in Omid. 
+First, we distribute persistent writes of transaction commit records, which is a centralized bottleneck in Omid. 
 Second, we introduce a novel \emph{fast path} algorithm for short single-key transactions, which 
 executes short transactions without the begin/commit overhead, 
  almost as fast as native HBase operations. This entails minor extensions to the underlying 
@@ -83,7 +83,7 @@ We have implemented {\sys\/} %\footnote{\url{https://github.com/yonigottesman/in
 based on the open source Omid code\footnote{\url{https://omid.incubator.apache.org}}, 
 and extended the HBase code to enable fast path 
 transactions. %\footnote{\url{https://github.com/yonigottesman/hbase_local_transactions/tree/0.98-add-rmw}}. 
-Our code is publicly available on github\footnote{Omitted for blind review.}. 
+Our code is publicly available on github\footnote{\small{Omitted for blind review.}}. 
 Our experiments on mid-range hardware show substantial performance improvements.
 Under low load,
 even without the fast path, \sys\ transactions are 4x to 5x faster than Omid's, 

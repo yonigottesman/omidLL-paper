@@ -1,13 +1,14 @@
 % Transactions in big-data platforms
-In recent years, transaction processing~\cite{Gray:1992:TPC:573304} technologies have paved their way into many-petabyte big data 
+In recent years, transaction processing~\cite{Gray:1992:TPC:573304} technologies have paved their way into multi-petabyte big data 
 platforms~\cite{Percolator2010,Spanner2012,Omid2017}. 
 %In some cases, they are built into the storage system itself~\cite{Spanner2012} whereas in the others they are standalone services~\cite{Omid2017}. 
 Modern industrial  systems~\cite{Percolator2010,Omid2017,tephra,cockroach} complement 
 existing underlying key-value storage with {\em atomicity}, {\em consistency}, {\em isolation\/} and 
 {\em durability} (ACID) semantics that enable programmers to perform 
 complex data manipulation without over-complicating their applications. Transaction support 
-in web-scale applications started from specific use cases like real-time content indexing~\cite{Percolator2010,
-Omid2017} but quickly expanded to full-scale SQL-compliant OLTP and online analytics~\cite{Phoenix, F1-2013}.
+in web-scale applications started from specific use cases like real-time content indexing for 
+search~\cite{Percolator2010, Omid2017} but quickly expanded to full-scale SQL-compliant OLTP 
+and online analytics~\cite{Phoenix, F1-2013}.
 
 Similarly to many technologies, the adoption of transactions took a  ``functionality-first" trajectory. 
 For example, the developers of Google Spanner~\cite{Spanner2012} wrote: ``We believe it

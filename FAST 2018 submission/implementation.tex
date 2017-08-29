@@ -1,4 +1,4 @@
-\subsection{\sys\ algorithm} 
+\subsection{\sysll\ algorithm} 
 \label{ssec:ll}
 
 \begin{figure}[!t]
@@ -60,7 +60,7 @@
   \end{subfigure}
 
   
-  \caption{Evolution of \sys\ metadata during a transaction. The transaction receives $ts_r=3$ in the begin stage, 
+  \caption{Evolution of \sysll\ metadata during a transaction. The transaction receives $ts_r=3$ in the begin stage, 
   and $ts_c=7$ when committing; its leader is \tuple{k1,3}.}
   \label{fig:model}
 \end{figure}
@@ -69,7 +69,7 @@
 
 \begin{algorithm}[htb]
 \begin{algorithmic}[1]
-
+\small
 \Procedure{begin}{}
 \State checkRenew()
 \State return Clock.fetchAndIncrement()
@@ -99,7 +99,7 @@
 \EndProcedure
 
 \end{algorithmic}
-\caption{\sys's TM algorithm with HA support.}
+\caption{\sysll's TM algorithm with HA support.}
 \label{alg:ha}
 \end{algorithm}
 
@@ -179,14 +179,14 @@
 \EndProcedure
       
   \end{algorithmic}
-  \caption{\sys's read and commit operations.} 
+  \caption{\sysll's read and commit operations.} 
   %for transaction with read timestamp $ts_r$.}
   \label{fig:get-pseudocode}
 \end{algorithm} 
 
 
 
-The metadata used by \sys\ for transaction management is stored in two additional columns associated with each object version in the data store:
+The metadata used by \sysll\ for transaction management is stored in two additional columns associated with each object version in the data store:
 (1) \emph{commit} holds the status of the transaction that wrote this version -- \emph{nil} if it is pending, its  $ts_c$ if committed, and 
 otherwise \emph{abort}; 
 and
@@ -197,7 +197,7 @@ Since the commit needs to be an atomic step, the first key in the transaction's 
 refer to the leader to find out whether the value they are attempting to read has been committed.
 Figure~\ref{fig:model} shows the metadata of a transaction during its stages of execution. 
 
-\sys's TM is a simplified version of Omid's TM, and appears  in Algorithm~\ref{alg:ha}. It has two roles:
+\sysll's TM is a simplified version of Omid's TM, and appears  in Algorithm~\ref{alg:ha}. It has two roles:
 First, it allocates begin and commit timestamps by fetching-and-incrementing a monotonically increasing global clock.
 Second, upon commit, it calls the \emph{conflictDetect} function, which 
 performs validation (i.e., conflict detection) using an in-memory hash table
@@ -207,17 +207,18 @@ updates the hash table with the write-set of the new transaction and its $ts_c$.
 %(For more details see~\cite{Omid2017}).
 The  \emph{checkRenew} procedure supports the TM's  high availability, and is explained at the end of this section.
 
-\sys's client operations proceed as follows (see Algorithm~\ref{fig:get-pseudocode}):
+\noindent
+Client operations proceed as follows (cf.~Algorithm~\ref{fig:get-pseudocode}):
 
-\paragraph{Begin.}
+\mypara{Begin.}
 The client sends a begin request to the TM, which assigns it a read timestamp $ts_r$.
 
-\paragraph{Write.}
+\mypara{Write.}
 The client uses the data store's update API to add a tentative record to the data store, with the written key and value, 
 version number $ts_r$, nil in the commit column, and the first key written during the transaction as the leader.
 It also tracks key in its local write-set.
 
-\paragraph{Read.}
+\mypara{Read.}
 The algorithm traverses data  records (using the data store's ds.get API) pertaining
 to the requested key with a version that does not exceed $ts_r$, latest to earliest, and returns the first value that is committed
 with a  version smaller than or equal to $ts_r$. Upon
@@ -236,7 +237,7 @@ always returns without attempting another check\&mutate.
 %When a transaction commits, it atomically checks it hasn't been invalidated before inserting the $ts_c$ to the commit .
 
 
-\paragraph{Commit.}
+\mypara{Commit.}
 The client first 
 \remove{flushes all its writes to the data store and then} 
 sends a commit request to the TM. 
@@ -251,7 +252,7 @@ To avoid an extra read of the leader on every transactional read, once a transac
 the transaction's $ts_c$ to the commit columns of all keys in  the transaction's write-set. 
 %Following a successful commit, the client adds $ts_c$ to all data items it wrote to.
 
-\paragraph{High availability.} The TM is implemented as a primary-backup process pair to ensure its high availability. 
+\mypara{High availability.} The TM is implemented as a primary-backup process pair to ensure its high availability. 
 The backup detects the primary's failure using timeouts. When it detects a failure, it immediately begins serving new
 transactions, without any recovery procedure. Because the backup may falsely suspect the primary because of
 unexpected network or processing delays (e.g., garbage collection stalls), we take precautions to avoid correctness

@@ -42,11 +42,13 @@
 \newcommand{\tb}{\hspace{5mm}}
 
 \newcommand{\sys}{Fragola}
-
+\newcommand{\sysll}{Omid~LL}
+\newcommand{\syspc}{Omid~2PC}
 
 \newcommand{\speedup}[1]{#1$\times$}
 \newcommand{\tuple}[1]{\ensuremath{\langle \mbox{#1} \rangle}}
 
+\newcommand{\mypara}[1]{ \vspace{8pt} \noindent{\bf #1}\hspace{6pt}}
 %========================
 \begin{document}
 
@@ -82,8 +84,7 @@ while at the same time improving throughput.
 Under light load, \sys\ is 4x to 5x faster than Omid, and under high loads, it is 
 more than an order of magnitude faster. 
  \sys\ further implements a \emph{fast path} for single-key transactions,
-processing them almost as fast as native HBase operations, while preserving
-transactional semantics relative to longer transactions.
+processing them almost as fast as native HBase operations.
 
 
 
@@ -95,11 +96,11 @@ transactional semantics relative to longer transactions.
 \section{Service API and Semantics} \label{sec:api}
 \input{api}
 
-\section{Fast Transactions with \sys} \label{sec:ll}
+\section{Fast Transactions with \sysll} \label{sec:ll}
 \input{lorra}
 \input{implementation}
 
-\section{Fast Path Transactions}
+\section{\sys\ Fast Path Transactions}
 \label{sec:alg}
 \input{fast-path}
 
@@ -133,7 +134,7 @@ by another 3x--5x under high load.
 
 The \sys\ code is publicly available\footnote{\small{Omitted for blind review.}}. 
 %\footnote{\url{https://github.com/yonigottesman/incubator-omid/tree/localTransactions}}, and 
-We are working on contributing it back to Omid. 
+We are working on contributing \sysll\  to the Omid production code base. 
 We believe our improvements will become instrumental for modern cloud-based, large-scale, 
 latency-sensitive services, e.g., the Phoenix OLTP system, which is designed 
 to harness up to ten thousand nodes.

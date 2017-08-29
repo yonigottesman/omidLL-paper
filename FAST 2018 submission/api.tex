@@ -1,13 +1,16 @@
 
 
-\sys\ is a \emph{Transaction Processing System (TPS)}, namely a service that runs atop an underlying data store and 
+
+A \emph{Transaction Processing System (TPS)} runs atop an underlying data store and 
 allows users to bundle multiple data store operations into a single atomic transaction. 
 The TPS architecture is depicted in Figure~\ref{fig:components}.
-We describe the data model and API of the underlying data store in Section~\ref{ssec:data-model}, and 
-then proceed to define  the transaction semantics provided by \sys\ in Section~\ref{ssec:transactions}. 
+Section~\ref{ssec:data-model} describes the data model and API of the underlying data store, and  Section~\ref{ssec:transactions}
+defines transaction semantics. 
 
 \begin{figure}
-\includegraphics[width=0.48\textwidth]{FragolaComponents.jpg}
+\centerline{
+\includegraphics[width=0.45\textwidth]{FragolaComponents.jpg}
+}
 \caption{Transaction processing architecture: A client library exposes an  API for  executing transactions of data store operations. 
 A centralized Transaction Manager handles transaction begin and commit requests, while data is written directly to the underlying data store.
 The TM has a backup for high availability.}
@@ -20,7 +23,7 @@ The TM has a backup for high availability.}
 The  data store holds  \emph{objects} (often referred to as \emph{rows}) identified by unique \emph{keys}.
 Each row can consist of multiple \emph{fields}, representing different \emph{columns}. 
 We consider multi-versioned objects, where object values are associated with \emph{version numbers}, and
-multiple versions associated with the same key may co-exist in the data store.
+multiple versions associated with the same key may co-exist.
 \remove{
 Thus, at any given time, an object holds a tuple \tuple{key,\tuple{version,value}+}, where value
 can be structured to consist of multiple columns.
@@ -30,11 +33,12 @@ We further assume that a write operation can specify the version number it write
 %\paragraph{API} 
 The  data store provides the following API:
 \begin{description}
-\item [\code{get(key, version)}] --  Returns the requested version of the requested key.
+\item [\code{get(key, version)}] --  Returns the requested version of key.
 %if no version is provided, returns the latest; 
 %if no field is provided returns the entire record. 
 %\item 
-The API further allows traversing (reading) earlier versions of the same key in descending order.
+The API further allows traversing (reading) earlier versions of the same key.
+% in descending order.
 \item [\code{update}(key, version, fields, values)] -- 
 creates or updates an object, setting the specified fields to the specified values. 
 If the version already exists, its value is updated; otherwise, a new version is added. 
@@ -72,13 +76,13 @@ Nevertheless, our implementation only relaxes the ordering of fast path  transac
 relative to regular ones (that do not use the fast path); regular transactions continue to satisfy SI amongst themselves. 
 
 Our correctness condition satisfies the key ``snapshot'' property of SI, which ensures that a transaction reading from the  database
-does not see a mix old and new values. For example, if a task updates the values of two stocks, 
+does not see a mix old and new values. For example, if a transaction updates the values of two stocks, 
 then no other transaction may observe the old value of one of these stocks and the new value of the other.
 However, it relaxes the real-time order guarantee of SI by allowing (fast-path) transactions to take effect `in the past'.  
- \remove{ 
+ \remove{ % Idit: removed the example and figure to save space
 Similarly, a regular transaction overlapping
 two fast path ones may observe an update of the second and miss an update by the first,  as illustrated in 
-}
+
 Figure~\ref{fig:ltx-rt}, shows an example where fast path transaction FP2 is ordered `in the past'.
 %Yet we do enforce real-time order on regular transactions as well as on all updates of the same key.
 
@@ -91,7 +95,7 @@ though $FP_2$ occurs after $FP_1$.
 }
 \label{fig:ltx-rt}
 \end{figure}
-
+} % remove
 Specifically, our correctness condition stipulates that
 the system enforces a total order ${\cal T}$ on all committed transactions, so that
 \begin{enumerate}

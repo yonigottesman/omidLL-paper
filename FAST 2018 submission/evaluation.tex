@@ -136,8 +136,8 @@ occur in our random mix, which uses random key selection with billions of keys.
 \subsection{Results}
 \label{ssec:results}
 
-\paragraph{Throughput and latency of short transactions.} 
-
+\mypara{Throughput and latency of short transactions.} 
+%
 Recall that \sys\ is motivated by the prevalence of short transactions in production, and is designed with
 the goal of accelerating such transactions.
 Its advantage is less pronounced for long transactions, where the cost of begin and commit is amortized
@@ -157,7 +157,7 @@ As we can see, under light load, \sysll\ and \syspc\ improve the latency of Omid
 %, even without the fast path.
 This is because in Omid, both begin and commit wait for preceding transactions to complete the writes of 
 their commit entries; this stems from Omid's design choice to avoid the need for resolving pending write intents
-by aborting transactions; see last (rightmost) column in Table~\ref{table:design-space}. 
+by aborting transactions; see penultimate column in Table~\ref{table:design-space}. 
 Single-key writes suffer from both the begin and commit latencies, whereas single-key reads  
 suffer only from begins (Figure~\ref{fig:stack-brc}). \syspc\ has longer commit latencies and shorter write latencies
 because it defers writes to commit time.
@@ -188,7 +188,7 @@ both read and write by more than a factor of 2.
 
 
 
-\paragraph{Long transactions.} 
+\mypara{Long transactions.} 
 We now examine longer transactions run as part of the random mix.
 Figure~\ref{fig:throughput-latency} shows the results for transactions of lengths $5$ and $10$.
 We see that the absolute latency gap of the new systems over Omid remains similar, but is amortized 
@@ -264,16 +264,17 @@ Under high load (Figure~\ref{fig:slowdown-high}), the fast path is even more adv
 
 
 
-\paragraph{Abort rates.}
+\mypara{Abort rates.}
 
-\inred{Abort rates are extremely low -- between  $0.01\%$ and  $0.02\%$ -- for all systems. To Do: try a sharper Zipf.}  
-\remove{ % Removed below since we now have smaller abort rates
+%Abort rates are extremely low -- between  $0.01\%$ and  $0.02\%$ -- for all systems. To Do: try a sharper Zipf.}  
 We note that \sys\ yields slightly higher rates of transaction aborts compared to Omid 
 (recall that \sysll\ aborts tentative writes in favor of concurrent reads, whereas  \sys\ also aborts
 singleton writes in presence of concurrent tentative writes). However, the abort rates exhibited by all  
-the systems are minor. Here, under the highest contention,  \sys\ aborts approximately $0.1\%$ 
-of the transactions versus  \sysll's $0.08\%$ and Omid's $0.07\%$ 
-(the latter  is in line with~\cite{Omid2017}).  
-}
-\remove{
-}
+the systems are minor. 
+Here, under the highest contention,  \sys\ aborts approximately \inred{$0.1\%$ }
+of the transactions versus  \sysll's \inred{$0.08\%$ },   
+ \syspc's \inred{XXX} 
+and Omid's $0.07\%$ 
+(the latter  is in line with production abort rates reported in Omid~\cite{Omid2017}).  
+
+

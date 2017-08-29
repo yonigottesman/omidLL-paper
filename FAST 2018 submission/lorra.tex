@@ -152,23 +152,25 @@ We are not familiar with another TPS that makes the same design choices as \sysl
 \begin{table*}[htb]
 \small
 \centerline{
-\begin{tabular}{|l|ccccc|}
+\begin{tabular}{|l|cccccc|}
 \hline
  & 
  \multicolumn{2}{c}{		 validation} & 
   \multicolumn{2}{c}{commit  entry}	& 
- resolving write intents\\
+ resolving write intents & requires support \\
 TPS	
 & 	
 scheme & time & 
 location& update & 	
-on read may cause abort	\\
+on read may cause abort	& 
+ from underlying data store \\
 \hline
-Percolator, \syspc & {\bf D} & commit & {\bf D} & {\bf D} & yes \\
-Omid1, Tephra 	& {\bf C} & commit & {\bf R} & {\bf C} & no\\
-Omid  		& {\bf C} & commit & {\bf C} & {\bf C} & no\\
-CockroachDB	& {\bf D} & write     & {\bf C} & {\bf D} & yes\\
-\sysll, \sys			& {\bf C} & commit & {\bf D} & {\bf D} & yes\\
+Percolator, \syspc & {\bf D} & commit & {\bf D} & {\bf D} & yes & yes \\
+Omid1, Tephra 	& {\bf C} & commit & {\bf R} & {\bf C} & no & no\\
+Omid  		& {\bf C} & commit & {\bf C} & {\bf C} & no & no\\
+CockroachDB	& {\bf D} & write     & {\bf C} & {\bf D} & yes & yes\\
+\sysll 		& {\bf C} & commit & {\bf D} & {\bf D} & yes & no\\
+\sys			& {\bf C} & commit & {\bf D} & {\bf D} & yes& yes\\
 \hline
 \end{tabular}
 }

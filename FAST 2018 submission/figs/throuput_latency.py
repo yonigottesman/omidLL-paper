@@ -10,7 +10,7 @@ my_linewidth = 5
 originalOmidLabel = 'Omid'
 lorraGenericLabel = 'Vanilla Fragola'
 lorraFPLabel = 'FP Fragola'
-lorra2PhLabel = '2 Phase Fragola'
+lorra2PhLabel = '2PC Fragola'
 
 
 myfonsize = 25
@@ -150,7 +150,7 @@ def singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,two_phase5,PUTori
 
     lorraGenericLabel = 'Vanilla'
     lorraFPLabel = 'Fast Path'
-    twoPhaselabel = '2 Phase '
+    twoPhaselabel = '2PC'
 
     p3 = ax.bar([5,6,7,8],commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
                 label='Commit', alpha=0.5, color='g', align='center')
@@ -213,7 +213,7 @@ def new_breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUT
 
     lorraGenericLabel = 'Vanilla'
     lorraFPLabel = 'Fast Path'
-    twoPhaselabel = '2 Phase'
+    twoPhaselabel = '2PC'
 
     p3 = ax.bar([5,6,7,8],commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
                 label='Commit', alpha=0.5, color='g', align='center',hatch=commit_hatch)
@@ -297,7 +297,7 @@ def singlebreakdownHigh(GETlorraGeneric,GETlorraFP,GET2phase,PUTlorraGeneric,PUT
 
     lorraGenericLabel = 'Vanilla'
     lorraFPLabel = 'Fast Path'
-    twoPhaselabel = '2 Phase'
+    twoPhaselabel = '2PC'
 
     p3 = ax.bar([4,5,6],commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
                 label='Commit', alpha=0.5, color='g', align='center')

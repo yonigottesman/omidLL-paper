@@ -86,7 +86,7 @@ We test the system with two transaction mixes:
 \item[Random mix] -- 
 transaction sizes (number of reads and writes) follow a Zipf distribution with $\theta=0.99$, with a cutoff at $10$. 
 With these parameters, $63\%$ of the transactions access three keys or less, and only $3\%$ access $10$ keys. 
-We vary the system load from 30K to 300K transactions per second (tps). 
+We vary the system load from 30K to 500K transactions per second (tps). 
 \item[BRWC] -- $80\%$ of the transactions are drawn from the random mix distribution, and $20\%$ perform a read
 and then a write to the same key. 
 \end{description}
@@ -151,29 +151,29 @@ by aborting transactions; see last (rightmost) column in Table~\ref{table:design
 Single-key writes suffer from both the begin and commit latencies, whereas single-key reads  
 suffer only from begins (Figure~\ref{fig:stack-brc}). 
 
-As load increases, Omid suffers from a well-pronounced bottleneck, and its latency at 200K tps is doubled, where \sys's 
+As load increases, Omid suffers from a well-pronounced bottleneck, and its latency at 250K tps is doubled, where \sys's 
 latency is unaffected. The extra delay in Omid is due to batching of commit record updates, 
 which its TM applies to handle congestion~\cite{Omid2017}. 
-\sys, in turn, begins to experience a bottleneck (due to a heavy request load on the TM)  at 250K tps.
+\sys, in turn, begins to experience a bottleneck (due to a heavy request load on the TM)  at 400K tps.
 Such congestion arises due to Omid's centralized 
 commit entry management (penultimate column in Table~\ref{table:design-space}).
 
 The FP API delivers better performance for this traffic. For instance, under low load (Figure~\ref{fig:stack-brc}),
 single writes take an average of 2.4ms using 
-the {\code bwc} API versus 5.4ms using the regular transaction API (consisting of begin, write, and commit). 
+the {\code bwc} API versus 5.65ms using the regular transaction API (consisting of begin, write, and commit). 
 For comparison, a native HBase write takes roughly 2ms under this load.
 A single read executed using {\code brc} takes 1.5ms, which is the average latency of a native HBase read,
-versus 2.3ms as a regular transaction. 
+versus 2.5ms as a regular transaction. 
 For transactions that read and write a single key as part of the BRWC workload, 
 %Their latency breakdown under a 100K tps throughput is shown in Figure~\ref{fig:rmw}.
 the fast path implementation (consisting of \code{br} and \code{wc} calls) completes within 3.9ms,
-versus 7ms for Vanilla \sys\ and 30.9ms for Omid. 
+versus 6.5ms for Vanilla \sys\ and 37.9ms for Omid. 
 %
 Under high load (Figure~\ref{fig:hightx}), the fast path is more beneficial: it reduces the latency of write
-by nearly a factor of five, from 11.24ms  to 2.4ms, and the read latency by a factor of six, from  8.24ms to 1.29ms.
+by a factor of 2.7, from 6.9ms  to 2.5ms, and the read latency by a factor of 2.2, from  3.65ms to 1.6ms.
 %, read, and brwc from 11.24ms, 8.24ms, and 11.85ms to 2.4ms, 1.29ms, and 4.19ms respectively. 
 
-
+As for 2PC, the performance is same as \sys\ for throughput up to $500K$ tps. Above $500K$ tps the centrlized conflict analysis becomes a bottlneck and 2PC has a minor speedup of 1.1x over \sys\.
 
 \paragraph{Long transactions.} 
 We now examine longer transactions run as part of the random mix workload.
@@ -211,8 +211,8 @@ $17\%$ of the time is spent on the control path, which leads to much faster comp
 Nevertheless,
 the FP mechanism takes its toll on the data path, which resorts to atomic check\&mutate operations 
 instead of simple writes. This is exacerbated for long transactions. 
-For example, a 10-access transaction takes 24.4ms with FP \sys, 
-versus 20.8ms with Vanilla \sys. 
+For example, a 10-access transaction takes 24.7ms with FP \sys, 
+versus 21.6ms with Vanilla \sys. The performace of 2PC with long transactions is the same as FP \sys\ because it also uses check\&mutate operations during the voting phase of a commit.
 
 
 
@@ -241,10 +241,10 @@ versus 20.8ms with Vanilla \sys.
 Figure~\ref{fig:fp-tradeoff} summarizes the tradeoffs entailed by the fast path API
 (relative to Vanilla \sys) for the different transaction classes. 
 We see that under low load (Figure~\ref{fig:slowdown-low}),
-the speedup for single-write transactions is 2.3x, whereas the worst slowdown is $14.8\%$. 
+the speedup for single-write transactions is 2.3x, whereas the worst slowdown is $13\%$. 
 In systems geared towards real-time processing, this is a reasonable tradeoff, since long transactions 
 are infrequent and less sensitive to extra delay.
-Under high load (Figure~\ref{fig:slowdown-high}), the fast path is clearly advantageous, most notably, the speedup for reads exceeds $500\%$.
+Under high load (Figure~\ref{fig:slowdown-high}), the fast path is clearly advantageous, most notably, the speedup for writes exceeds $170\%$.
 %In systems geared towards real-time processing, this is a reasonable tradeoff, since long transactions 
 %are infrequent and less sensitive to extra delay. Under the studied workload, e.g.,   FP \sys\/ is more desirable. 
 

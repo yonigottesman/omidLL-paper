@@ -8,9 +8,9 @@ import datetime
 marksize=10
 my_linewidth = 5
 originalOmidLabel = 'Omid'
-lorraGenericLabel = 'Vanilla Fragola'
-lorraFPLabel = 'FP Fragola'
-lorra2PhLabel = '2PC Fragola'
+lorraGenericLabel = 'Omid LL'
+lorraFPLabel = 'Fragola'
+lorra2PhLabel = 'Omid 2PC'
 
 
 myfonsize = 25
@@ -40,11 +40,13 @@ def draw_throughput_latency(originalOmid,lorraGeneric,lorraFP,lorra2phase,pltnum
     plt.plot(throughputs, lorraGeneric, marker='o', linestyle='-', color=tableau20[0], label=lorraGenericLabel,
              linewidth=my_linewidth, markersize=marksize, markeredgewidth=2)
 
+    plt.plot(throughputs, lorra2phase, label=lorra2PhLabel, marker='x', linestyle='-', color=tableau20[4],
+             linewidth=my_linewidth-1, markersize=marksize, markeredgewidth=1)
+
     plt.plot(throughputs, lorraFP, label=lorraFPLabel, marker='s', linestyle='-', color=tableau20[2], linewidth=my_linewidth,
              markersize=marksize, markeredgewidth=2)
 
-    plt.plot(throughputs, lorra2phase, label=lorra2PhLabel, marker='x', linestyle='-', color=tableau20[4],
-             linewidth=my_linewidth-1, markersize=marksize, markeredgewidth=1)
+
 
 
     plt.ylabel("Latency [msec]",fontsize=myfonsize)
@@ -76,8 +78,8 @@ def breakdown(originalOmid,lorraGeneric,lorraFP,pltnum):
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
 
-    lorraGenericLabel = 'Vanilla\nFragola'
-    lorraFPLabel = 'FP\nFragola'
+    lorraGenericLabel = 'Omid LL'
+    lorraFPLabel = 'Fragola'
 
     p3 = ax.bar(range(len(commit_times)), commit_times, bottom=np.array(begin_times)+np.array(hbase_times),
                 label='Commit', alpha=0.5, color='g',align='center')
@@ -111,8 +113,8 @@ def breakdownHighTX(originalOmid,lorraGeneric,lorraFP,pltnum):
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
 
-    lorraGenericLabel = 'Vanilla\nFragola'
-    lorraFPLabel = 'FP\nFragola'
+    lorraGenericLabel = 'Omid LL'
+    lorraFPLabel = 'Fragola'
 
     p3 = ax.bar(range(len(commit_times)), commit_times, bottom=np.array(begin_times)+np.array(hbase_times),
                 label='Commit', alpha=0.5, color='g',align='center')
@@ -141,16 +143,16 @@ def breakdownHighTX(originalOmid,lorraGeneric,lorraFP,pltnum):
 
 def singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,two_phase5,PUToriginalOmid,PUTlorraGeneric,PUTlorraFP,two_phase10,ylimit,txt):
 
-    begin_times = [GEToriginalOmid[0], GETlorraGeneric[0], GETlorraFP[0],two_phase5[0]]
-    hbase_times = [GEToriginalOmid[1], GETlorraGeneric[1], GETlorraFP[1],two_phase5[1]]
-    commit_times = [GEToriginalOmid[2], GETlorraGeneric[2], GETlorraFP[2],two_phase5[2]]
+    begin_times = [GEToriginalOmid[0], GETlorraGeneric[0],two_phase5[0], GETlorraFP[0]]
+    hbase_times = [GEToriginalOmid[1], GETlorraGeneric[1],two_phase5[1], GETlorraFP[1]]
+    commit_times = [GEToriginalOmid[2], GETlorraGeneric[2],two_phase5[2], GETlorraFP[2]]
 
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
 
-    lorraGenericLabel = 'Vanilla'
-    lorraFPLabel = 'Fast Path'
-    twoPhaselabel = '2PC'
+    lorraGenericLabel = 'Omid LL'
+    lorraFPLabel = 'Fragola'
+    twoPhaselabel = 'Omid 2PC'
 
     p3 = ax.bar([5,6,7,8],commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
                 label='Commit', alpha=0.5, color='g', align='center')
@@ -158,9 +160,9 @@ def singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,two_phase5,PUTori
                 color='r', align='center', )
     p1 = ax.bar([5,6,7,8], begin_times, label='Begin', alpha=1, color='b', align='center')
 
-    begin_times = [PUToriginalOmid[0], PUTlorraGeneric[0], PUTlorraFP[0],two_phase10[0]]
-    hbase_times = [PUToriginalOmid[1], PUTlorraGeneric[1], PUTlorraFP[1],two_phase10[1]]
-    commit_times = [PUToriginalOmid[2], PUTlorraGeneric[2], PUTlorraFP[2],two_phase10[2]]
+    begin_times = [PUToriginalOmid[0], PUTlorraGeneric[0],two_phase10[0], PUTlorraFP[0]]
+    hbase_times = [PUToriginalOmid[1], PUTlorraGeneric[1],two_phase10[1], PUTlorraFP[1]]
+    commit_times = [PUToriginalOmid[2], PUTlorraGeneric[2],two_phase10[2], PUTlorraFP[2]]
 
     p3 = ax.bar([0, 1, 2,3], commit_times, bottom=np.array(begin_times) + np.array(hbase_times), alpha=0.5, color='g', align='center')
     p2 = ax.bar([0, 1, 2,3], hbase_times, bottom=begin_times,  alpha=1, color='r', align='center', )
@@ -169,7 +171,7 @@ def singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,two_phase5,PUTori
     ax.text(4, ylimit-5, txt[0], fontsize=myfonsize)
     ax.text(0, ylimit-5, txt[1], fontsize=myfonsize)
 
-    plt.xticks([0,1,2,3,5,6,7,8], [originalOmidLabel, lorraGenericLabel, lorraFPLabel,twoPhaselabel,originalOmidLabel, lorraGenericLabel, lorraFPLabel,twoPhaselabel], fontsize=myfonsize)
+    plt.xticks([0,1,2,3,5,6,7,8], [originalOmidLabel, lorraGenericLabel,twoPhaselabel, lorraFPLabel,originalOmidLabel, lorraGenericLabel,twoPhaselabel, lorraFPLabel], fontsize=myfonsize)
 
     for tick in ax.get_xticklabels():
         tick.set_rotation(45)
@@ -201,9 +203,9 @@ def new_breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUT
     generic_colot='r'
     fp_color='b'
 
-    begin_times = [GEToriginalOmid[0], GETlorraGeneric[0], GETlorraFP[0],GET2phase[0]]
-    hbase_times = [GEToriginalOmid[1], GETlorraGeneric[1], GETlorraFP[1],GET2phase[1]]
-    commit_times = [GEToriginalOmid[2], GETlorraGeneric[2], GETlorraFP[2],GET2phase[2]]
+    begin_times = [GEToriginalOmid[0], GETlorraGeneric[0],GET2phase[0], GETlorraFP[0]]
+    hbase_times = [GEToriginalOmid[1], GETlorraGeneric[1],GET2phase[1], GETlorraFP[1]]
+    commit_times = [GEToriginalOmid[2], GETlorraGeneric[2],GET2phase[2], GETlorraFP[2]]
 
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
@@ -211,9 +213,9 @@ def new_breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUT
     # lorraGenericLabel = 'Vanilla\nFragola'
     # lorraFPLabel = 'FP\nFragola'
 
-    lorraGenericLabel = 'Vanilla'
-    lorraFPLabel = 'Fast Path'
-    twoPhaselabel = '2PC'
+    lorraGenericLabel = 'Omid LL'
+    lorraFPLabel = 'Fragola'
+    twoPhaselabel = 'Omid 2PC'
 
     p3 = ax.bar([5,6,7,8],commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
                 label='Commit', alpha=0.5, color='g', align='center',hatch=commit_hatch)
@@ -222,18 +224,18 @@ def new_breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUT
                 color='r', align='center', hatch=hbase_hatch)
     p1 = ax.bar([5,6,7,8], begin_times, label='Begin', alpha=1, color='b', align='center',hatch=begin_hatch)
 
-    begin_times = [PUToriginalOmid[0], PUTlorraGeneric[0], PUTlorraFP[0],PUT2phase[0]]
-    hbase_times = [PUToriginalOmid[1], PUTlorraGeneric[1], PUTlorraFP[1],PUT2phase[1]]
-    commit_times = [PUToriginalOmid[2], PUTlorraGeneric[2], PUTlorraFP[2],PUT2phase[2]]
+    begin_times = [PUToriginalOmid[0], PUTlorraGeneric[0],PUT2phase[0], PUTlorraFP[0]]
+    hbase_times = [PUToriginalOmid[1], PUTlorraGeneric[1],PUT2phase[1], PUTlorraFP[1]]
+    commit_times = [PUToriginalOmid[2], PUTlorraGeneric[2],PUT2phase[2], PUTlorraFP[2]]
 
     p3 = ax.bar([0, 1, 2,3], commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
                 alpha=0.5, color='g', align='center',hatch=commit_hatch)
     p2 = ax.bar([0, 1, 2,3], hbase_times, bottom=begin_times,  alpha=1, color='r', align='center',hatch=hbase_hatch )
     p1 = ax.bar([0, 1, 2,3], begin_times,  alpha=1, color='b', align='center',hatch=begin_hatch)
 
-    begin_times = [RMWoriginalOmid[0], RMWlorraGeneric[0], RMWlorraFP[0],RMW2phase[0]]
-    hbase_times = [RMWoriginalOmid[1], RMWlorraGeneric[1], RMWlorraFP[1],RMW2phase[1]]
-    commit_times = [RMWoriginalOmid[2], RMWlorraGeneric[2], RMWlorraFP[2],RMW2phase[2]]
+    begin_times = [RMWoriginalOmid[0], RMWlorraGeneric[0],RMW2phase[0], RMWlorraFP[0]]
+    hbase_times = [RMWoriginalOmid[1], RMWlorraGeneric[1],RMW2phase[1], RMWlorraFP[1]]
+    commit_times = [RMWoriginalOmid[2], RMWlorraGeneric[2],RMW2phase[2], RMWlorraFP[2]]
 
     p3 = ax.bar([10,11,12,13], commit_times, bottom=np.array(begin_times) + np.array(hbase_times), alpha=0.5, color='g', align='center',hatch=commit_hatch)
     p2 = ax.bar([10,11,12,13], hbase_times, bottom=begin_times,  alpha=1, color='r', align='center',hatch=hbase_hatch )
@@ -244,7 +246,7 @@ def new_breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUT
     # ax.text(4, ylimit-5, txt[0], fontsize=myfonsize)
     # ax.text(0, ylimit-5, txt[1], fontsize=myfonsize)
 
-    plt.xticks([0,1,2,3,5,6,7,8,10,11,12,13], [originalOmidLabel, lorraGenericLabel, lorraFPLabel,twoPhaselabel,originalOmidLabel, lorraGenericLabel, lorraFPLabel,twoPhaselabel,originalOmidLabel, lorraGenericLabel, lorraFPLabel,twoPhaselabel], fontsize=myfonsize-9)
+    plt.xticks([0,1,2,3,5,6,7,8,10,11,12,13], [originalOmidLabel, lorraGenericLabel,twoPhaselabel, lorraFPLabel,originalOmidLabel, lorraGenericLabel,twoPhaselabel, lorraFPLabel,originalOmidLabel, lorraGenericLabel,twoPhaselabel, lorraFPLabel], fontsize=myfonsize-9)
 
 
     for tick in ax.get_xticklabels():
@@ -284,9 +286,9 @@ def new_breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUT
 
 def singlebreakdownHigh(GETlorraGeneric,GETlorraFP,GET2phase,PUTlorraGeneric,PUTlorraFP,PUT2phase,RMWlorraGeneric,RMWlorraFP,RMW2phase,ylimit,txt):
 
-    begin_times = [GETlorraGeneric[0], GETlorraFP[0],GET2phase[0]]
-    hbase_times = [GETlorraGeneric[1], GETlorraFP[1],GET2phase[1]]
-    commit_times = [GETlorraGeneric[2], GETlorraFP[2],GET2phase[2]]
+    begin_times = [GETlorraGeneric[0],GET2phase[0], GETlorraFP[0]]
+    hbase_times = [GETlorraGeneric[1],GET2phase[1], GETlorraFP[1]]
+    commit_times = [GETlorraGeneric[2],GET2phase[2], GETlorraFP[2]]
 
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
@@ -295,9 +297,9 @@ def singlebreakdownHigh(GETlorraGeneric,GETlorraFP,GET2phase,PUTlorraGeneric,PUT
     # lorraGenericLabel = 'Vanilla\nFragola'
     # lorraFPLabel = 'FP\nFragola'
 
-    lorraGenericLabel = 'Vanilla'
-    lorraFPLabel = 'Fast Path'
-    twoPhaselabel = '2PC'
+    lorraGenericLabel = 'Omid LL'
+    lorraFPLabel = 'Fragola'
+    twoPhaselabel = 'Omid 2PC'
 
     p3 = ax.bar([4,5,6],commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
                 label='Commit', alpha=0.5, color='g', align='center')
@@ -305,24 +307,24 @@ def singlebreakdownHigh(GETlorraGeneric,GETlorraFP,GET2phase,PUTlorraGeneric,PUT
                 color='r', align='center', )
     p1 = ax.bar([4,5,6], begin_times, label='Begin', alpha=1, color='b', align='center')
 
-    begin_times = [PUTlorraGeneric[0], PUTlorraFP[0],PUT2phase[0]]
-    hbase_times = [PUTlorraGeneric[1], PUTlorraFP[1],PUT2phase[1]]
-    commit_times = [PUTlorraGeneric[2], PUTlorraFP[2],PUT2phase[2]]
+    begin_times = [PUTlorraGeneric[0],PUT2phase[0], PUTlorraFP[0]]
+    hbase_times = [PUTlorraGeneric[1],PUT2phase[1], PUTlorraFP[1]]
+    commit_times = [PUTlorraGeneric[2],PUT2phase[2], PUTlorraFP[2]]
 
     p3 = ax.bar([0, 1,2], commit_times, bottom=np.array(begin_times) + np.array(hbase_times), alpha=0.5, color='g', align='center')
     p2 = ax.bar([0, 1,2], hbase_times, bottom=begin_times,  alpha=1, color='r', align='center', )
     p1 = ax.bar([0, 1,2], begin_times,  alpha=1, color='b', align='center')
 
-    begin_times = [RMWlorraGenericHigh[0], RMWlorraFPHigh[0],RMW2phase[0]]
-    hbase_times = [RMWlorraGenericHigh[1], RMWlorraFPHigh[1],RMW2phase[1]]
-    commit_times = [RMWlorraGenericHigh[2], RMWlorraFPHigh[2],RMW2phase[2]]
+    begin_times = [RMWlorraGenericHigh[0],RMW2phase[0], RMWlorraFPHigh[0]]
+    hbase_times = [RMWlorraGenericHigh[1],RMW2phase[1], RMWlorraFPHigh[1]]
+    commit_times = [RMWlorraGenericHigh[2],RMW2phase[2], RMWlorraFPHigh[2]]
 
     p3 = ax.bar([8,9,10], commit_times, bottom=np.array(begin_times) + np.array(hbase_times), alpha=0.5, color='g',
                 align='center')
     p2 = ax.bar([8,9,10], hbase_times, bottom=begin_times, alpha=1, color='r', align='center', )
     p1 = ax.bar([8,9,10], begin_times, alpha=1, color='b', align='center')
 
-    plt.xticks([0,1,2,4,5,6,8,9,10], [lorraGenericLabel, lorraFPLabel, twoPhaselabel,lorraGenericLabel, lorraFPLabel,twoPhaselabel,lorraGenericLabel, lorraFPLabel,twoPhaselabel], fontsize=myfonsize-9)
+    plt.xticks([0,1,2,4,5,6,8,9,10], [lorraGenericLabel,  twoPhaselabel,lorraFPLabel,lorraGenericLabel, twoPhaselabel,lorraFPLabel,lorraGenericLabel, twoPhaselabel,lorraFPLabel], fontsize=myfonsize-9)
 
     for tick in ax.get_xticklabels():
         tick.set_rotation(45)
@@ -350,7 +352,7 @@ def singlebreakdownHigh(GETlorraGeneric,GETlorraFP,GET2phase,PUTlorraGeneric,PUT
     plt.subplots_adjust(bottom=0.2, top=0.9)
 
     plt.savefig("latencyHighThrough_" +txt[3] + ".pdf")
-    plt.show()
+
 
 
 

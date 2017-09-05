@@ -85,7 +85,7 @@ The values are 2K big, yielding roughly 46GB of actual data, replicated three-wa
 across the servers. The data accesses are 50\% reads and 
 50\% writes. The key access frequencies follow a Zipf distribution, generated following 
 the description in~\cite{Gray:1994:QGB:191839.191886}, with $\theta=0.8$, which we derive from production 
-workloads. \inred{In this distribution, the first key is accessed 3.5\% of the  time.}
+workloads. In this distribution, the first key is accessed 0.7\% of the  time.
 %in Yahoo's deployment of Omid~\cite{Omid2017}. 
 %Note that under this access distribution, data requests are load-balanced across nodes.
 
@@ -271,9 +271,9 @@ We note that \sys\ yields slightly higher rates of transaction aborts compared t
 (recall that \sysll\ aborts tentative writes in favor of concurrent reads, whereas  \sys\ also aborts
 singleton writes in presence of concurrent tentative writes). However, the abort rates exhibited by all  
 the systems are minor. 
-Here, under the highest contention,  \sys\ aborts approximately \inred{$0.1\%$ }
-of the transactions versus  \sysll's \inred{$0.08\%$ },   
- \syspc's \inred{XXX} 
+Here, under the highest contention,  \sys\ aborts approximately $0.1\%$ 
+of the transactions versus  \sysll's $0.08\%$,   
+ \syspc's $0.08\%$ 
 and Omid's $0.07\%$ 
 (the latter  is in line with production abort rates reported in Omid~\cite{Omid2017}).  
 

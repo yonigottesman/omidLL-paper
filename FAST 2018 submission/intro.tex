@@ -72,7 +72,7 @@ can induce latencies of tens to hundreds of milliseconds under high loads.
 The  improvement  is achieved in two steps, as depicted in Figure~\ref{fig:evolution}.  
 %by two design changes.
 
-First, in Section~\ref{sec:ll}, we create a new version of Omid, \sysll, that 
+First, in Section~\ref{sec:ll}, we create a new low latency version of Omid, \sysll. It  
 distributes persistent writes of transaction commit records, which is a centralized bottleneck in Omid. 
 \sysll\ uses Omid's centralized transaction manager for timestamp allocation and conflict detection, 
 but relieves it of performing I/O. We further explore the design space of transaction processing protocols (in Section~\ref{sec:ll}), 
@@ -89,22 +89,24 @@ transaction processing services.
 %transactions in presence of such commits. 
 
 \begin{figure}
-\centerline{
-\includegraphics[width=0.80\columnwidth]{figs/OmidEvolution}
-}
-\caption{The evolution of Omid. We introduce a ``low latency'' version Omid-LL, and extend it to support fast-path transactions in \sys.
-A variant based on two phase commit, \syspc, is implemented for comparison purposes.}
+  \centerline{
+        \includegraphics[width=0.75\columnwidth]{figs/OmidEvolutionFlat}	
+  }
+\caption{The evolution of Omid. We develop a low latency version Omid-LL, and extend it to support fast-path transactions in \sys.
+              We implement a variant based on two phase commit, \syspc, for comparison.}
 \label{fig:evolution}
 \end{figure}
+
 
 %We have implemented {\sys\/} %\footnote{\url{https://github.com/yonigottesman/incubator-omid/tree/localTransactions}} 
 Our implementations are 
 based on the open source Omid code\footnote{\url{https://omid.incubator.apache.org}}.
-To support \syspc\ and \sys, we also had to extend  HBase  to enable locking and the fast path, resp. 
+To support \syspc\ and \sys, we further extended  HBase  to enable locking and the fast path, resp. 
 %\footnote{\url{https://github.com/yonigottesman/hbase_local_transactions/tree/0.98-add-rmw}}. 
-All our code is publicly available on github\footnote{\small{Omitted for blind review.}},
-and we are currently productionalizing \sysll, (which does not require HBase extensions),  
-and contributing the changes back to the Omid open-source project.
+Our code is publicly available on github\footnote{\small{Omitted for blind review.}}
+and since \sysll\ does not require HBase extensions, we hope to contribute it back to the Omid open-source project.
+%and we are currently productionalizing \sysll, (which does not require HBase extensions),  
+%and contributing the changes back to the Omid open-source project.
  
  Section~\ref{sec:eval} presents our experiments on mid-range hardware, which show substantial performance improvements.
 Under low load, \sysll\ transactions are 4x to 5x faster than Omid's, 
@@ -139,9 +141,10 @@ In summary, our contributions are as follows:
     \setlength{\itemsep}{1pt}
     \setlength{\parskip}{1pt}
     \setlength{\parsep}{1pt}  
-\item we implement \sysll, a ``low latency'' version of Omid, which 
+\item we implement \sysll, which 
+we hope to contribute to the Apache Omid project;
 %which improves latency by 5x and doubles throughput; 
-we are working to incorporate in  production;
+%we are working to incorporate in  production;
 \item we explore the design space of transaction processing engines for NoSQL data stores, 
 highlighting the tradeoffs between various design choices;  
 \item we design a novel fast path for short transactions and implement it in \sys; and

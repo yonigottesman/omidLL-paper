@@ -140,8 +140,9 @@ allow more concurrency than serializable ones, and hence scale better.
 It is therefore provided by popular database technologies such as Oracle, PostgreSQL, and SQL Server,
 and TPSs such as Percolator, Omid, Tephra, and  CockroachDB.
 
-Following a commit call, the transaction may successfully \emph{commit}, whereby all of its operations take effect;
-in case of conflicts, (i.e., when two concurrent transactions attempt to update the same item), the transaction may
+Following a commit call, the transaction may successfully \emph{commit}, whereby all of its operations take effect, 
+or 
+%in case of conflicts, (i.e., when two concurrent transactions attempt to update the same item), the transaction may
 \emph{abort}, in which case none of its changes take effect. 
 
 

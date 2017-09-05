@@ -209,7 +209,7 @@ Our experiments show that the centralized access to commit entries is Omid's mai
 and while this bottleneck is mitigated via batching commit table updates, this also increases latency.
 Omid chose this  option as it was designed for high throughput. Here, on the other hand, we target  low latency. 
 
-We therefore distribute the commit table: we  
+We therefore distribute the commit table as in Percolator: we  
 %opt to follow the design of Percolator, which 
 store each transaction's commit entry alongside its first written key,
 which we call the \emph{leader}, and store pointers to this leader at all other keys written by the transaction. 

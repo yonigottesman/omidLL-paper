@@ -192,7 +192,7 @@ during which conflicts lead to aborts.
 }
 In \sysll, we instead adopt Omid's centralized conflict detection mechanism, which eliminates the need for locking objects,
 and is extremely scalable~\cite{Omid2017}. This approach does not entail any changes to the underlying data store (HBase in our implementation),
-which facilitates production deployment.
+which can facilitate production deployment.
 
 For comparison, we also implement a 2PC-based version, \syspc.  We note that this variant \emph{does} necessitate changes in the 
 underlying data store to allow (1) transactional reads to abort lock-holding transactions; and 

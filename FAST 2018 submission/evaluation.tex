@@ -103,13 +103,16 @@ and then a write to the same key.
 We add the BRWC workload since single-key read+write transactions are common in production, but are highly unlikely to 
 occur in our random mix, which uses random key selection with billions of keys.
 
-\begin{figure}[htb]
+\begin{figure}[ht]
 	\centering
       	\includegraphics[width=0.48\textwidth]{figs/throughputlatency1.pdf}
 	    \caption{Throughput vs.\ latency, transaction size = 1.}
         \label{fig:tl-1}      
 \end{figure}
 
+
+\subsection{Results}
+\label{ssec:results}
 
 \begin{figure*}[hbt]
 \centering
@@ -131,10 +134,6 @@ occur in our random mix, which uses random key selection with billions of keys.
 \end{tabular}
        \caption{Latency breakdown  for single-key transactions under  random mix workload. }
 \end{figure*}
-
-
-\subsection{Results}
-\label{ssec:results}
 
 \mypara{Throughput and latency of short transactions.} 
 %

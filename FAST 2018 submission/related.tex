@@ -22,8 +22,9 @@ with different design choices, and we choose a new operation point in
 this design space. In particular, \sysll\ eliminates the bottleneck of Omid by
 distributing the commit entry, makes commits and begins faster than Omid's by 
 allowing reads to abort pending transactions. Unlike Percolator and CockroachDB, 
-uses centralized conflict detection. This eliminates the need to modify HBase to support locking
-facilitating committing the improved system back to the production version of Omid. 
+\sysll\/ uses scalable centralized conflict detection. This eliminates the need to modify 
+HBase to support locking, and facilitates committing the algorithm back 
+to the production system. 
 
 
 %detect client failures as in Percolator or have transactional writes perform conflict detection as in CockroachDB. 

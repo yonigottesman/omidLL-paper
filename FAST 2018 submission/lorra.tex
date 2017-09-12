@@ -195,8 +195,7 @@ and is extremely scalable~\cite{Omid2017}. This approach does not entail any cha
 which can facilitate production deployment.
 
 For comparison, we also implement a 2PC-based version, \syspc.  We note that this variant \emph{does} necessitate changes in the 
-underlying data store to allow (1) transactional reads to abort lock-holding transactions; and 
-(2) transaction validation (conflict detection) using check\&mutate for each written key. The latter is slower than data store writes,
+underlying data store to allow transaction validation (conflict detection) using check\&mutate for each written key. This makes data store writes slower,
 which takes a toll on long transactions, where validation time is substantial.
 
 

@@ -230,7 +230,7 @@ of the pending transaction.
 %\Yoni{example here?}. 
 To this end, {\sc checkStatus} attempts to forcefully abort the pending transaction. This is done using the
  {check\&mutate} operation, which atomically reads and sets the commit entry to abort in case its value is still nil. 
-Before calling {check\&mutate}, it is possibale to wait a configurable amount of time in order to let the transaction complete without aborting it.
+Before calling {check\&mutate}, it is possible to wait a configurable amount of time in order to let the transaction complete without aborting it.
 If check\&mutate fails, this means that the transaction is no longer pending, and {\sc checkStatus} is recursively called to
 re-read the leader's entry. Note that during the nested call, the commit status can no longer be nil, and so it
 always returns without attempting another check\&mutate.

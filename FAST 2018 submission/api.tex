@@ -58,7 +58,7 @@ A separate process performs garbage collection of obsolete versions.
 \subsection{Transaction semantics} \label{ssec:transactions}
 
 TPSs provide \emph{begin} and \emph{commit} APIs for delineating transactions: 
-a \emph{transaction} the sequence of \emph{read} and \emph{write} operations on different objects 
+a \emph{transaction} is a sequence of \emph{read} and \emph{write} operations on different objects 
 that occur between begin and commit. Note that transactional reads and writes are implemented using the 
 datastore's get and put operations.
 Two transactions are said to be \emph{concurrent} if 

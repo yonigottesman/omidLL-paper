@@ -83,11 +83,11 @@
 \subsection*{Abstract}
 
 Apache Omid is a transaction processing engine for Apache HBase. 
-It was originally designed for in-house data-processing pipelines at Yahoo, which are, by and large, latency-insensistive. 
-Yet the move to new, more interactive application domains and cloud settings introduces new requirments, including  
+It was originally designed for in-house data-processing pipelines at Yahoo, which are, by and large, latency-insensitive. 
+Yet the move to new, more interactive application domains and cloud settings introduces new requirements, including  
 low latency transactions, support for multi-tenancy, and functionality to support SQL APIs. 
 
-In this paper we disucss our efforts to adapt Omid to these new domains. We improve the transaction processing protocol to 
+In this paper we discuss our efforts to adapt Omid to these new domains. We improve the transaction processing protocol to 
 reduce latency while at the same time improving throughput. Under light load, the new protocol's latency is 4x to 5x shorter 
 than Omid's. Under increasing loads, it is an order of magnitude faster.
 %, scaling far beyond Omid's limits.

@@ -1,0 +1,156 @@
+\documentclass[letterpaper,twocolumn,10pt]{article}
+%\usepackage{times}
+\usepackage{epsfig,endnotes}
+
+%========================
+%  Packages
+%========================
+
+\usepackage{graphicx,url,color}
+\usepackage{amsmath}
+\usepackage{amssymb}
+%\usepackage{amsthm}  %<---- for a different "look" in theorems (theorem word in bold, etc.) %ACM conflict with proof definition?
+%\usepackage{subfigure}
+%\usepackage[tight,footnotesize]{subfigure}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{times}
+\usepackage[outercaption]{sidecap}    
+
+
+%\usepackage{todonotes}
+%\usepackage[normalem]{ulem} %strikethrough: \sout{Hello World}
+%\usepackage{lastpage} %for number of pages
+%\usepackage{xspace}
+%\usepackage{multirow}
+%\usepackage{balance}
+
+\usepackage[colorlinks=true,allcolors=blue,breaklinks]{hyperref}   % hyperlinks, including DOIs and URLs in bibliography
+\usepackage{subcaption}
+\usepackage{graphicx}
+%\usepackage{caption}
+\usepackage{float}
+%\usepackage{floatrow}
+
+
+%========================
+%  Macros
+%========================
+
+\newcommand{\code}[1]{\textsf{\fontsize{9}{11}\selectfont #1}}
+
+\newcommand{\inred}[1]{{\color{red}{#1}}}
+\newcommand{\remove}[1]{}
+\newcommand{\Idit}[1]{[[\inred{Idit: #1}]]}
+\newcommand{\Yoni}[1]{[\inred{Yoni: #1}]}
+\newcommand{\tb}{\hspace{5mm}}
+
+\newcommand{\sys}{Omid~FP}
+\newcommand{\sysll}{Omid~LL}
+\newcommand{\syspc}{Omid~2PC}
+
+\newcommand{\speedup}[1]{#1$\times$}
+\newcommand{\tuple}[1]{\ensuremath{\langle \mbox{#1} \rangle}}
+
+\newcommand{\mypara}[1]{ \vspace{8pt} \noindent{\bf #1}\hspace{6pt}}
+
+%========================
+\begin{document}
+
+\date{}
+
+\title{Taking Omid to the Clouds}
+
+
+\author{
+\remove{
+{\rm Yonatan Gottesman\footnotemark[1]\tb Aran Bergman\footnotemark[2]\tb   Edward Bortnikov\footnotemark[1] }\\ 
+{\rm Eshcar Hillel\footnotemark[1]\tb Idit Keidar\footnotemark[1] \footnotemark[2]\tb Ohad Shacham\footnotemark[1]}\\
+	\footnotemark[1] Yahoo Research\ \ \footnotemark[2] Technion  \\ [2mm]
+\small Submission Type: Research	
+}
+} % end author
+
+
+\maketitle
+
+
+
+%=========================================================================
+%  Abstract
+%=========================================================================
+
+\subsection*{Abstract}
+
+Apache Omid is a transaction processing engine for Apache HBase. 
+It was originally designed for in-house data-processing pipelines at Yahoo, which are, by and large, latency-insensistive. 
+Yet the move to new, more interactive application domains and cloud settings introduces new requirments, including  
+low latency transactions, support for multi-tenancy, and functionality to support SQL APIs. 
+
+In this paper we disucss our efforts to adapt Omid to these new domains. We improve the transaction processing protocol to 
+reduce latency while at the same time improving throughput. Under light load, the new protocol's latency is 4x to 5x shorter 
+than Omid's. Under increasing loads, it is an order of magnitude faster.
+%, scaling far beyond Omid's limits.
+We further implement a \emph{fast path} for single-key transactions, 
+processing them almost as fast as native HBase operations.
+The new protocol supports multi-tenancy as well as new  functionality for implementing SQL APIs.
+%========================
+
+\section{Introduction} \label{sec:intro}
+\input{intro} 
+
+\section{Service API and Semantics} \label{sec:api}
+\input{api}
+
+\section{Fast Transactions with \sysll} \label{sec:ll}
+\input{lorra}
+\input{implementation}
+
+\section{\sys\ Fast Path Transactions}
+\label{sec:alg}
+\input{fast-path}
+
+\section{Evaluation} \label{sec:eval}
+\input{evaluation}
+
+\section{Related Work} \label{sec:related}
+\input{related}
+
+\section{Conclusion} \label{sec:conclusions}
+
+As transaction processing services begin to be used in new application domains, low 
+transaction latency becomes an important consideration. 
+Motivated by such use cases we developed \sys, a highly scalable 
+low-latency transaction processing engine for Apache HBase. 
+We implemented \sys\ based on Omid, and 
+improved its protocol to reduce latency (by 4x to 5x under light load
+and an order of magnitude under heavy load). In contrast with 
+Omid, it scales almost perfectly on the throughput side. 
+
+We further designed a generic \emph{fast path} for single-key transactions, 
+which executes them  almost as fast as native HBase operations (in terms of 
+both throughput and latency), while preserving
+transactional semantics relative to longer transactions.
+Our fast path algorithm is not \sys-specific, and can be similarly supported in 
+other transaction management systems.
+Our implementation of the fast path in \sys\ can process single-key
+transactions  at a virtually unbounded rate (thanks to HBase's horizontal 
+scalability), and improves the latency of short transactions
+by another 3x--5x under high load.
+
+The \sys\ code is publicly available\footnote{\small{Omitted for blind review.}}. 
+%\footnote{\url{https://github.com/yonigottesman/incubator-omid/tree/localTransactions}}, and 
+We are working on contributing \sysll\  to the Omid production code base. 
+We believe our improvements will become instrumental for modern cloud-based, large-scale, 
+latency-sensitive services, e.g., the Phoenix OLTP engine, which are designed 
+to harness up to ten thousand nodes.
+
+%\subsection*{Acknowledgments}
+
+\newpage
+
+{\footnotesize \bibliographystyle{acm}
+
+\bibliography{refs}
+
+\end{document}

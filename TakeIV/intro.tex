@@ -10,7 +10,7 @@ Tephra and Omid followed suit with Apache HBase~\cite{hbase}.
 
 Transaction support in huge-scale applications was initially motivated by specific use cases like real-time content indexing for 
 web search~\cite{Percolator2010, Omid2017} but  rapidly evolved into a wealth of OLTP and operational analytics 
-applications (e.g.,~\cite{Borthakur:2011, F1-2013}). In recent years, data management platforms provide ACID transactions as part of a full-fledged 
+applications (e.g.,~\cite{Borthakur:2011, F1-2013}). In recent years, we see data management platforms provide ACID transactions as part of a full-fledged 
 SQL interface, e.g., Google Spanner~\cite{Spanner2012}, Apache Phoenix~\cite{phoenix}, and CockroachDB~\cite{cockroach}. 
 %This allows for  reuse, and affords them the flexibility to continue to offer capabilities from the NoSQL world alongside new functionalities. 
 
@@ -59,7 +59,11 @@ Motivated by this example,
 }%remove
 
 % Drum roll 
-Our main contribution is supporting low-latency {\em and\/} high-throughput transaction processing  for HBase. 
+
+Our main contribution is supporting low-latency {\em and\/} high-throughput transaction processing  for HBase 
+\inred{via a solution that is appropriate  for multi-tenancy scenarios}.  
+We further extend Omid's API with functionality required by
+a SQL engine running atop it.
 Similarly to other modern transaction managers~\cite{Percolator2010,Spanner2012,Omid2017,tephra,cockroach},
 we provide a (somewhat relaxed) variant of \emph{snapshot isolation (SI)}~\cite{DBLP:conf/sigmod/BerensonBGMOO95},
 which scales better than traditional serializability implementations; the service's API and semantics are defined in  Section~\ref{sec:api}.  
@@ -81,12 +85,18 @@ The performance  improvement  is achieved in two steps, as depicted in Figure~\r
 First, in Section~\ref{sec:ll}, we create a new low latency version of Omid, \sysll. It  
 distributes persistent writes of transaction commit records, which is a centralized bottleneck in Omid. 
 \sysll\ uses Omid's centralized transaction manager for timestamp allocation and conflict detection, 
-but relieves it of performing I/O. We further explore the design space of transaction processing protocols (in Section~\ref{sec:ll}), 
-and implement a variant of Omid that uses Percolator's \emph{two-phase commit (2PC)} approach to 
-conflict detection~\cite{Percolator2010}, which we call \syspc. 
-It is important to  note that the 2PC approach assumes that all transactions have permission 
+but relieves it of performing I/O. 
+It is important to  note that we distribute the writes of commit records, but not the records themselves.
+\inred{
+This is in contrast to Percolator, which distributed the actual commit records in database tables, 
+under the assumption  that all transactions have permission 
 to access all tables, which is common in single-application settings, but is often not the case 
 in multi-tenancy scenarios.
+}
+We further explore the design space of transaction processing protocols (in Section~\ref{sec:ll}), 
+and implement a variant of Omid that uses Percolator's \emph{two-phase commit (2PC)} approach to 
+conflict detection~\cite{Percolator2010}, which we call \syspc. 
+
   
 Second, in Section~\ref{sec:alg} we introduce a novel \emph{fast path} algorithm for short single-key transactions, which 
 executes short transactions without the begin/commit overhead, 
@@ -113,7 +123,8 @@ based on the open source Omid code\footnote{\url{https://omid.incubator.apache.o
 To support \syspc\ and \sys, we further extended  HBase  to enable locking and the fast path, resp. 
 %\footnote{\url{https://github.com/yonigottesman/hbase_local_transactions/tree/0.98-add-rmw}}. 
 Our code is publicly available on github\footnote{\small{Omitted for blind review.}}
-and since \sysll\ does not require HBase extensions, we hope to contribute it back to the Omid open-source project.
+and since \sysll\ does not require HBase extensions.
+\inred{We hope to contribute it back to the Omid open-source project.}
 %and we are currently productionalizing \sysll, (which does not require HBase extensions),  
 %and contributing the changes back to the Omid open-source project.
  
@@ -152,7 +163,7 @@ In summary, our contributions are as follows:
     \setlength{\itemsep}{1pt}
     \setlength{\parskip}{1pt}
     \setlength{\parsep}{1pt}  
-\item We implement \sysll, a low-latency distributed transaction engine amenable to multi-tenancy; 
+\item We implement \sysll, a low-latency distributed transaction engine \inred{amenable to multi-tenancy}; 
 we plan to contribute it  to the Apache Omid project.
 %which improves latency by 5x and doubles throughput; 
 %we are working to incorporate in  production;

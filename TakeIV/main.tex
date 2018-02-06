@@ -89,7 +89,7 @@ low latency transactions, \inred{multi-tenancy}, and functionality to support SQ
 
 In this paper we discuss our efforts to adapt Omid to these new domains. We improve the transaction processing protocol to 
 reduce latency while at the same time improving throughput. Under light load, the new protocol's latency is 4x to 5x shorter 
-than Omid's. Under increasing loads, it is an order of magnitude faster.
+than Omid's, and under increased loads, it is an order of magnitude faster.
 %, scaling far beyond Omid's limits.
 We further implement a \emph{fast path} for single-key transactions, 
 processing them almost as fast as native HBase operations.

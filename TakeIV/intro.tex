@@ -59,15 +59,16 @@ Motivated by this example,
 }%remove
 
 % Drum roll 
-
+This paper reports on our recent extensions and improvements of Apache Incubator Omid~\cite{omid},
+which allow it to be used for latency-sensitive analytics applications in cloud settings. 
 Our main contribution is supporting low-latency {\em and\/} high-throughput transaction processing  for HBase 
-\inred{via a solution that is appropriate  for multi-tenancy scenarios}.  
-We further extend Omid's API with functionality required by
-a SQL engine running atop it.
+\inred{while preserving Omid's applicability to multi-tenancy settings}.  
+We further extend Omid's API with functionality required by a SQL engine running atop it.
 Similarly to other modern transaction managers~\cite{Percolator2010,Spanner2012,Omid2017,tephra,cockroach},
 we provide a (somewhat relaxed) variant of \emph{snapshot isolation (SI)}~\cite{DBLP:conf/sigmod/BerensonBGMOO95},
 which scales better than traditional serializability implementations; the service's API and semantics are defined in  Section~\ref{sec:api}.  
 
+\remove{
 Our prototype is based on Apache Incubator Omid~\cite{omid}, but dissipates the principal bottleneck present therein.
 %in the prior implementations the overhead of begin and commit operations. 
 Its advantage is maximized for short  transactions, which are prevalent in latency-sensitive applications.
@@ -79,44 +80,49 @@ The new protocol also doubles the system throughput.
 %, which is \inred{an order of magnitude higher than} previously achievable limits. 
 %Different aspects of our protocol are inspired by other systems, while their combination is novel.
 %, to the best of our knowledge. 
-
-The performance  improvement  is achieved in two steps, as depicted in Figure~\ref{fig:evolution}.  
-%by two design changes.
-First, in Section~\ref{sec:ll}, we create a new low latency version of Omid, \sysll. It  
-distributes persistent writes of transaction commit records, which is a centralized bottleneck in Omid. 
-\sysll\ uses Omid's centralized transaction manager for timestamp allocation and conflict detection, 
-but relieves it of performing I/O. 
-It is important to  note that we distribute the writes of commit records, but not the records themselves.
-\inred{
-This is in contrast to Percolator, which distributed the actual commit records in database tables, 
-under the assumption  that all transactions have permission 
-to access all tables, which is common in single-application settings, but is often not the case 
-in multi-tenancy scenarios.
 }
-We further explore the design space of transaction processing protocols (in Section~\ref{sec:ll}), 
-and implement a variant of Omid that uses Percolator's \emph{two-phase commit (2PC)} approach to 
-conflict detection~\cite{Percolator2010}, which we call \syspc. 
-
-  
-Second, in Section~\ref{sec:alg} we introduce a novel \emph{fast path} algorithm for short single-key transactions, which 
-executes short transactions without the begin/commit overhead, 
- almost as fast as native HBase operations. This entails minor extensions to the underlying 
-data store. We call the resulting system \sys. Note that
-the fast path is orthogonal to other protocol aspects, and can be supported in other 
-transaction processing services. 
-%, to enable local commits directly within the storage layer and verify the correctness of general 
-%transactions in presence of such commits. 
 
 \begin{figure}
   \centerline{
-        \includegraphics[width=0.75\columnwidth]{figs/OmidEvolution}	
+        \includegraphics[width=0.75\columnwidth]{figs/OmidVersions}	
   }
-\caption{The evolution of Omid. We develop a low latency version Omid-LL, and extend it to support fast-path transactions in \sys.
-              We implement a variant based on two phase commit, \syspc, for comparison.}
+\caption{
+%Our extensions of Apache Incubator Omid. 
+              We extend the  Apache Incubator version of Omid to support APIs  for SQL transactions in Phoenix. 
+              In a complementary branch,
+              we develop a low latency version \sysll, and extend it to support fast-path transactions in \sys.
+              We also implement a variant based on two phase commit, \syspc, for comparison.}
 \label{fig:evolution}
 \end{figure}
 
+The performance  improvement  is achieved in two steps, as depicted in the middle row in  Figure~\ref{fig:evolution}.  
+%by two design changes.
+First, in Section~\ref{sec:ll}, we create a new low latency version of Omid, \sysll, which
+dissipates Omid's principal bottleneck. It  
+distributes persistent writes of transaction commit records, which is a centralized bottleneck in Omid. 
+\sysll\ uses Omid's centralized transaction manager for timestamp allocation and conflict detection, 
+but relieves it of performing I/O. 
+%
+For comparison, we implement a variant of Omid that uses Percolator's \emph{two-phase commit (2PC)} approach to 
+conflict detection~\cite{Percolator2010}, which we call \syspc. 
+\inred{
+However, the Percolator approach  assumes that all transactions have permission 
+to access all data tables, which is common in single-application settings, but is often not the case 
+in multi-tenancy scenarios. \sysll\  instead, follows Omid's approach of storing conflict information in a common \emph{commit table}, which does  not  hold application data and is exclusively accessed by the transaction management layer.
+}
 
+Our second performance improvement is motivated by the observation that, in many production settings, single-key transactions are prevalent. \inred{For example, an in-house analysis of transactions processed by a major e-commerce company revealed that $70\%$ of transactions affected a single database key.} 
+In Section~\ref{sec:alg} we introduce a novel \emph{fast path} algorithm for short single-key transactions, which 
+executes short transactions without the begin/commit overhead,  almost as fast as native HBase operations. 
+%This entails minor extensions to the underlying data store. 
+We call the resulting system \sys. 
+Note that the fast path is orthogonal to other protocol aspects, and can be supported in other 
+transaction processing services. 
+%, to enable local commits directly within the storage layer and verify the correctness of general 
+%transactions in presence of such commits. 
+\inred{We discussed the fact that it uses coprocessor and maybe say it is experimental, but neither seems essential to elaborate at the introduction level.}
+
+\remove{
 %We have implemented {\sys\/} %\footnote{\url{https://github.com/yonigottesman/incubator-omid/tree/localTransactions}} 
 Our implementations are 
 based on the open source Omid code\footnote{\url{https://omid.incubator.apache.org}}.
@@ -127,8 +133,13 @@ and since \sysll\ does not require HBase extensions.
 \inred{We hope to contribute it back to the Omid open-source project.}
 %and we are currently productionalizing \sysll, (which does not require HBase extensions),  
 %and contributing the changes back to the Omid open-source project.
+ }
  
- \inred{Describe the functionality extensions for SQL and refer to the new section that will present them.}
+ \inred{ 
+ During our integration of Omid in Apache Phoenix, we came across the need to extend Omid's API in order
+ to support certain SQL features, such as index building and  snapshots (Ohad, what was the name for that?). 
+Section TBD describes the functionality extensions added in order to integrate Omid in Apache Phoenix. These extensions are currently implemented in a separate branch that has been integrated in Phoenix. They are complementary to the performance improvements of \sysll\ and \sys, which we also plan to integrate into the Phoenix branch in the future.
+}
  
  Section~\ref{sec:eval} presents our experiments on mid-range hardware, which show substantial performance improvements.
 Under low load, \sysll\ transactions are 4x to 5x faster than Omid's, 
@@ -163,13 +174,13 @@ In summary, our contributions are as follows:
     \setlength{\itemsep}{1pt}
     \setlength{\parskip}{1pt}
     \setlength{\parsep}{1pt}  
-\item We implement \sysll, a low-latency distributed transaction engine \inred{amenable to multi-tenancy}; 
-we plan to contribute it  to the Apache Omid project.
+\item We extend Omid with functionality that facilitates implementing a SQL API and integrate it in Apache Phoenix.
+\item We implement \sysll, a low-latency distributed transaction engine \inred{amenable to multi-tenancy}. 
+%we plan to contribute it  to the Apache Omid project.
 %which improves latency by 5x and doubles throughput; 
 %we are working to incorporate in  production;
-\item We explore the design space of transaction processing engines for NoSQL data stores, 
-highlighting the tradeoffs between various design choices.  
+%\item We explore the design space of transaction processing engines for NoSQL data stores, 
+%highlighting the tradeoffs between various design choices.  
 \item We design a novel fast path for short transactions and implement it in \sys.
-\item We extend Omid with functionality that facilitates implementing a SQL API. 
-\item We extensively evaluate the systems.
+\item We extensively evaluate the new algorithms.
 \end{enumerate}

@@ -59,22 +59,17 @@
 
 \date{}
 
-\title{Taking Omid to the Clouds}
+\title{Omid-Evolution: \\ Fast and Scalable Transactions for Real-Time Hadoop Analytics }
 
 
 \author{
-%\remove{
 {\rm Yonatan Gottesman\footnotemark[1]\tb Aran Bergman\footnotemark[2]\tb   Edward Bortnikov\footnotemark[1] }\\ 
 {\rm Eshcar Hillel\footnotemark[1]\tb Idit Keidar\footnotemark[1] \footnotemark[2]\tb Ohad Shacham\footnotemark[1]}\\
 	\footnotemark[1] Yahoo Research\ \ \footnotemark[2] Technion  \\ [2mm]
-%\small Submission Type: Research	
-%}
 } % end author
 
 
 \maketitle
-
-
 
 %=========================================================================
 %  Abstract
@@ -82,18 +77,24 @@
 
 \subsection*{Abstract}
 
-Apache Omid is a transaction processing engine for Apache HBase. 
-It was originally designed for in-house data-processing pipelines at Yahoo, which are, by and large, latency-insensitive. 
-Yet the move to new, more interactive application domains and cloud settings introduces new requirements, including  
-low latency transactions, \inred{multi-tenancy}, and functionality to support SQL APIs. 
+We describe the evolution of Omid, a transaction processing system for Apache HBase, 
+to power Apache Phoenix, a cloud-grade real-time SQL analytics engine.  
 
-In this paper we discuss our efforts to adapt Omid to these new domains. We improve the transaction processing protocol to 
-reduce latency while at the same time improving throughput. Under light load, the new protocol's latency is 4x to 5x shorter 
-than Omid's, and under increased loads, it is an order of magnitude faster.
-%, scaling far beyond Omid's limits.
-We further implement a \emph{fast path} for single-key transactions, 
-processing them almost as fast as native HBase operations.
-The new protocol supports \inred{multi-tenancy as well as} new  functionality for implementing SQL APIs.
+Omid was originally designed for data processing pipelines at Yahoo, which are, by and large, 
+huge-scale throughput-oriented monolithic NoSQL applications. Evolving into a platform for 
+a variety of converged real-time transaction processing and analytics ({\em translytics}) 
+applications introduces new functional and performance requirements. For example, SQL 
+support is key for developer productivity, multi-tenancy is paramount for cloud deployment, 
+and latency is cardinal for just-in-time data ingestion and insights in a variety of applications. 
+
+In this paper we discuss our efforts to adapt Omid to these new domains, which emerged 
+in the process of integrating it into Phoenix as transaction processing backend. The centerpiece
+of our work is latency reduction in Omid's protocol, which also improves the overall scalability.  
+Under light load, the new protocol's latency is 4x to 5x smaller than the legacy Omid's, whereas 
+under increased loads it is an order of magnitude faster. We further describe an experimental 
+\emph{fast path} for single-key transactions, which enables processing them almost as fast 
+as native HBase operations.
+
 %========================
 
 \section{Introduction} \label{sec:intro}

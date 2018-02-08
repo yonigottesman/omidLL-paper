@@ -11,27 +11,22 @@ Incubator projects Tephra~\cite{tephra} and Omid~\cite{Omid2017} followed suit w
 Transaction support in huge-scale applications was initially motivated by specific use cases like real-time content indexing for web search~\cite{Percolator2010, Omid2017} but  rapidly evolved into a wealth of OLTP and operational analytics 
 applications (e.g.,~\cite{Borthakur:2011, F1-2013}). Moreover, managing all data and insights in one place is becoming a prevalent requirement. A recent Forrester report~\cite{Forrester2017} coins the notion of {\em translytics}  as ``a unified and integrated data platform that supports multi-workloads such as transactional, operational and analytical simultaneously in real-time, ... and ensures full transactional integrity and data consistency''. Indeed, we see scalable data management platforms (e.g., Google Spanner~\cite{Spanner2012}, Apache Phoenix~\cite{phoenix}, and CockroachDB~\cite{cockroach}) shifting from NoSQL to full-fledged SQL interfaces in order to provide complex query semantics in conjunction with strong data guarantees. SQL support raises new requirements for transaction management, e.g., in the context of secondary index maintenance. 
 
-Modern translytics platforms are built cloud-native. In particular, multi-tenancy becomes key 
-for hosting data owned by multiple applications without breaching access rights. Multi-tenancy 
-affects the choices made while designing transaction processing systems. 
-
 Similarly to many technologies, the adoption of transactions took a  ``functionality-first" trajectory. 
-For example, the developers of Spanner~\cite{Spanner2012} wrote:
+For example, the developers of Spanner~\cite{Spanner2012} wrote: 
 %\begin{quote}
   ``We believe it
 is better to have application programmers deal with performance problems due to overuse 
 of transactions as bottlenecks arise, rather than always coding around the lack of transactions''. 
 %\end{quote}
-
 Yet the expectation for high performance is rapidly picking up. 
 Whereas early transaction systems were  latency-insensitive~\cite{Percolator2010, Omid2017}, 
-with the thrust into new interactive domains like 
-social networks~\cite{chatter},  %logging~\cite{},
-messaging~\cite{Borthakur:2011} and algorithmic trading~\cite{opentsdb} 
-latency becomes essential;   
-SLAs for interactive user experience
-mandate that simple updates and point queries  complete within single-digit milliseconds. 
-This paper is motivated by such  applications.
+with the thrust into new interactive domains like social networks~\cite{chatter},  messaging~\cite{Borthakur:2011} 
+and algorithmic trading~\cite{opentsdb} latency becomes essential;   
+SLAs for interactive user experience mandate that simple updates and point queries  complete within single-digit milliseconds. Such applications motivate further speedup of transaction processing infrastructure. 
+
+Finally, modern translytics platforms are built cloud-native. In particular, multi-tenancy becomes key 
+for hosting data owned by multiple applications without breaching access rights. This requirement 
+affects the choices made while designing transaction processing systems. 
 
 \remove{ % Idit: removed the following two paragraphs for blind review; moved some content above and below
 Consider, for example, the platform powering Yahoo! Mail, which serves hundreds of millions of users. 

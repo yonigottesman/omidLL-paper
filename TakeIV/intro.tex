@@ -8,7 +8,7 @@ semantics that enable programmers to perform complex data manipulation without o
 Google's Percolator~\cite{Percolator2010} pioneered a transaction API atop the Bigtable storage. Apache 
 Incubator projects Tephra~\cite{tephra} and Omid~\cite{Omid2017} followed suit with Apache HBase~\cite{hbase}. 
 
-Transaction support in huge-scale applications was initially motivated by specific use cases like real-time content indexing for web search~\cite{Percolator2010, Omid2017} but  rapidly evolved into a wealth of OLTP and operational analytics 
+Transaction support in huge-scale applications was initially motivated by specific use cases like content indexing for web search~\cite{Percolator2010, Omid2017} but  rapidly evolved into a wealth of OLTP and operational analytics 
 applications (e.g.,~\cite{Borthakur:2011, F1-2013}). Moreover, managing all data and insights in one place is becoming a prevalent requirement. A recent Forrester report~\cite{Forrester2017} coins the notion of {\em translytics}  as ``a unified and integrated data platform that supports multi-workloads such as transactional, operational and analytical simultaneously in real-time, ... and ensures full transactional integrity and data consistency''. Indeed, we see scalable data management platforms (e.g., Google Spanner~\cite{Spanner2012}, Apache Phoenix~\cite{phoenix}, and CockroachDB~\cite{cockroach}) shifting from NoSQL to full-fledged SQL interfaces in order to provide complex query semantics in conjunction with strong data guarantees. SQL support raises new requirements for transaction management, e.g., in the context of secondary index maintenance. 
 
 Similarly to many technologies, the adoption of transactions took a  ``functionality-first" trajectory. 
@@ -20,65 +20,71 @@ of transactions as bottlenecks arise, rather than always coding around the lack 
 %\end{quote}
 Yet the expectation for high performance is rapidly picking up. 
 Whereas early transaction systems were  latency-insensitive~\cite{Percolator2010, Omid2017}, 
-with the thrust into new interactive domains like social networks~\cite{chatter},  messaging~\cite{Borthakur:2011} 
-and algorithmic trading~\cite{opentsdb} latency becomes essential;   
+with the thrust into new interactive domains like social networks~\cite{chatter},  
+messaging~\cite{Borthakur:2011} and algorithmic trading~\cite{opentsdb} latency becomes essential.  
 SLAs for interactive user experience mandate that simple updates and point queries  complete within single-digit milliseconds. Such applications motivate further speedup of transaction processing infrastructure. 
 
 Finally, modern translytics platforms are built cloud-native. In particular, multi-tenancy becomes key 
 for hosting data owned by multiple applications without breaching access rights. This requirement 
 affects the choices made while designing transaction processing systems. 
 
-\remove{ % Idit: removed the following two paragraphs for blind review; moved some content above and below
-Consider, for example, the platform powering Yahoo! Mail, which serves hundreds of millions of users. 
-The Mail backend ingests billions of messages daily; messages undergo both machine 
-classification (e.g., for spam filtering, thread detection, and ``smart views''~\cite{smart-view}),
-%\footnote{\footnotesize{\url{https://yahoohelpcommunity.tumblr.com/post/118485031125/getting-to-know-smart-views-in-yahoo-mail}}}
-and user manipulation (e.g., starring, tagging, and moving between folders).    
-Mail users browse their mail and search for content, issuing many billions of requests a day; they
-expect a consistent experience -- e.g., messages  do not 
-disappear when moved between folders, starred content gets prioritized in search, folder counters are reliable, etc.
-
-The Yahoo! Mail metadata platform is built on top of Apache HBase~\cite{hbase}, 
-which provides reliable and scalable key-value storage. The system's first generation
-was built without transaction support. This exposed  developers to very complex programming scenarios 
-to achieve ACID behavior (e.g., consistent folder listings, atomic updates of multiple counters). 
-%We would like to build the next generation of the system using a transaction API on top of HBase.
-We have looked into building the next generation using  Omid~\cite{omid}, 
-an Apache Incubator project which provides a transaction API on top of HBase, and 
-is already in use at large scale at Yahoo~\cite{Omid2017}.
-Unfortunately, while this makes programming much easier, it also jeopardizes 
-the real-time latency SLA for interactive user experience. For example,  
-simple updates and point queries must complete within single-digit milliseconds.
-whereas Omid, which was designed for throughput-oriented data pipelines~\cite{Omid2017}, 
-can induce latencies of tens to hundreds of milliseconds under high loads. 
-
-Motivated by this example, 
-}%remove
-
 % Drum roll 
-This paper reports on our recent extensions and improvements of Apache Incubator Omid~\cite{omid},
-which allow it to be used for latency-sensitive analytics applications in cloud settings. 
-Our main contribution is supporting low-latency {\em and\/} high-throughput transaction processing  for HBase 
-\inred{while preserving Omid's applicability to multi-tenancy settings}.  
-We further extend Omid's API with functionality required by a SQL engine running atop it.
-Similarly to other modern transaction managers~\cite{Percolator2010,Spanner2012,Omid2017,tephra,cockroach},
-we provide a (somewhat relaxed) variant of \emph{snapshot isolation (SI)}~\cite{DBLP:conf/sigmod/BerensonBGMOO95},
-which scales better than traditional serializability implementations; the service's API and semantics are defined in  Section~\ref{sec:api}.  
+This paper describes recent functionality extensions and performance improvements 
+to Omid~\cite{omid}, an open source transaction manager for HBase, to power 
+Phoenix~\cite{phoenix} -- a SQL-compliant Hadoop data analytics platform designed 
+for cloud deployment. In contrast with earlier SQL query engines for Hadoop (e.g., 
+Hive~\cite{hive} and Impala~\cite{impala}), which focused on large-scale processing
+of immutable data, Phoenix targets converged data ingestion and analytics in one 
+place~\cite{PhoenixUseCases} -- hence its need in transaction semantics. Phoenix
+applications are both latency- and throughput-sensitive. Phoenix uses HBase 
+as key-value storage layer, and Omid as transaction processing layer\footnote{
+\small{Tephra is supported as alternative transaction manager, however its scalability 
+and reliability are lower than Omid's.}}. 
 
 \remove{
-Our prototype is based on Apache Incubator Omid~\cite{omid}, but dissipates the principal bottleneck present therein.
-%in the prior implementations the overhead of begin and commit operations. 
-Its advantage is maximized for short  transactions, which are prevalent in latency-sensitive applications.
-Our system processes  such transactions in a handful of milliseconds, whereas Omid, 
-which was designed for throughput-oriented data pipelines~\cite{Omid2017}, 
-can induce latencies of tens to hundreds of milliseconds under high loads. 
-The new protocol also doubles the system throughput.
-%Moreover, it is amenable to a simpler high availability solution than the original design. 
-%, which is \inred{an order of magnitude higher than} previously achievable limits. 
-%Different aspects of our protocol are inspired by other systems, while their combination is novel.
-%, to the best of our knowledge. 
-}
+Similarly to other modern transaction managers~\cite{Percolator2010,Spanner2012,tephra,cockroach}, it provides a (somewhat relaxed) 
+variant of \emph{snapshot isolation (SI)}~\cite{DBLP:conf/sigmod/BerensonBGMOO95}, 
+which scales better than traditional serializability implementations.}
 
+This paper makes the following contributions: 
+\begin{enumerate}
+    \setlength{\itemsep}{1pt}
+    \setlength{\parskip}{1pt}
+    \setlength{\parsep}{1pt}  
+
+\item {\em Protocol re-design for low-latency transactions},. 
+The new protocol, denoted \sysll, dissipates a major architectural bottleneck. 
+It reduces the latency of short transactions by 5x under light load, and 
+by 10x-100x under heavy load compared to legacy Omid. It also scales 
+the overall system throughput to 550K transactions per second while remaining 
+within real-time latency SLA's. In contrast with the previously published protocols 
+(e.g.,~\cite{Percolator2010}), our solution is amenable to multi-tenancy.
+
+\item {\em Novel fast-path algorithm\/} (denoted \sys, experimental in the current version) 
+which maximizes the performance advantages for single-key transactions that are prevalent 
+in latency-sensitive applications. It defines a dedicated API for single-read, 
+single-write and read-modify-write transactions.  Fast path transactions execute at the 
+latency of native HBase operations regardless of system load.
+%(thanks to HBase's near perfect horizontal scalability). 
+They run twice as fast as \sysll\/ transactions, and complete within 2-4 ms on mid-range hardware. 
+This comes at the cost of a minor ($15-25\%$) negative impact on long (latency-insensitive) transactions.  
+
+\item {\em SQL compliance algorithms\/} -- primarily, support of secondary indexes for 
+accelerated analytics. The new implementation allows index on-demand creation with 
+strong consistency guarantees, without impeding concurrent database operations. 
+   
+\end{enumerate}
+
+We extensively evaluate the new algorithms. 
+
+Finally, we explore the design space of the big data 
+transaction processing engines, highlighting the tradeoffs between various design choices.
+
+; the service's API and semantics are defined in  Section~\ref{sec:api}.  
+
+
+
+\remove{
 \begin{figure}
   \centerline{
         \includegraphics[width=0.75\columnwidth]{figs/OmidVersions}	
@@ -91,7 +97,9 @@ The new protocol also doubles the system throughput.
               We also implement a variant based on two phase commit, \syspc, for comparison.}
 \label{fig:evolution}
 \end{figure}
+}
 
+\remove{
 The performance  improvement  is achieved in two steps, as depicted in the middle row in  Figure~\ref{fig:evolution}.  
 %by two design changes.
 First, in Section~\ref{sec:ll}, we create a new low latency version of Omid, \sysll, which
@@ -118,6 +126,7 @@ transaction processing services.
 %, to enable local commits directly within the storage layer and verify the correctness of general 
 %transactions in presence of such commits. 
 \inred{We discussed the fact that it uses coprocessor and maybe say it is experimental, but neither seems essential to elaborate at the introduction level.}
+}
 
 \remove{
 %We have implemented {\sys\/} %\footnote{\url{https://github.com/yonigottesman/incubator-omid/tree/localTransactions}} 
@@ -132,6 +141,7 @@ and since \sysll\ does not require HBase extensions.
 %and contributing the changes back to the Omid open-source project.
  }
  
+ \remove{
  \inred{ 
  During our integration of Omid in Apache Phoenix, we came across the need to extend Omid's API in order
  to support certain SQL features, such as index building and  snapshots (Ohad, what was the name for that?). 
@@ -181,3 +191,4 @@ In summary, our contributions are as follows:
 \item We design a novel fast path for short transactions and implement it in \sys.
 \item We extensively evaluate the new algorithms.
 \end{enumerate}
+}

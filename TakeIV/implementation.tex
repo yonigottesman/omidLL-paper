@@ -184,9 +184,14 @@
   \label{fig:get-pseudocode}
 \end{algorithm} 
 
+Like Omid, \sysll\ uses a dedicated commit table for storing commit entries. 
+Unlike Omid, however, \sysll\ distributes the table updates, and thus dissipates Omid's principal bottleneck.
+ 
 
 
-The metadata used by \sysll\ for transaction management is stored in two additional columns associated with each object version in the data store:
+
+The metadata used by \sysll\ for transaction management is stored in a dedicated commit table 
+as well as an   additional \emph{commit} column associated with each object version in the data store:
 (1) \emph{commit} holds the status of the transaction that wrote this version -- \emph{nil} if it is pending, its  $ts_c$ if committed, and 
 otherwise \emph{abort}; 
 and

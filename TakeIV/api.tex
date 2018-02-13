@@ -1,11 +1,12 @@
 
 
 
-A \emph{Transaction Processing System (TPS)} runs atop an underlying data store and 
+A \emph{Transaction Processing System (TPS)} runs atop an underlying data store 
+(e.g., HBase) and 
 allows users to bundle multiple data store operations into a single atomic transaction. 
 The TPS architecture is depicted in Figure~\ref{fig:components}.
 Section~\ref{ssec:data-model} describes the data model and API of the underlying data store, and  Section~\ref{ssec:transactions}
-defines transaction semantics. 
+defines transaction semantics provided by the TPS. 
 
 \begin{figure}
 \centerline{
@@ -33,18 +34,18 @@ We further assume that a write operation can specify the version number it write
 %\paragraph{API} 
 The  data store provides the following API:
 \begin{description}
-\item [\code{get(key, version)}] --  Returns the requested version of key.
+\item [\code{get(key, version)}] --  returns the requested version of key.
 %if no version is provided, returns the latest; 
 %if no field is provided returns the entire record. 
 %\item 
 The API further allows traversing (reading) earlier versions of the same key.
 % in descending order.
-\item [\code{update}(key, version, fields, values)] -- 
+\item [\code{update(key, version, fields, values)}] -- 
 creates or updates an object, setting the specified fields to the specified values. 
 If the version already exists, its value is updated; otherwise, a new version is added. 
 \remove{The data store may buffer the write in memory until an ensuing flush. }
 \item [\code{remove(key, version)}] -- removes an object with the given key and version.
-\item [\code{check\&mutate}(key, version, field, old, new)] -- checks the record associated with key and version. 
+\item [\code{check\&mutate(key, version, field, old, new)}] -- checks the record associated with key and version. 
 If field holds old, replace it with new   and return true; otherwise return false.
 \remove{ \item [\code{flush}] -- persists all previous updates to disk.}
 %data stores often provide means to atomically read and update a single object, e.g., HBase exports check\&mutate operations, which are 
@@ -71,11 +72,12 @@ A TPS  ensures the ACID properties for transactions:
 \emph{durability} (whereby updates survive crashes).
 
 Different isolation levels can be considered for the third property. We consider a variant of 
-snapshot isolation~\cite{DBLP:conf/sigmod/BerensonBGMOO95} that, similarly to \emph{generalized snapshot isolation}~\cite{DBLP:conf/srds/ElniketyZP05}, relaxes  the real-time order requirement. 
+\emph{snapshot isolation (SI)}~\cite{DBLP:conf/sigmod/BerensonBGMOO95} that, similarly to \emph{generalized snapshot isolation}~\cite{DBLP:conf/srds/ElniketyZP05}, relaxes  the real-time order requirement. 
 Nevertheless, our implementation only relaxes the ordering of fast path  transactions (described in Section~\ref{sec:alg}) 
 relative to regular ones (that do not use the fast path); regular transactions continue to satisfy SI amongst themselves. 
+Moreover, \sysll, without the fast path, satisfies SI as Omid does.
 
-Our correctness condition satisfies the key ``snapshot'' property of SI, which ensures that a transaction reading from the  database
+Our relaxed correctness condition satisfies the key ``snapshot'' property of SI, which ensures that a transaction reading from the  database
 does not see a mix old and new values. For example, if a transaction updates the values of two stocks, 
 then no other transaction may observe the old value of one of these stocks and the new value of the other.
 However, it relaxes the real-time order guarantee of SI by allowing (fast-path) transactions to take effect `in the past'.  
@@ -96,7 +98,7 @@ though $FP_2$ occurs after $FP_1$.
 \label{fig:ltx-rt}
 \end{figure}
 } % remove
-Specifically, our correctness condition stipulates that
+Specifically, %our correctness condition stipulates that
 the system enforces a total order ${\cal T}$ on all committed transactions, so that
 \begin{enumerate}
     \setlength{\itemsep}{0pt}

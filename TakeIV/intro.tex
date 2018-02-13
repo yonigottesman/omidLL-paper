@@ -47,8 +47,14 @@ Hive~\cite{hive} and Impala~\cite{impala}), which focused on large-scale process
 of immutable data, Phoenix targets converged data ingestion and analytics~\cite{PhoenixUseCases},
 which necessitates transaction semantics. Phoenix
 applications are both latency- and throughput-sensitive. Phoenix uses HBase 
+<<<<<<< HEAD
 as key-value storage layer, and Omid as transaction processing layer\footnote{\small{Tephra 
 is supported as alternative transaction manager, however its scalability and reliability are inferior to Omid.}}. 
+=======
+as its key-value storage layer, and \inred{is adopting Omid as} its transaction processing layer\footnote{
+\small{Tephra is supported as alternative transaction manager, however its scalability 
+and reliability are lower than Omid's.}}. 
+>>>>>>> f944b4f0a698756f78eb687b182e8dd6212359d1
 
 \remove{
 Similarly to other modern transaction managers~\cite{Percolator2010,Spanner2012,tephra,cockroach}, it provides a (somewhat relaxed) 
@@ -75,8 +81,13 @@ in latency-sensitive applications. It defines a dedicated API for single-read,
 single-write and read-modify-write transactions.  Fast path transactions execute at the 
 latency of native HBase operations regardless of system load.
 %(thanks to HBase's near perfect horizontal scalability). 
+<<<<<<< HEAD
 They run twice as fast as \sysll\/ transactions, and complete within $2-4$ ms on mid-range hardware. 
 This comes at the cost of a minor ($15-25\%$) negative impact on long (latency-insensitive) transactions.  
+=======
+They run twice as fast as \sysll\/ transactions, and complete within 2--4 ms on mid-range hardware. 
+This comes at the cost of a minor (15--25$\%$) negative impact on long (latency-insensitive) transactions.  
+>>>>>>> f944b4f0a698756f78eb687b182e8dd6212359d1
 
 \item {\em SQL compliance\/}. We add support for creating 
 secondary indices on-demand for accelerated analytics, without impeding concurrent database operations

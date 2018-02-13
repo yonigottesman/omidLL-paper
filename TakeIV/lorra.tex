@@ -187,17 +187,19 @@ Moreover, it may hold locks for a long period (in case of a long transaction),
 during which conflicts lead to aborts.  
 }
 
-To allow us to compare the two approaches, we also implement a 2PC-based version of Omid, \syspc.  
+To allow us to compare the two approaches, we also implement a 2PC-based version of Omid, \syspc,
+which follows Percolator's design.
 %Furthermore, 
 %this approach does not entail any changes to the underlying data store (HBase in our implementation),
 %which can facilitate production deployment.
 \inred{
 We note that unlike our approach, this variant \emph{does} necessitate changes in the 
-underlying data store to allow transaction validation (conflict detection) using check\&mutate for each written key. 
+underlying data store to allow transaction validation using check\&mutate for each written key. 
 }
 %Using check\&mutate for all updates makes data store writes slower,
 
 \mypara{Distributed commit entry updates with  multi-tenancy.}
+%
 The early generation of Omid~\cite{OmidICDE2014} (referred to as Omid1) and Tephra replicate commit entries 
 of pending transactions among all active clients, which consumes high bandwidth and does not scale. Omid 
 %and CockroachDB 
@@ -226,7 +228,7 @@ This did not pose a problem in Percolator, which was designed for use inside Goo
 data centers, but is usually unacceptable in multi-tenant data stores.
 
 Unlike data tables, which are owned by individual applications that manage their permissions,  
-the dedicated commit table is owned by the TPS. It is not accessed direclty by application code,
+the dedicated commit table is owned by the TPS. It is not accessed directly by application code,
 but rather from transactional code that is part of the TPS.
 }
 

@@ -8,9 +8,9 @@ semantics that enable programmers to perform complex data manipulation without o
 Google's Percolator~\cite{Percolator2010} pioneered a transaction API atop the Bigtable storage. Apache 
 Incubator projects Tephra~\cite{tephra} and Omid~\cite{Omid2017} followed suit with Apache HBase~\cite{hbase}. 
 
-Transaction support in huge-scale applications was initially motivated by specific use cases like content indexing for web search~\cite{Percolator2010, Omid2017} but  rapidly evolved into a wealth of OLTP and operational analytics 
-applications (e.g.,~\cite{Borthakur:2011, F1-2013}). Moreover, managing all data and insights in one place is becoming a prevalent requirement. A recent Forrester report~\cite{Forrester2017} coins the notion of {\em translytics}  as ``a unified and integrated data platform that supports multi-workloads such as transactional, operational and analytical simultaneously in real-time, ... and ensures full transactional integrity and data consistency''. Indeed, we see scalable data management platforms (e.g., Google Spanner~\cite{Spanner2012}, Apache Phoenix~\cite{phoenix}, and CockroachDB~\cite{cockroach}) shifting from NoSQL to full-fledged SQL interfaces in order to provide complex query semantics in conjunction with strong data guarantees. SQL support raises new requirements for transaction management, e.g., in the context of secondary index maintenance. 
+Adopting these technologies in new domains, in particular, real-time cloud analytics, raises three principal challenges: performance, functionality, and cloud-deployability, as we now explain.   
 
+{\bf Performance.\ }
 Similarly to many technologies, the adoption of transactions took a  ``functionality-first" trajectory. 
 For example, the developers of Spanner~\cite{Spanner2012} wrote: 
 %\begin{quote}
@@ -22,22 +22,32 @@ Yet the expectation for high performance is rapidly picking up.
 Whereas early transaction systems were  latency-insensitive~\cite{Percolator2010, Omid2017}, 
 with the thrust into new interactive domains like social networks~\cite{chatter},  
 messaging~\cite{Borthakur:2011} and algorithmic trading~\cite{opentsdb} latency becomes essential.  
-SLAs for interactive user experience mandate that simple updates and point queries  complete within single-digit milliseconds. Such applications motivate further speedup of transaction processing infrastructure. 
+SLAs for interactive user experience mandate that simple updates and point queries  complete within single-digit milliseconds. 
+%Such applications motivate further speedup of transaction processing infrastructure. 
 
-Finally, modern translytics platforms are built cloud-native. In particular, multi-tenancy becomes key 
+{\bf Functionality.\ }
+Transaction support in huge-scale applications was initially motivated by specific use cases like content indexing for web search~\cite{Percolator2010, Omid2017} but  rapidly evolved into a wealth of OLTP and operational analytics 
+applications (e.g.,~\cite{Borthakur:2011, F1-2013}). 
+%Moreover, managing all data and insights in one place is becoming a prevalent requirement. 
+A recent Forrester report~\cite{Forrester2017} coins the notion of {\em translytics}  as ``a unified and integrated data platform that supports multi-workloads such as transactional, operational and analytical simultaneously in real-time, ... and ensures full transactional integrity and data consistency''. Indeed, we see scalable data management platforms (e.g., Google Spanner~\cite{Spanner2012}, Apache Phoenix~\cite{phoenix}, and CockroachDB~\cite{cockroach}) shifting from NoSQL to full-fledged SQL interfaces in order to provide complex query semantics in conjunction with strong data guarantees. SQL support raises new requirements for transaction management, e.g., in the context of secondary index maintenance. 
+
+{\bf Cloud-deployability.\ }
+%Finally, 
+Modern translytics platforms are built cloud-native. In particular, multi-tenancy becomes key 
 for hosting data owned by multiple applications without breaching access rights. This requirement 
-affects the choices made while designing transaction processing systems. 
+affects design choices made in the transaction processing system. 
 
 % Drum roll 
+{\bf Omid evolution.\ }
 This paper describes recent functionality extensions and performance improvements 
 to Omid~\cite{omid}, an open source transaction manager for HBase, to power 
-Phoenix~\cite{phoenix} -- a SQL-compliant Hadoop data analytics platform designed 
-for cloud deployment. In contrast with earlier SQL query engines for Hadoop (e.g., 
+Phoenix~\cite{phoenix},  a Hadoop SQL-compliant  data analytics platform designed 
+for cloud deployment. In contrast to earlier SQL query engines for Hadoop (e.g., 
 Hive~\cite{hive} and Impala~\cite{impala}), which focused on large-scale processing
-of immutable data, Phoenix targets converged data ingestion and analytics in one 
-place~\cite{PhoenixUseCases} -- hence its need in transaction semantics. Phoenix
+of immutable data, Phoenix targets converged data ingestion and analytics~\cite{PhoenixUseCases},
+which necessitates transaction semantics. Phoenix
 applications are both latency- and throughput-sensitive. Phoenix uses HBase 
-as key-value storage layer, and Omid as transaction processing layer\footnote{
+as its key-value storage layer, and \inred{is adopting Omid as} its transaction processing layer\footnote{
 \small{Tephra is supported as alternative transaction manager, however its scalability 
 and reliability are lower than Omid's.}}. 
 
@@ -52,36 +62,36 @@ This paper makes the following contributions:
     \setlength{\parskip}{1pt}
     \setlength{\parsep}{1pt}  
 
-\item {\em Protocol re-design for low-latency transactions},. 
-The new protocol, denoted \sysll, dissipates a major architectural bottleneck. 
+\item {\em Protocol re-design for low-latency transactions}. 
+The new protocol,  \sysll, dissipates a major architectural bottleneck. 
 It reduces the latency of short transactions by 5x under light load, and 
 by 10x-100x under heavy load compared to legacy Omid. It also scales 
 the overall system throughput to 550K transactions per second while remaining 
-within real-time latency SLA's. In contrast with the previously published protocols 
+within real-time latency SLA's. In contrast to previously published protocols 
 (e.g.,~\cite{Percolator2010}), our solution is amenable to multi-tenancy.
 
-\item {\em Novel fast-path algorithm\/} (denoted \sys, experimental in the current version) 
-which maximizes the performance advantages for single-key transactions that are prevalent 
+\item {\em Novel fast-path algorithm}. The  novel (experimental) \sys\ protocol  
+maximizes the performance of  single-key transactions, which are prevalent 
 in latency-sensitive applications. It defines a dedicated API for single-read, 
 single-write and read-modify-write transactions.  Fast path transactions execute at the 
 latency of native HBase operations regardless of system load.
 %(thanks to HBase's near perfect horizontal scalability). 
-They run twice as fast as \sysll\/ transactions, and complete within 2-4 ms on mid-range hardware. 
-This comes at the cost of a minor ($15-25\%$) negative impact on long (latency-insensitive) transactions.  
+They run twice as fast as \sysll\/ transactions, and complete within 2--4 ms on mid-range hardware. 
+This comes at the cost of a minor (15--25$\%$) negative impact on long (latency-insensitive) transactions.  
 
-\item {\em SQL compliance algorithms\/} -- primarily, support of secondary indexes for 
-accelerated analytics. The new implementation allows index on-demand creation with 
-strong consistency guarantees, without impeding concurrent database operations. 
-   
+\item {\em SQL compliance\/}. We add support for creating 
+secondary indices on-demand for accelerated analytics, without impeding concurrent database operations
+or sacrificing consistency. 
+
 \end{enumerate}
 
-We extensively evaluate the new algorithms. 
-
-Finally, we explore the design space of the big data 
-transaction processing engines, highlighting the tradeoffs between various design choices.
-
-; the service's API and semantics are defined in  Section~\ref{sec:api}.  
-
+{\bf Roadmap.\ }
+ Section~\ref{sec:api} defines  the service API and semantics. Section~\ref{sec:ll} describes \sysll, 
+ our protocol redesign for improved performance with multi-tenancy support.  
+Section~\ref{sec:alg} details our fast path algorithm, \sys.
+We extensively evaluate the new algorithms in Section~\ref{sec:eval}.  
+The functionality extensions are given in Section~\ref{sec:sql}.  
+Section~\ref{sec:related} reviews related work, and  Section~\ref{sec:conclusions} concludes.
 
 
 \remove{

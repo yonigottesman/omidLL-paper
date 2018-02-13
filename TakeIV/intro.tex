@@ -37,8 +37,8 @@ Modern translytics platforms are built cloud-native. In particular, multi-tenanc
 for hosting data owned by multiple applications without breaching access rights. This requirement 
 affects design choices made in the transaction processing system. 
 
-% Drum roll 
-{\bf Omid evolution.\ }
+% Drum roll
+\subsection{Omid Evolution }
 This paper describes recent functionality extensions and performance improvements 
 we made in Omid~\cite{omid}, an open source transaction manager for HBase, to power 
 Phoenix~\cite{phoenix},  a Hadoop SQL-compliant  data analytics platform designed 
@@ -47,14 +47,10 @@ Hive~\cite{hive} and Impala~\cite{impala}), which focused on large-scale process
 of immutable data, Phoenix targets converged data ingestion and analytics~\cite{PhoenixUseCases},
 which necessitates transaction semantics. Phoenix
 applications are both latency- and throughput-sensitive. Phoenix uses HBase 
-<<<<<<< HEAD
 as key-value storage layer, and Omid as transaction processing layer\footnote{\small{Tephra 
 is supported as alternative transaction manager, however its scalability and reliability are inferior to Omid.}}. 
-=======
-as its key-value storage layer, and \inred{is adopting Omid as} its transaction processing layer\footnote{
-\small{Tephra is supported as alternative transaction manager, however its scalability 
-and reliability are lower than Omid's.}}. 
->>>>>>> f944b4f0a698756f78eb687b182e8dd6212359d1
+Being designed to scale to at least 10K query processing nodes, it exploits the scalability of its 
+underlying services. 
 
 \remove{
 Similarly to other modern transaction managers~\cite{Percolator2010,Spanner2012,tephra,cockroach}, it provides a (somewhat relaxed) 
@@ -81,13 +77,8 @@ in latency-sensitive applications. It defines a dedicated API for single-read,
 single-write and read-modify-write transactions.  Fast path transactions execute at the 
 latency of native HBase operations regardless of system load.
 %(thanks to HBase's near perfect horizontal scalability). 
-<<<<<<< HEAD
 They run twice as fast as \sysll\/ transactions, and complete within $2-4$ ms on mid-range hardware. 
 This comes at the cost of a minor ($15-25\%$) negative impact on long (latency-insensitive) transactions.  
-=======
-They run twice as fast as \sysll\/ transactions, and complete within 2--4 ms on mid-range hardware. 
-This comes at the cost of a minor (15--25$\%$) negative impact on long (latency-insensitive) transactions.  
->>>>>>> f944b4f0a698756f78eb687b182e8dd6212359d1
 
 \item {\em SQL compliance\/}. We add support for creating 
 secondary indices on-demand for accelerated analytics, without impeding concurrent database operations

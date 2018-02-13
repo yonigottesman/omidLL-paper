@@ -1,10 +1,11 @@
 
 
-We now describe \sysll, a scalable low-latency TPS.
+We now describe \sysll, a scalable low-latency TPS algorithm 
 % on top of HBase. 
 %\sys\ is an evolution of the open-source Omid TPS, redesigned to reduce latency.
 %For clarity of the presentation, in this section we describe \sys\ without the fast-path; 
-This protocol satisfies standard (unrelaxed) SI semantics.
+%This protocol 
+that satisfies standard (unrelaxed) SI semantics and is amenable to multi-tenancy.
 We begin in Section~\ref{ssec:schema} with  background on the modus operandi of existing TPSs that support SI, including Omid. 
 We will see that, while many TPSs follow a similar schema,  they make different design choices when implementing this schema. 
 We discuss our design choices in Section~\ref{ssec:ll-txns}. 
@@ -26,7 +27,7 @@ We now overview the phases a transaction goes through, focusing on Omid's approa
 
 \begin{algorithm}[tb]
 \begin{algorithmic}[1]
-\small
+%\small
 \Procedure{begin}{}
 \State obtain read timestamp $ts_r$ 
 \EndProcedure
@@ -50,10 +51,10 @@ We now overview the phases a transaction goes through, focusing on Omid's approa
 
 \Procedure{commit}{$ts_r$, write-set}
 \Statex \Comment check for write-write conflicts  \label{l:validate}
+\State obtain commit timestamp $ts_c$
 \If{validate(write-set, $ts_r$)}  
-	\State obtain commit timestamp $ts_c$
-	\Statex \Comment commit all write intents with version $ts_c$
-	\State atomically and persistently indicate commit   \label{l:commit}
+%	\Statex \Comment commit all write intents with version $ts_c$
+	\State write commit  version $ts_c$ to persistent commit entry \label{l:commit}
 \Else
 	\State abort	
 \EndIf
@@ -100,7 +101,7 @@ To this end, TPSs keep per-transaction \emph{commit entries}, which are the sour
 (pending, committed, or aborted). 
 This entry is updated in line~\ref{l:commit} of Algorithm~\ref{alg:schema} as we explain below, 
 and is checked in order to resolve write intents in line~\ref{l:resolve}.
-In some cases~\cite{Percolator2010,cockroach}, when the writing transaction status is undetermined, the read forcefully aborts
+In some cases~\cite{Percolator2010,cockroach}, when the status of the writing transaction  is undetermined, the read forcefully aborts
 it by updating the commit entry accordingly, as explained below.
 
 %Similarly, the solution we implement in \sys\ forces the transaction with the pending write intent to abort. 
@@ -142,35 +143,30 @@ Validation can be centralized~\cite{OmidICDE2014,Omid2017,tephra} or distributed
   transactions no longer incur this overhead for keys updated by the terminated
   transaction.}
 
+
+
 \subsection{\sysll\ design choices}
 \label{ssec:ll-txns}
 
-We now discuss our design choices, which are summarized and compared with other TPSs in  Table~\ref{table:design-space}. 
-We are not familiar with another TPS that makes the same design choices as \sysll\ and \sys. 
+We now discuss our design choices, which are geared towards high performance without sacrificing cloud deployability.
+They are compared with the choices made in other TPSs in  Table~\ref{table:design-space}. 
+We are not familiar with another TPS that makes the same design choices as \sysll. 
 
 
 \begin{table*}[htb]
 \small
 \centerline{
-\begin{tabular}{|l|cccccc|}
+\begin{tabular}{|l|ccccc|}
 \hline
- & 
- \multicolumn{2}{c}{		 validation} & 
-  \multicolumn{2}{c}{commit  entry}	& 
- resolving write intents & requires support \\
-TPS	
-& 	
-scheme & time & 
-location& update & 	
-on read may cause abort	& 
- from underlying data store \\
+TPS & validation & data store modification & commit  entry updates	&  multi-tenancy &
+ read may cause abort  \\
 \hline
-Percolator, \syspc & {\bf D} & commit & {\bf D} & {\bf D} & yes & yes \\
-Omid1, Tephra 	& {\bf C} & commit & {\bf R} & {\bf C} & no & no\\
-Omid  		& {\bf C} & commit & {\bf C} & {\bf C} & no & no\\
-CockroachDB	& {\bf D} & write     & {\bf C} & {\bf D} & yes & yes\\
-\sysll 		& {\bf C} & commit & {\bf D} & {\bf D} & yes & no\\
-\sys			& {\bf C} & commit & {\bf D} & {\bf D} & yes& yes\\
+Percolator, \syspc & {\bf D}  & yes & {\bf D} & no & yes \\
+CockroachDB	& {\bf D}     & yes & {\bf D} & yes & yes \\
+Omid1, Tephra 	& {\bf C}  & no & {\bf R} & yes & no \\
+Omid  		& {\bf C}  & no & {\bf C} & yes & no \\
+{\bf \sysll }		& {\bf C}  & {\bf no} & {\bf D} & {\bf yes} & {\bf yes} \\
+% \sys			& {\bf C} & {\bf D} & {\bf D} & yes& yes\\
 \hline
 \end{tabular}
 }
@@ -179,43 +175,60 @@ CockroachDB	& {\bf D} & write     & {\bf C} & {\bf D} & yes & yes\\
 \end{table*}
 
 
+
 \mypara{Centralized validation.}
-Percolator 
-%the first TPS in this vein, 
-used a 2PC protocol that locked all written objects during validation.
-While Percolator did this at commit time, CockroachDB~\cite{cockroach} performs distributed validation at write time, 
-by replacing writes with atomic check\&mutate operations that can abort either the current transaction or a conflicting one. 
+\sysll\ adopts Omid's centralized conflict detection mechanism, which eliminates the need for locking objects
+in the data store, and is extremely scalable~\cite{Omid2017}. 
+
+Other TPSs (like Percolator and  CockroachDB~\cite{cockroach}) instead use a distributed 2PC-like protocol that locks all written objects during validation (either at commit time or during the write). To this end, they use atomic check\&mutate operations on the underlying data store. This slows down either commits (in case of commit-time validation) or transactional writes (in case of write-time validation), which takes a toll on long transactions, where validation time is substantial. 
 \remove{
-This approach slows down either commits (in case of commit-time validation as in Percolator) or 
-transactional writes (in case of write-time validation). Moreover, it may hold locks for a long period (in case of a long transaction),
+%that can abort either the current transaction or a conflicting one. 
+Moreover, it may hold locks for a long period (in case of a long transaction),
 during which conflicts lead to aborts.  
 }
-In \sysll, we instead adopt Omid's centralized conflict detection mechanism, which eliminates the need for locking objects,
-and is extremely scalable~\cite{Omid2017}. This approach does not entail any changes to the underlying data store (HBase in our implementation),
-which can facilitate production deployment.
 
-For comparison, we also implement a 2PC-based version, \syspc.  We note that this variant \emph{does} necessitate changes in the 
-underlying data store to allow transaction validation (conflict detection) using check\&mutate for each written key. This makes data store writes slower,
-which takes a toll on long transactions, where validation time is substantial.
+To allow us to compare the two approaches, we also implement a 2PC-based version of Omid, \syspc.  
+%Furthermore, 
+%this approach does not entail any changes to the underlying data store (HBase in our implementation),
+%which can facilitate production deployment.
+\inred{
+We note that unlike our approach, this variant \emph{does} necessitate changes in the 
+underlying data store to allow transaction validation (conflict detection) using check\&mutate for each written key. 
+}
+%Using check\&mutate for all updates makes data store writes slower,
 
-
-\mypara{Distributed commit entry.}
+\mypara{Distributed commit entry updates with  multi-tenancy.}
 The early generation of Omid~\cite{OmidICDE2014} (referred to as Omid1) and Tephra replicate commit entries 
-of pending transactions among all active clients, 
-which consumes high bandwidth and does not scale. Omid and CockroachDB instead use dedicated tables. CockroachDB updates the table in a distributed manner, 
-while Omid has the centralized TM persist all commits. 
+of pending transactions among all active clients, which consumes high bandwidth and does not scale. Omid 
+%and CockroachDB 
+instead uses a dedicated table, and 
+%CockroachDB updates the table in a distributed manner, while Omid 
+has the centralized TM persist all commits to this table. 
 Our experiments show that the centralized access to commit entries is Omid's main scalability bottleneck, 
 and while this bottleneck is mitigated via batching commit table updates, this also increases latency.
-Omid chose this  option as it was designed for high throughput. Here, on the other hand, we target  low latency. 
+Omid chose this  option as it was designed for high throughput. 
 
-We therefore distribute the commit table as in Percolator: we  
-%opt to follow the design of Percolator, which 
-store each transaction's commit entry alongside its first written key,
-which we call the \emph{leader}, and store pointers to this leader at all other keys written by the transaction. 
-Thus,  transaction entries can be updated in parallel by 
-independent clients, and such updates are no longer a performance bottleneck. 
-We will see below that this modification reduces latency
+Here, on the other hand, we target  low latency. 
+We therefore distribute the commit entry updates, and allow commit entries of different transactions to be 
+updated in parallel by independent clients. We will see below that this modification reduces latency
 by up to an order of magnitude on small transactions.
+
+\inred{
+We note that commit table updates are distributed also in CockroachDB and Percolator. 
+Percolator takes this approach one step further, and distributes not only the commit table updates 
+but also the actual commit entries. There, commit entries reside in user data tables, where the first table 
+accessed in a given transaction holds the commit entry for that transaction.
+The problem with this approach is that it assumes that all clients have permissions to access all 
+data tables -- a transaction attempting to read from  table $A$ may encounter a write intent 
+produced by a transaction that accessed table $B$ before table $A$, and will need to refer to 
+that transaction's commit entry in table $B$ in order to determine its status. 
+This did not pose a problem in Percolator, which was designed for use inside Google's 
+data centers, but is usually unacceptable in multi-tenant data stores.
+
+Unlike data tables, which are owned by individual applications that manage their permissions,  
+the dedicated commit table is owned by the TPS. It is not accessed direclty by application code,
+but rather from transactional code that is part of the TPS.
+}
 
 \mypara{Write intent resolution.}
 As in other TPSs, reads resolve write intents via the commit entry.
@@ -232,7 +245,9 @@ This is achieved
 %a single TM that allocates timestamps, performs validation, and writes the commit entry.
 either by delaying begin and commit requests until all transactions that concurrently attempt to commit complete (as in Omid),
 or sending information about all these transactions to the beginning client (as in Omid1 and Tephra).
-\sys\ avoids such costly mechanisms by allowing reads to force aborts. 
+\sysll\ avoids such costly mechanisms by allowing reads to force aborts. 
+
+
 
 \remove{
 

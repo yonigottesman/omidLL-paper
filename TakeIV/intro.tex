@@ -18,16 +18,15 @@ a single data platform, to avoid lengthy and error-prone extract-transform-load 
 A Forrester report~\cite{Forrester2017} coins the notion of {\em translytics}  as ``a unified and integrated data platform that supports multi-workloads such as transactional, operational and analytical simultaneously in real-time, ... and ensures full transactional integrity and data consistency''. 
 
 {\inred{As the use cases become more complex, application developers tend to prefer high-level SQL abstractions to 
-crude NoSQL data access methods. }} Indeed, we see scalable data management platforms (e.g., Google Spanner~\cite{Spanner2012}, Apache Phoenix~\cite{phoenix}, and CockroachDB~\cite{cockroach}) providing full-fledged SQL interfaces in order to support complex query semantics in conjunction with strong data guarantees. SQL API raises new requirements for transaction management, e.g., in the context of secondary index maintenance. 
+crude NoSQL data access methods. }} Indeed, we see scalable data management platforms (e.g., Google Spanner~\cite{Spanner2012}, Apache Phoenix~\cite{phoenix}, and CockroachDB~\cite{cockroach}) providing full-fledged SQL interfaces in order to support complex query semantics in conjunction with strong data guarantees. SQL API raises new requirements for transaction management, e.g., in the context of maintaining secondary indexes for accelerated analytics. 
 
 {\bf Scale.\ } 
 {\inred{Public cloud instances are built to efficiently serve a multitude of applications 
 with elastic resource demands. This efficiency is achieved through huge scale. The 
 cloud-first data platforms are therefore designed to scale well beyond the limits of single-application 
-infrastructure -- even web search. For example, Phoenix is designed to scale to 10K SQL compute
-nodes on top of thousands of HBase KV-storage nodes in one instance. Such expectations push 
-the scalability requirements from the transaction processing infrastructure to hundreds of thousands
-or even millions transactions per second (tps). 
+infrastructure -- even web search. For example, Phoenix is designed to scale to 10K query processing 
+nodes in one instance. Such expectations push the scalability limits of the transaction processing 
+infrastructure to hundreds of thousands or even millions transactions per second (tps). 
  }}
 
 {\bf Latency.\ }
@@ -60,15 +59,14 @@ Hive~\cite{hive} and Impala~\cite{impala}), which focused on large-scale process
 of immutable data, Phoenix targets converged data ingestion and analytics~\cite{PhoenixUseCases},
 which necessitates transaction semantics. Phoenix
 applications are both latency- and throughput-sensitive. Phoenix uses HBase 
-as key-value storage layer, and Omid as transaction processing layer\footnote{\small{Tephra 
+as key-value storage layer, and Omid as transaction processing layer atop HBase\footnote{\small{Tephra 
 is supported as alternative transaction manager, however its scalability and reliability are inferior to Omid.}}. 
-Being designed to scale to at least 10K query processing nodes, it exploits the scalability of its 
-underlying services. 
 
-\remove{
-Similarly to other modern transaction managers~\cite{Percolator2010,Spanner2012,tephra,cockroach}, it provides a (somewhat relaxed) 
-variant of \emph{snapshot isolation (SI)}~\cite{DBLP:conf/sigmod/BerensonBGMOO95}, 
-which scales better than traditional serializability implementations.}
+Omid provides a (somewhat relaxed) variant of \emph{snapshot isolation (SI)}~\cite{DBLP:conf/sigmod/BerensonBGMOO95}, similarly to other modern transaction managers~\cite{Percolator2010,Spanner2012,tephra,cockroach}. Its implementation is lock-free, 
+which makes it scale better than traditional lock-based serializability protocols.
+{\inred{Omid is database-neutral, i.e., it could use any data store with 
+traditional NoSQL API (see Section~\ref{sec:api}). For example, it does 
+not require any changes to HBase code.  }}
 
 This paper makes the following contributions: 
 \begin{enumerate}
@@ -77,14 +75,14 @@ This paper makes the following contributions:
     \setlength{\parsep}{1pt}  
 
 \item {\em Protocol re-design for low-latency transactions}. 
-The new protocol,  \sysll, dissipates a major architectural bottleneck. 
+The new protocol,  \sysll, dissipates Omid's major architectural bottleneck. 
 It reduces the latency of short transactions by 5x under light load, and 
 by 10x-100x under heavy load compared to the legacy Omid. It also scales 
-the overall system throughput to 550K transactions per second while remaining 
+the overall system throughput to 550K tps while remaining 
 within real-time latency SLA's. In contrast to previously published protocols 
 (e.g.,~\cite{Percolator2010}), our solution is amenable to multi-tenancy.
 
-\item {\em Novel fast-path algorithm}. The  novel (experimental) \sys\ protocol  
+\item {\em Novel fast-path algorithm\/}. The  novel (experimental) \sys\ protocol  
 maximizes the performance of  single-key transactions, which are prevalent 
 in latency-sensitive applications. It defines a dedicated API for single-read, 
 single-write and read-modify-write transactions.  Fast path transactions execute at the 
@@ -93,9 +91,18 @@ latency of native HBase operations regardless of system load.
 They run twice as fast as \sysll\/ transactions, and complete within $2-4$ ms on mid-range hardware. 
 This comes at the cost of a minor ($15-25\%$) negative impact on long (latency-insensitive) transactions.  
 
-\item {\em SQL compliance\/}. We add support for creating 
-secondary indices on-demand for accelerated analytics, without impeding concurrent database operations
-or sacrificing consistency. 
+\item {\em SQL compliance\/}. We add support for creating secondary indexes on-demand, 
+without impeding concurrent database operations or sacrificing consistency. 
+{\inred{We also extend the traditional SI model, which provides a single-read-point 
+semantics, with multiple read points, which helps to avoid recursive 
+read-your-own-writes scenarios in complex queries.}} 
+
+\item {\inred {{\em Design space\/}. We explore the design choices of transaction processing engines 
+for NoSQL data stores, highlighting the tradeoffs between them. In particular, we compare Omid's 
+approach based on a centralized conflict tie breaker to the two-phase commit (2PC) approach
+adopted by Percolator~\cite{Percolator2010} and CockroachDB~\cite{cockroach}.
+We implement a variant of Omid, named \syspc, which follows Percolator's protocol, 
+and compare its properties to our solution.}}
 
 \end{enumerate}
 
@@ -104,8 +111,8 @@ or sacrificing consistency.
  our protocol redesign for improved performance with multi-tenancy support.  
 Section~\ref{sec:alg} details our fast path algorithm, \sys.
 We extensively evaluate the new algorithms in Section~\ref{sec:eval}.  
-The functionality extensions are given in Section~\ref{sec:sql}.  
-Section~\ref{sec:related} reviews related work, and  Section~\ref{sec:conclusions} concludes.
+Section~\ref{sec:sql} describes functionality extensions for SQL support.  
+Section~\ref{sec:related} reviews related work, and  Section~\ref{sec:conclusions} concludes the paper.
 
 
 \remove{

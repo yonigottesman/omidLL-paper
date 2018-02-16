@@ -1,16 +1,36 @@
 % Transactions in big-data platforms
-In recent years, transaction processing~\cite{Gray:1992:TPC:573304} technologies have paved their way into multi-petabyte big data 
-platforms~\cite{Percolator2010,Spanner2012,Omid2017}. 
+In recent years, transaction processing~\cite{Gray:1992:TPC:573304} technologies have paved their way into multi-petabyte big data platforms~\cite{Percolator2010,Spanner2012,Omid2017}. 
 %In some cases, they are built into the storage system itself~\cite{Spanner2012} whereas in the others they are standalone services~\cite{Omid2017}. 
 Modern industrial transaction processing systems~\cite{Percolator2010, Omid2017, tephra, cockroach} complement 
-existing underlying NoSQL key-value storage with {\em atomicity}, {\em consistency}, {\em isolation\/} and {\em durability} (ACID) 
-semantics that enable programmers to perform complex data manipulation without over-complicating their applications. 
-Google's Percolator~\cite{Percolator2010} pioneered a transaction API atop the Bigtable storage. Apache 
+existing underlying NoSQL key-value storage with {\em atomicity}, {\em consistency}, {\em isolation\/} and {\em durability} (ACID) semantics that enable programmers to perform complex data manipulation without over-complicating their applications. Google's Percolator~\cite{Percolator2010} pioneered a transaction API atop the Bigtable storage. Apache 
 Incubator projects Tephra~\cite{tephra} and Omid~\cite{Omid2017} followed suit with Apache HBase~\cite{hbase}. 
 
-Adopting these technologies in new domains, in particular, real-time cloud analytics, raises three principal challenges: performance, functionality, and cloud-deployability, as we now explain.   
+{\inred {This trend happens in parallel with massive transition of big data services to public clouds -- 
+e.g., the AWS cloud can run HBase as part of its Elastic Mapreduce (EMR) suite~\cite{emr}. 
+Adapting a transaction processing technology for cloud use amplifies existing challenges and raises new ones, 
+as we now highlight.  }}
 
-{\bf Performance.\ }
+{\bf Diverse functionality.\ }
+Large-scale transaction support was initially motivated by specific use cases like content indexing for 
+web search\cite{Percolator2010, Omid2017} but  rapidly evolved into a wealth of OLTP and  analytics 
+applications (e.g.,~\cite{F1-2013}). {\inred{Today, the users expect to manage diverse workloads within 
+a single data platform, to avoid lengthy and error-prone extract-transform-load (ETL) processes. }}
+A Forrester report~\cite{Forrester2017} coins the notion of {\em translytics}  as ``a unified and integrated data platform that supports multi-workloads such as transactional, operational and analytical simultaneously in real-time, ... and ensures full transactional integrity and data consistency''. 
+
+{\inred{As the use cases become more complex, application developers tend to prefer high-level SQL abstractions to 
+crude NoSQL data access methods. }} Indeed, we see scalable data management platforms (e.g., Google Spanner~\cite{Spanner2012}, Apache Phoenix~\cite{phoenix}, and CockroachDB~\cite{cockroach}) providing full-fledged SQL interfaces in order to support complex query semantics in conjunction with strong data guarantees. SQL API raises new requirements for transaction management, e.g., in the context of secondary index maintenance. 
+
+{\bf Scale.\ } 
+{\inred{Public cloud instances are built to efficiently serve a multitude of applications 
+with elastic resource demands. This efficiency is achieved through huge scale. The 
+cloud-first data platforms are therefore designed to scale well beyond the limits of single-application 
+infrastructure -- even web search. For example, Phoenix is designed to scale to 10K SQL compute
+nodes on top of thousands of HBase KV-storage nodes in one instance. Such expectations push 
+the scalability requirements from the transaction processing infrastructure to hundreds of thousands
+or even millions transactions per second (tps). 
+ }}
+
+{\bf Latency.\ }
 Similarly to many technologies, the adoption of transactions took a  ``functionality-first" trajectory. 
 For example, the developers of Spanner~\cite{Spanner2012} wrote: 
 %\begin{quote}
@@ -18,24 +38,17 @@ For example, the developers of Spanner~\cite{Spanner2012} wrote:
 is better to have application programmers deal with performance problems due to overuse 
 of transactions as bottlenecks arise, rather than always coding around the lack of transactions''. 
 %\end{quote}
-Yet the expectation for high performance is rapidly picking up. 
+Yet the expectation for low latency is rapidly picking up. 
 Whereas early transaction systems were  latency-insensitive~\cite{Percolator2010, Omid2017}, 
 with the thrust into new interactive domains like social networks~\cite{chatter},  
 messaging~\cite{Borthakur:2011} and algorithmic trading~\cite{opentsdb} latency becomes essential.  
-SLAs for interactive user experience mandate that simple updates and point queries  complete within single-digit milliseconds. 
-%Such applications motivate further speedup of transaction processing infrastructure. 
+SLAs for interactive user experience mandate that simple updates and point queries  complete within 
+single-digit milliseconds. {\inred{In particular, transaction processing systems can no more trade latency for
+scale as they used to~\cite{Omid2017}. }}
 
-{\bf Functionality.\ }
-Transaction support in huge-scale applications was initially motivated by specific use cases like content indexing for web search~\cite{Percolator2010, Omid2017} but  rapidly evolved into a wealth of OLTP and operational analytics 
-applications (e.g.,~\cite{Borthakur:2011, F1-2013}). 
-%Moreover, managing all data and insights in one place is becoming a prevalent requirement. 
-A recent Forrester report~\cite{Forrester2017} coins the notion of {\em translytics}  as ``a unified and integrated data platform that supports multi-workloads such as transactional, operational and analytical simultaneously in real-time, ... and ensures full transactional integrity and data consistency''. Indeed, we see scalable data management platforms (e.g., Google Spanner~\cite{Spanner2012}, Apache Phoenix~\cite{phoenix}, and CockroachDB~\cite{cockroach}) shifting from NoSQL to full-fledged SQL interfaces in order to provide complex query semantics in conjunction with strong data guarantees. SQL support raises new requirements for transaction management, e.g., in the context of secondary index maintenance. 
-
-{\bf Cloud-deployability.\ }
-%Finally, 
-Modern translytics platforms are built cloud-native. In particular, multi-tenancy becomes key 
-for hosting data owned by multiple applications without breaching access rights. This requirement 
-affects design choices made in the transaction processing system. 
+{\bf Multi-tenancy.\ } {\inred{Data privacy is key in systems that host data owned by multiple applications.
+Maintaining the access rights affects design choices made in the transaction processing system, 
+e.g., how it maintains its shared persistent state. }}
 
 % Drum roll
 \subsection{Omid Evolution }

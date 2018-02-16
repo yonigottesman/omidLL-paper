@@ -50,11 +50,14 @@ Maintaining the access rights affects design choices made in the transaction pro
 e.g., how it maintains its shared persistent state. }}
 
 % Drum roll
-\subsection{Omid Evolution }
+\subsection{Omid-Evolution }
 This paper describes recent functionality extensions and performance improvements 
 we made in Omid~\cite{omid}, an open source transaction manager for HBase, to power 
 Phoenix~\cite{phoenix},  a Hadoop SQL-compliant  data analytics platform designed 
-for cloud deployment. In contrast to earlier SQL query engines for Hadoop (e.g., 
+for cloud deployment\footnote{\small{\url{https://issues.apache.org/jira/browse/PHOENIX-3623}
+summarizes the new features' development process.}}. 
+
+In contrast to earlier SQL query engines for Hadoop (e.g., 
 Hive~\cite{hive} and Impala~\cite{impala}), which focused on large-scale processing
 of immutable data, Phoenix targets converged data ingestion and analytics~\cite{PhoenixUseCases},
 which necessitates transaction semantics. Phoenix

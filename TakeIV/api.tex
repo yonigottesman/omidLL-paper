@@ -139,8 +139,8 @@ Note that as with SI, two concurrent transactions conflict only if they both \em
 In contrast, under serializability, a transaction that updates an item also conflicts with transactions that \emph{read} that item. 
 Snapshot isolation is thus amenable to implementations (using multi-versioning) that 
 allow more concurrency than serializable ones, and hence scale better.
-It is therefore provided by popular database technologies such as Oracle, PostgreSQL, and SQL Server,
-and TPSs such as Percolator, Omid, Tephra, and  CockroachDB.
+It is provided by popular database technologies such as Oracle, PostgreSQL, and SQL Server,
+and TPSs such as Percolator, Omid, and  CockroachDB.
 
 Following a commit call, the transaction may successfully \emph{commit}, whereby all of its operations take effect, 
 or 

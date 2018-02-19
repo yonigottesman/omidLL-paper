@@ -115,8 +115,8 @@ a decentralized \emph{two-phase commit (2PC)}-based approach, as
 % describes functionality extensions for SQL support.  
 We add support for creating secondary indices on-demand, 
 without impeding concurrent database operations or sacrificing consistency. 
-We further extend the traditional SI model, which provides single-read-point 
-semantics, with multiple read points, used to avoid recursive 
+We further extend the traditional SI model, which provides single-read-point-single-write-point
+semantics, with multiple read and write points. This functionality is used to avoid recursive 
 read-your-own-writes scenarios in complex queries. 
 
 \remove{
@@ -132,7 +132,7 @@ and compare its properties to our solution.}}
 \end{enumerate}
 
 Finally,
-Section~\ref{sec:related} reviews related work, and  Section~\ref{sec:conclusions} concludes the paper.
+Section~\ref{sec:related} reviews related work, and  Section~\ref{sec:conclusions} concludes. % the paper.
 
 
 \remove{

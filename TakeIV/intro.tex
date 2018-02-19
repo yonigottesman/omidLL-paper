@@ -113,22 +113,9 @@ a decentralized \emph{two-phase commit (2PC)}-based approach, as
  adopted in Percolator and CockroachDB.
 
 \item {\em SQL compliance} (Section~\ref{sec:sql}). 
-% describes functionality extensions for SQL support.  
-We add support for creating secondary indices on-demand, 
+We add support for creating secondary indexes on-demand, 
 without impeding concurrent database operations or sacrificing consistency. 
-We further extend the traditional SI model, which provides single-read-point-single-write-point
-semantics, with multiple read and write points. This functionality is used to avoid recursive 
-read-your-own-writes scenarios in complex queries. 
-
-\remove{
-\item {\inred {{\em Design space\/}. 
-We explore the design choices of transaction processing engines 
-for NoSQL data stores, highlighting the tradeoffs between them. In particular, we compare Omid's 
-approach based on a centralized conflict tie breaker to the two-phase commit (2PC) approach
-adopted by Percolator~\cite{Percolator2010} and CockroachDB~\cite{cockroach}.
-We implement a variant of Omid, named \syspc, which follows Percolator's protocol, 
-and compare its properties to our solution.}}
-}
+We further extend the traditional SI model, which provides single-read-point-single-write-point semantics, with multiple read and write points. This functionality is used to avoid recursive read-your-own-writes scenarios in complex queries. 
 
 \end{enumerate}
 

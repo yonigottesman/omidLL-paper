@@ -36,7 +36,7 @@ enables this optimization by allowing selective inclusion of keys in the working
 Note that the above mechanism is not unique for indexes. It applies to all types of derived data, 
 e.g., materialized views. 
 
-\subsection{Extended Snapshot Semantics}
+\subsection{Extended snapshot semantics}
 
 Some applications may prefer to avoid observing the writes made by same transaction --
 a deviation from the standard SI model, which provides the ``read-your-own-writes'' 
@@ -73,5 +73,5 @@ the data), Omid applies {\em snapshot\/}.
 A transaction can generate $\Delta-1$ snapshots without affecting 
 the overall correctness. By default, Omid sets $\Delta=50$.  
 
-\subsection{Scan Performance} In many cases, Phoenix pushes computation close to data, in order
+\subsection{Scan performance} In many cases, Phoenix pushes computation close to data, in order
 to speed up query evaluation.

@@ -1,8 +1,7 @@
-{\inred{
-
 Comprehensive SQL support in Phoenix required multiple extensions to Omid. 
 
-{\bf Indexes. \/} A secondary index in SQL is an auxiliary table that provides fast access to data in a table 
+\subsection{Indexes}
+A secondary index in SQL is an auxiliary table that provides fast access to data in a table 
 by a key that is different from the table's primary key. This need often emerges in analytics scenarios, in
 which data is accessed by multiple dimensions. Typically, the secondary key serves as the index's primary;
 it is associated with the unique reference into the base table (e.g., primary key + timestamp). SQL query 
@@ -31,17 +30,48 @@ timestamp and tries to commit after it. Note that fence timestamps do not burden
 significantly: every fence is retired after being installed beyond the maximal transaction lifetime. 
 
 Since the TM detects all write conflicts at the base table level, there is no need to embed the affected 
-secondary index keys in the commit request. Hence, the load on the TM does not increase. Omid enables 
-this optimization by allowing selective inclusion of keys in the working set. 
+secondary index keys in the commit request. Hence, the load on the TM does not increase. Omid 
+enables this optimization by allowing selective inclusion of keys in the working set. 
 
 Note that the above mechanism is not unique for indexes. It applies to all types of derived data, 
 e.g., materialized views. 
 
-{\bf Multiple read points. \/}
+\subsection{Extended Snapshot Semantics}
 
-%{\sc Insert into T (id, grade, date) \\  Select (id, grade, ?today) \\ From T}
+Some applications may prefer to avoid observing the writes made by same transaction --
+a deviation from the standard SI model, which provides the ``read-your-own-writes'' 
+semantics. 
 
-{\bf Scan performance. \/} In many cases, Phoenix pushes computation close to data, in order
+For example, consider a social networking application that stores its adjacency graph 
+as table of neighbor pairs. The transitive closure computation atop this graph performs
+multiple iterations. Each iteration scans the existing data, computes new edges in the 
+graph, and inserts them back into the table. It can be implemented by a single 
+{\sc Insert into T \ldots Select from T \ldots \/} statement, which may perform its reads and writes in parallel. 
+The desirable semantics are that the reads only see the data that existed prior to the 
+statement's execution. 
+
+This behavior is provided by Omid's {\em snapshot isolation exclude-current} (SIX) 
+consistency level. To this end, the TM promotes its transaction timestamp counter $ts_r$ 
+in leaps of $\Delta > 1$ (rather than $1$, as originally presented).  The client manages 
+two distinct local timestamps for reads ($\tau_r$) and writes ($\tau_w$). By default, 
+it holds that  $\tau_r = \tau_w = ts_r$, implying the traditional SI behavior. Omid 
+defines two new methods, {\em snapshot\/} and {\em checkpoint}, to increment 
+$\tau_r$ and $\tau_w$, respectively. If the consistency level is set to SIX, 
+it maintains 
+\[
+\tau_w = \tau_r+1 < ts_r+\Delta,
+\]
+thereby separating the reads from the writes. For example, the execution of 
+the above {\sc Insert into T \ldots Select from T \ldots \/} statement applies 
+{\em checkpoint\/} prior to accessing the data. If a transaction spans multiple 
+statements (e.g., computes the transitive closure in multiple iterations), 
+every statement beyond the first one applies both {\em snapshot\/} 
+and {\em checkpoint}, thereby exposing the data written by the prior 
+statement while maintaining the invariant. If the consistency level is
+set back to SI (e.g., in order to let a {\sc Select\/} statement read all 
+the data), Omid applies {\em snapshot\/}.  
+A transaction can generate $\Delta-1$ snapshots without affecting 
+the overall correctness. By default, Omid sets $\Delta=50$.  
+
+\subsection{Scan Performance} In many cases, Phoenix pushes computation close to data, in order
 to speed up query evaluation.
-
-}

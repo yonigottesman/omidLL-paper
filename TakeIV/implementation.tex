@@ -6,62 +6,56 @@
   
   \begin{subfigure}[tb]{\columnwidth}
       \centering\small
-    \begin{tabular}{|c|c|c|c|c|}
-      \hline
-      key & value & version & commit& leader\\
-      %\hline
-      \hline
-      k1 & a & 3 & nil &\tuple{k1,3}\\
-      %\hline
-      k2 & b & 3 & nil &\tuple{k1,3}\\
-      %\hline
-      k3 & c & 3 & nil &\tuple{k1,3}\\
-      \hline
-    \end{tabular}
+      
+      
+      \begin{tabular}{|c|c|c|c| c| c | c|}
+\multicolumn{4}{c}{Data Table}&  \multicolumn{3}{r}{\hspace{1mm} Commit Table}\\
+\cline{1-4} \cline{6-7}
+key & value & version & commit & & $ts_r$ & $ts_c$ \\
+\cline{1-4} \cline{6-7}
+$k_1$ & a & 3 & nil & &  &  \\
+\cline{6-7} \cline{1-4}
+\end{tabular}
+    
 	\caption[]{Pending transaction}
     \label{fig:model:tentative}
   \end{subfigure}
   
   \begin{subfigure}[t]{\columnwidth}
     \centering\small
-    \begin{tabular}{|c|c|c|c|c|}
-      \hline
-      key & value & version & commit& leader\\
-      \hline
-      %\hline
-      k1 & a & 3 & 7&\tuple{k1,3}\\
-      %\hline
-      k2 & b & 3 & nil &\tuple{k1,3}\\
-      %\hline
-      k3 & c & 3 & nil &\tuple{k1,3}\\
-      \hline
-    \end{tabular}
-	\caption[]{Committed transaction}
+    
+          \begin{tabular}{|c|c|c|c| c| c | c|}
+\multicolumn{4}{c}{Data Table}&  \multicolumn{3}{r}{\hspace{1mm} Commit Table}\\
+\cline{1-4} \cline{6-7}
+key & value & version & commit & & $ts_r$ & $ts_c$ \\
+\cline{1-4} \cline{6-7}
+$k_1$ & a & 3 & nil & & 3 & 7 \\
+\cline{6-7} \cline{1-4}
+\end{tabular}
+    	\caption[]{Committed transaction}
     \label{fig:model:committed}
   \end{subfigure}
 
 
   \begin{subfigure}[tb]{\columnwidth}
     \centering\small
-    \begin{tabular}{|c|c|c|c|c|}
-      \hline
-      key & value & version & commit& leader\\
-      \hline
-      %\hline
-      k1 & a & 3 & 7&\tuple{k1,3}\\
-      %\hline
-      k2 & b & 3 & 7&\tuple{k1,3}\\
-      %\hline
-      k3 & c & 3 & 7&\tuple{k1,3}\\
-      \hline
-    \end{tabular}
+          \begin{tabular}{|c|c|c|c| c| c | c|}
+\multicolumn{4}{c}{Data Table}&  \multicolumn{3}{r}{\hspace{1mm} Commit Table}\\
+\cline{1-4} \cline{6-7}
+key & value & version & commit & & $ts_r$ & $ts_c$ \\
+\cline{1-4} \cline{6-7}
+$k_1$ & a & 3 & 7& & 3 & 7 \\
+\cline{6-7}
+%$k_2$ & b & 3 & nil \\
+\cline{1-4}
+\end{tabular}
 	\caption[]{Post-committed transaction}
     \label{fig:model:postcommit}
   \end{subfigure}
 
   
-  \caption{Evolution of \sysll\ metadata during a transaction. The transaction receives $ts_r=3$ in the begin stage, 
-  and $ts_c=7$ when committing; its leader is \tuple{k1,3}.}
+  \caption{Evolution of \sysll\ metadata during a transaction. The transaction receives $ts_r=3$ in the begin stage 
+  and uses this as the version number for tentative writes. It receives a commit timestamp $ts_c=7$ when committing.}
   \label{fig:model}
 \end{figure}
 
@@ -69,7 +63,7 @@
 
 \begin{algorithm}[htb]
 \begin{algorithmic}[1]
-\small
+%\small
 \Procedure{begin}{}
 \State checkRenew()
 \State return Clock.fetchAndIncrement()
@@ -105,19 +99,22 @@
 
 \begin{algorithm}[t]
   \begin{algorithmic}
-    \small
-      \Procedure{read}{$ts_r$, key} 
+ %   \small
+ \Procedure{begin}{}
+       \State  return TM.begin
+\EndProcedure
+%
+  \Procedure{write}{$ts_r$, key, val}
+       \State  return ds.put(key, val, $ts_r$, nil)
+       \State  track key in write-set 
+\EndProcedure
+%     
+\Procedure{read}{$ts_r$, key} 
       \For{rec $\leftarrow$ ds.get(key, versions down from $ts_r$)}
-		\If{rec.commit $\not \in\{$nil, abort$\}$} \Comment committed
-     			 \If{rec.commit $< ts_r$}  \State return rec.value \EndIf
-      		\ElsIf{rec.commit = nil}  
- 			\State $ts_c \leftarrow$ {\sc checkStatus}(rec.leader, $ts_r$)
-   			\State rec.commit $\leftarrow ts_c$ \Comment helping 
- 			 \If{$ts_c \not=$ abort  $\wedge\ ts_c <  ts_r$}  \State return  rec.value \EndIf
-      		\EndIf
-      		
-
-
+ 			\State $ts_c \leftarrow$ {\sc checkStatus}(rec, $ts_r$)
+       			 \If{$ts_c \not=$ abort  $\wedge\ ts_c <  ts_r$}  
+ 			 	\State return  rec.value 
+			\EndIf
       \EndFor
       \State  return nil
       \EndProcedure
@@ -137,23 +134,34 @@
 %			\State return abort
 %	   	\EndProcedure
 
-      		\Procedure{checkStatus}{k, ts} 
+      		\Procedure{checkStatus}{rec, ts} 
 	%	     	 \While{true} \Comment at most two iterations 
-      				\State rec $\leftarrow$ ds.get(k, ts) 
-     				 \If{rec $=$ nil} 
-     				 	 return abort \Comment{leader removed} 
-     				 \EndIf 		
-     				 
-     				 \If{rec.commit $=$ nil}  \Comment{abort transaction} 
-     				 	\State ok $\leftarrow$ ds.check\&mutate(k, ts, commit, nil, abort)
-					\If{ok}
-						\State return abort	
-					\Else \Comment commit  no longer nil, retry
-						\State return {\sc checkStatus}(k, ts)
-	     				 \EndIf 			
+			\If{rec.commit $\not =$nil}  
+     			 \State return rec.commit \EndIf
+      				\State $ts_c  \leftarrow$ CT.get(ts) 
+      				\If{$ts_c = nil$}  \Comment no CT entry -- set transaction status to $\bot$
+      					\State $ts_c \leftarrow$ CT.putIfAbsent(ts, $\bot$) 
+      					 \Comment returns new value
 				\EndIf
-%				\Else\ 
-				\State return rec.commit  %\Comment transaction is complete 
+      				
+ 				 \If{$ts_c = \bot$  }  
+ 				 	\State \Comment check for race: committed before $\bot$ entry was created
+ 				 	\If{rec.commit $\not =$nil}  return rec.commit \EndIf
+ 				 	\State return abort 				
+				\EndIf
+
+%
+ %    				 \If{$ts_c =$ nil}  \Comment{abort transaction}  
+     				% 	\State ok $\leftarrow$ CT.putIfAbsent(ts, abort)
+%					\If{CT.putIfAbsent(ts, abort)}
+%						\State return abort	
+%					\Else \Comment entry no longer nil, retry
+%						\State return {\sc checkStatus}(ts)
+%	     				 \EndIf 			
+%				\EndIf
+%				return abort
+%				\Else
+%					\State return rec.commit  %\Comment transaction is complete 
 %					\State return leader.commit \Comment transaction is complete
 %				\EndIf 		     	 	
 %		     	 \EndWhile
@@ -164,10 +172,10 @@
       	\remove{\State ds.flush}
       	\State $ts_c \leftarrow$ TM.commit($ts_r$, write-set) \Comment may return abort
       	\If{$ts_c \not=$ abort}
-		\State leader  $\leftarrow$ first written key in write-set %getLeader(write-set)
-	      	 \State  ok $\leftarrow$ ds.check\&mutate(leader, $ts_r$, commit, nil,  $ts_c$)
-   		\If{$\neg$ok} 
-   		 $ts_c \leftarrow$ abort \EndIf
+	      	\If {CT.putIfAbsent($ts_r$, $ts_c$) $=\bot$}
+%   		\If{$\neg$ok} 
+   		 	\State $ts_c \leftarrow$ abort 
+   		 \EndIf
 	\EndIf
 	\State \Comment post-commit
 	\ForAll{keys k $\in$ write-set}
@@ -179,29 +187,20 @@
 \EndProcedure
       
   \end{algorithmic}
-  \caption{\sysll's read and commit operations.} 
+  \caption{\sysll's client-side operations.} 
   %for transaction with read timestamp $ts_r$.}
   \label{fig:get-pseudocode}
 \end{algorithm} 
 
-Like Omid, \sysll\ uses a dedicated commit table for storing commit entries. 
-Unlike Omid, however, \sysll\ distributes the table updates, and thus dissipates Omid's principal bottleneck.
- 
+Like Omid, \sysll\ uses a dedicated \emph{commit table (CT)} for storing commit entries.
+A transaction is atomically committed by adding to the CT a commit entry mapping its $ts_r$ to its $ts_c$.
+The post-commit phase then copies this information to 
+a dedicated \emph{commit} column in the data table, in order to spare future reading transactions
+ the overhead of checking the commit table. 
+ Figure~\ref{fig:model} shows the metadata of a transaction during its stages of execution. 
 
-The metadata used by \sysll\ for transaction management is stored in a dedicated commit table 
-as well as an   additional \emph{commit} column associated with each object version in the data store.
-The \emph{commit} column is added upon commit, and includes  the  $ts_c$ of the transaction that
-committed this version. 
-
-
-Since the commit needs to be an atomic step, the transaction commits via a single atomic write 
-to the commit table, followed by a lazy update of the commit cells. 
-
-Transactional read operations that find a nil commit entry 
-refer to the leader to find out whether the value they are attempting to read has been committed.
-Figure~\ref{fig:model} shows the metadata of a transaction during its stages of execution. 
-
-\sysll's TM is a simplified version of Omid's TM, and appears  in Algorithm~\ref{alg:ha}. It has two roles:
+Whereas Omid's CT is updated by the TM, \sysll\ distributes the CT updates amongst the clients.
+Its TM is thus a simplified version of Omid's TM, and appears  in Algorithm~\ref{alg:ha}. It has two roles:
 First, it allocates begin and commit timestamps by fetching-and-incrementing a monotonically increasing global clock.
 Second, upon commit, it calls the \emph{conflictDetect} function, which 
 performs validation (i.e., conflict detection) using an in-memory hash table
@@ -211,6 +210,8 @@ updates the hash table with the write-set of the new transaction and its $ts_c$.
 %(For more details see~\cite{Omid2017}).
 The  \emph{checkRenew} procedure supports the TM's  high availability, and is explained at the end of this section.
 
+
+
 \noindent
 Client operations proceed as follows (cf.~Algorithm~\ref{fig:get-pseudocode}):
 
@@ -219,7 +220,7 @@ The client sends a begin request to the TM, which assigns it a read timestamp $t
 
 \mypara{Write.}
 The client uses the data store's update API to add a tentative record to the data store, with the written key and value, 
-version number $ts_r$, nil in the commit column, and the first key written during the transaction as the leader.
+version number $ts_r$, and nil in the commit column.
 It also tracks key in its local write-set.
 
 \mypara{Read.}

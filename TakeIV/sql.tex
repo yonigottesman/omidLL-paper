@@ -29,9 +29,13 @@ allocated upon the call to fence. The TM aborts every transaction that begins be
 timestamp and tries to commit after it. Note that fence timestamps do not burden the TM state 
 significantly: every fence is retired after being installed beyond the maximal transaction lifetime. 
 
-Since the TM detects all write conflicts at the base table level, there is no need to embed the affected 
-secondary index keys in the commit request. Hence, the load on the TM does not increase. Omid 
-enables this optimization by allowing selective inclusion of keys in the working set. 
+Neither the bulk index population nor its incremental update require write conflict detection 
+among the index keys, for different reasons. The former does not contend with any other 
+transaction, and hence is committed automatically -- the shadow cells are created simultaneously
+with the rest of the index data. The latter is voided by the TM detecting conflicts at the base 
+table level upon commit. Hence, there is no need to embed the affected index keys in the commit 
+request, i.e., the load on the TM does not increase in comparison with tables with no indexes. 
+Omid provides extensions for its put API for these scenarios. 
 
 Note that the above mechanism is not unique for indexes. It applies to all types of derived data, 
 e.g., materialized views. 

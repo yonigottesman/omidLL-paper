@@ -29,9 +29,8 @@ with elastic resource demands, and their efficiency is achieved through  scale.
 Thus, cloud-first data platforms are  designed to scale well beyond the limits of a single application. 
 For example, Phoenix is designed to scale to 10K query processing 
 nodes in one instance, and is expected to scale to process hundreds
- of thousands or even millions of \emph{transactions per second (tps)}. 
+ of thousands or even millions of transactions per second ({\em tps}). 
  
-
 {\bf Latency.\ }
 Similarly to many technologies, the adoption of transactions took a  ``functionality-first" trajectory. 
 For example, the developers of Spanner~\cite{Spanner2012} wrote: 
@@ -41,16 +40,15 @@ is better to have application programmers deal with performance problems due to 
 of transactions as bottlenecks arise, rather than always coding around the lack of transactions''. 
 %\end{quote}
 Yet the expectation for low latency is rapidly picking up. 
-Whereas early transaction systems were  latency-insensitive~\cite{Percolator2010, Omid2017}, 
+Whereas early applications of big data transaction processing systems were 
+mostly throughput-sensitive~\cite{Percolator2010, Omid2017}, 
 with the thrust into new interactive domains like social networks~\cite{chatter},  
 messaging~\cite{Borthakur:2011} and algorithmic trading~\cite{opentsdb} latency becomes essential.  
 SLAs for interactive user experience mandate that simple updates and point queries  complete within 
-single-digit milliseconds. 
-This is so critical, that programmers using systems like Phoenix often
-refrain from using transactional semantics altogether for fear of high latency, 
+single-digit milliseconds. The early experience with Phoenix shows that programmers  often
+refrain from using transaction semantics altogether for fear of high latency, 
 and instead  adopt solutions that may compromise consistency, e.g., 
 causing an index to inconsistently represent the data.
-%{\inred{In particular, transaction processing systems can no more trade latency for scale as they used to~\cite{Omid2017}. }}
 
 {\bf Multi-tenancy.\ } Data privacy is key in systems that host data owned by multiple applications.
 Maintaining  access rights is therefore an important design consideration for TPSs, 

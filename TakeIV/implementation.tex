@@ -188,17 +188,16 @@ Like Omid, \sysll\ uses a dedicated commit table for storing commit entries.
 Unlike Omid, however, \sysll\ distributes the table updates, and thus dissipates Omid's principal bottleneck.
  
 
-
-
 The metadata used by \sysll\ for transaction management is stored in a dedicated commit table 
-as well as an   additional \emph{commit} column associated with each object version in the data store:
-(1) \emph{commit} holds the status of the transaction that wrote this version -- \emph{nil} if it is pending, its  $ts_c$ if committed, and 
-otherwise \emph{abort}; 
-and
-(2) \emph{leader} is the key of the record holding the transaction's commit entry.
-%, namely, the first key written by the same transaction. 
+as well as an   additional \emph{commit} column associated with each object version in the data store.
+The \emph{commit} column is added upon commit, and includes  the  $ts_c$ of the transaction that
+committed this version. 
 
-Since the commit needs to be an atomic step, the first key in the transaction's write-set is chosen to be the leader, and the transaction commits via a single atomic write of $ts_c$ to the leader's commit column. Transactional read operations that find a nil commit entry 
+
+Since the commit needs to be an atomic step, the transaction commits via a single atomic write 
+to the commit table, followed by a lazy update of the commit cells. 
+
+Transactional read operations that find a nil commit entry 
 refer to the leader to find out whether the value they are attempting to read has been committed.
 Figure~\ref{fig:model} shows the metadata of a transaction during its stages of execution. 
 

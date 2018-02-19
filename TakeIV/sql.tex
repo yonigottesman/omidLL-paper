@@ -1,0 +1,48 @@
+{\inred{
+
+Comprehensive SQL support in Phoenix required multiple extensions to Omid. 
+
+{\bf Indexes. \/} A secondary index in SQL is an auxiliary table that provides fast access to data in a table 
+by a key that is different from the table's primary key. This need often emerges in analytics scenarios, in
+which data is accessed by multiple dimensions. Typically, the secondary key serves as the index's primary;
+it is associated with the unique reference into the base table (e.g., primary key + timestamp). SQL query 
+optimizers exploit secondary indexes in order to produce efficient query execution plans. Query speed 
+is therefore at odds with update speed since every write to a table triggers writes to all its indexes. 
+
+The SQL standard allows creating indexes on demand. When the user issues the {\sc {Create Index}} 
+command, the database (1) populates the new index table with historic data from the base table, and
+(2) installs a trigger to augment every new write to the base table with a write to the index table. 
+It is desirable to allow temporal overlap between the two, in order to avoid stalling the writes while 
+the index is being populated. 
+
+Transaction managers that provide SI consistency offer a simple mechanism for doing so. Index 
+population is a transaction which scans a snapshot of the base table and streams the data into the  
+index table. This way, historic data is captured without blocking the concurrent puts. Once this 
+process completes, the index can become available to queries. The index update trigger, which is 
+created is parallel with the bulk population, is also a transaction, which guarantees the atomicity of 
+all updates. 
+
+In order to guarantee the new index's consistency with the base table, the snapshot creation 
+and the update trigger setup must be atomic. In other words, all writes beyond the snapshot   
+timestamp must be handled by the trigger. Omid achieve this through a new {\em fence\/} API
+implemented by the TM. Namely, the trigger installation is associated with a fence timestamp 
+allocated upon the call to fence. The TM aborts every transaction that begins before the fence 
+timestamp and tries to commit after it. Note that fence timestamps do not burden the TM state 
+significantly: every fence is retired after being installed beyond the maximal transaction lifetime. 
+
+Since the TM detects all write conflicts at the base table level, there is no need to embed the affected 
+secondary index keys in the commit request. Hence, the load on the TM does not increase. Omid enables 
+this optimization by allowing selective inclusion of keys in the working set. 
+
+Note that the above mechanism is not unique for indexes. It applies to all types of derived data, 
+e.g., materialized views. 
+
+{\bf Multiple read points. \/}
+
+{\sc Insert into T (id, grade, date) \\  Select (id, grade, ?today) \\ From T}
+
+
+{\bf Scan performance. \/} In many cases, Phoenix pushes computation close to data, in order
+to speed up query evaluation.
+
+}

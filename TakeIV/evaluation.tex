@@ -6,7 +6,7 @@ in Section~\ref{ssec:results}.
 \subsection{Methodology}
 \label{ssec:methodology}
 
-\paragraph{Evaluated systems.}
+\subsubsection{Evaluated systems}
 
 We compare \sys\  to  state-of-the art TPSs and separately evaluate the effectiveness of its FP mechanism.
 To this end, we compare four TPSs, all of which use HBase as the underlying data store -- Omid, \sysll, 
@@ -45,7 +45,7 @@ In FP \sys, transactions that can use the FP API (specifically, singleton reads,
 and single-key read-writes) do so, whereas other transactions use the standard API.
 }
 
-\paragraph{Experiment setup.}
+\subsubsection{Experiment setup}
 
 Our experiment testbed consists of nine 12-core Intel Xeon 5 machines with 46GB RAM and 4TB 
 SSD storage, interconnected by 10G Ethernet. We allocate three of these to HBase nodes, 
@@ -78,7 +78,7 @@ Note that the client also generates begin/commit requests, which account for \mb
 The client runs the popular YCSB benchmark~\cite{Cooper:2010:BCS:1807128.1807152}, 
 exercising the synchronous transaction processing API in a varying number of threads. 
 
-\paragraph{Workload.}
+\subsubsection{Workload}
 
 Our test cluster stores approximately 23M keys ($\sim\!\!7$M keys per node). 
 The values are 2K big, yielding roughly 46GB of actual data, replicated three-way in HDFS. The keys are hash-partitioned

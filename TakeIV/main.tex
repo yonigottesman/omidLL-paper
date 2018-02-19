@@ -66,10 +66,15 @@
 
 \date{}
 
-\title{Omid-Evolution: \\ Fast,  Scalable Transactions for Real-Time Cloud Analytics }
+\title{Taking Omid to the Clouds: \\ 
+Fast,  Scalable Transactions for Real-Time Cloud Analytics }
 
 \numberofauthors{6} 
 \author{
+\alignauthor
+Ohad Shacham\\
+       \affaddr{Yahoo Research}
+       \email{}
 \alignauthor
 Yonatan Gottesman\\ %\footnotemark[1]
        \affaddr{Yahoo Research}
@@ -78,11 +83,11 @@ Yonatan Gottesman\\ %\footnotemark[1]
 Aran Bergman\\
        \affaddr{Technion}
        \email{}
+\and
 \alignauthor
 Edward Bortnikov\\
        \affaddr{Yahoo Research}
        \email{}
-\and       
 \alignauthor
 Eshcar Hillel\\
        \affaddr{Yahoo Research}
@@ -91,18 +96,6 @@ Eshcar Hillel\\
 Idit Keidar\\
        \affaddr{Technion and Yahoo Research}
        \email{}
-\alignauthor
-Ohad Shacham\\
-       \affaddr{Yahoo Research}
-       \email{}
-%\alignauthor Aran Bergman\\ %\footnotemark[2]
-  %     \affaddr{Technion}\\
-    %          \email{trovato@corporation.com}
-%\alignauthor   Edward Bortnikov%\footnotemark[1] 
-%\alignauthor Eshcar Hillel%\footnotemark[1]
-%\alignauthor Idit Keidar%\footnotemark[1] \footnotemark[2]
-%\alignauthor Ohad Shacham%\footnotemark[1]
-%	\footnotemark[1] Yahoo Research\ \ \footnotemark[2] Technion  \\ [2mm]
 } % end author
 
 
@@ -124,7 +117,8 @@ throughput-oriented monolithic NoSQL applications.
 Providing a platform 
 to support 
 %a variety of 
-converged real-time transaction processing and analytics applications -- {\em translytics} --  
+converged real-time transaction processing and analytics applications --
+dubbed {\em translytics} --  
 introduces new functional and performance requirements. For example, SQL 
 support is key for developer productivity, multi-tenancy is paramount for cloud deployment, 
 and latency is cardinal for just-in-time data ingestion and analytics insights.
@@ -133,8 +127,8 @@ and latency is cardinal for just-in-time data ingestion and analytics insights.
 We discuss our efforts to adapt Omid to these new domains, 
 as part of 
 %which emerged in 
-the process of integrating it into Phoenix as the transaction processing backend. The centerpiece
-of our work is latency reduction in Omid's protocol, which also improves the overall scalability.  
+the process of integrating it into Phoenix as the transaction processing backend. A central piece
+of our work is latency reduction in Omid's protocol, which also improves  scalability.  
 Under light load, the new protocol's latency is 4x to 5x smaller than the legacy Omid's, whereas 
 under increased loads it is an order of magnitude faster. We further describe an experimental 
 \emph{fast path} for single-key transactions, which enables processing them almost as fast 
@@ -197,8 +191,6 @@ latency-sensitive services, e.g., the Phoenix OLTP engine, which are designed
 to harness up to ten thousand nodes.
 
 %\subsection*{Acknowledgments}
-
-\newpage
 
 {\footnotesize \bibliographystyle{acm}
 

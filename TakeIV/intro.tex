@@ -46,10 +46,10 @@ with the thrust into new interactive domains like social networks~\cite{chatter}
 messaging~\cite{Borthakur:2011} and algorithmic trading~\cite{opentsdb} latency becomes essential.  
 SLAs for interactive user experience mandate that simple updates and point queries  complete within 
 single-digit milliseconds. 
-
-In fact, the fear of high transactional latency in systems like Phoenix impedes the adoption of transactional semantics,
-leading  programmers to  adopt solutions that may compromise consistency, e.g., 
-leading to an index inconsistently reflecting the data.
+This is so critical, that programmers using systems like Phoenix often
+refrain from using transactional semantics altogether for fear of high latency, 
+and instead  adopt solutions that may compromise consistency, e.g., 
+causing an index to inconsistently represent the data.
 %{\inred{In particular, transaction processing systems can no more trade latency for scale as they used to~\cite{Omid2017}. }}
 
 {\bf Multi-tenancy.\ } Data privacy is key in systems that host data owned by multiple applications.
@@ -85,7 +85,7 @@ This paper makes the following contributions:
     \setlength{\parskip}{1pt}
     \setlength{\parsep}{1pt}  
 
-\item {\em Protocol re-design for low-latency transactions (Section~\ref{sec:ll})}. 
+\item {\em Protocol re-design for low-latency transactions} (Section~\ref{sec:ll}). 
 The new protocol,    \emph{Omid Low Latency (\sysll)}, 
 dissipates Omid's major architectural bottleneck. 
 It reduces the latency of short transactions by 5x under light load, and 
@@ -95,23 +95,24 @@ the overall system throughput to 550K tps while remaining
 within real-time latency SLAs. In contrast to previously published protocols 
 (e.g.,~\cite{Percolator2010}), our solution is amenable to multi-tenancy.
 
-\item {\em Novel fast-path (FP) algorithm (Section~\ref{sec:alg})\/}. 
+\item {\em Novel fast-path (FP) algorithm} (Section~\ref{sec:alg}). 
 Our  novel (experimental) \sys\ protocol  
-maximizes the performance of  single-key transactions, which are prevalent 
-in latency-sensitive applications. It defines a dedicated API for single-key read, 
-write and read-modify-write transactions.  Fast path transactions execute at the 
+maximizes the performance of  single-key transactions.
+%, which are prevalent  in latency-sensitive applications. 
+It defines a dedicated API for single-key read, 
+write, and read-modify-write transactions, which execute at the 
 latency of native HBase operations regardless of system load.
 %(thanks to HBase's near perfect horizontal scalability). 
 They run twice as fast as \sysll\/ transactions, and complete within 2--4 ms on mid-range hardware. 
 This comes at the cost of a minor (15--25\%) negative impact on long (latency-insensitive) transactions.  
 
-\item \emph{Evaluation and comparison with alternative designs (Section~\ref{sec:eval})}.
-We extensively evaluate the new algorithms. 
-We further compare Omid's  centralized conflict management  to 
+\item \emph{Evaluation and comparison with alternative designs} (Section~\ref{sec:eval}).
+We extensively evaluate the new algorithms. %%% (as reported above). 
+We further compare Omid's  centralized architecture  to 
 a decentralized \emph{two-phase commit (2PC)}-based approach, as 
  adopted in Percolator and CockroachDB.
 
-\item {\em SQL compliance (Section~\ref{sec:sql})\/}. 
+\item {\em SQL compliance} (Section~\ref{sec:sql}). 
 % describes functionality extensions for SQL support.  
 We add support for creating secondary indices on-demand, 
 without impeding concurrent database operations or sacrificing consistency. 

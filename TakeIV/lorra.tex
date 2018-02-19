@@ -192,10 +192,6 @@ which follows Percolator's design.
 %Furthermore, 
 %this approach does not entail any changes to the underlying data store (HBase in our implementation),
 %which can facilitate production deployment.
-\inred{
-We note that unlike our approach, this variant \emph{does} necessitate changes in the 
-underlying data store to allow transaction validation using check\&mutate for each written key. 
-}
 %Using check\&mutate for all updates makes data store writes slower,
 
 \mypara{Distributed commit entry updates with  multi-tenancy.}

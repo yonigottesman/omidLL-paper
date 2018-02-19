@@ -35,7 +35,8 @@
 \usepackage{balance}  % for  \balance command ON LAST PAGE  (only there!)
 
 % Include information below and uncomment for camera ready
-\vldbTitle{Omid-Evolution: Fast, Scalable Transactions for Real-Time Cloud Analytics}
+\vldbTitle{Taking Omid to the Clouds: 
+Fast, Scalable Transactions for Real-Time Cloud Analytics}
 \vldbAuthors{Gottesman et al.}
 \vldbDOI{https://doi.org/TBD}
 
@@ -66,7 +67,7 @@
 
 \date{}
 
-\title{Omid-Evolution: \\ Fast,  Scalable Transactions for Real-Time Cloud Analytics }
+\title{Taking Omid to the Clouds: \\ Fast,  Scalable Transactions for Real-Time Cloud Analytics }
 
 \numberofauthors{6} 
 \author{
@@ -121,10 +122,9 @@ Omid was originally designed for data processing pipelines at Yahoo, which are, 
 %huge-scale 
 throughput-oriented monolithic NoSQL applications. 
 %Evolving Omid into 
-Providing a platform 
-to support 
-%a variety of 
-converged real-time transaction processing and analytics applications -- {\em translytics} --  
+Providing a platform to support 
+converged real-time transaction processing and analytics applications -- dubbed 
+{\em translytics} --  
 introduces new functional and performance requirements. For example, SQL 
 support is key for developer productivity, multi-tenancy is paramount for cloud deployment, 
 and latency is cardinal for just-in-time data ingestion and analytics insights.
@@ -133,8 +133,8 @@ and latency is cardinal for just-in-time data ingestion and analytics insights.
 We discuss our efforts to adapt Omid to these new domains, 
 as part of 
 %which emerged in 
-the process of integrating it into Phoenix as the transaction processing backend. The centerpiece
-of our work is latency reduction in Omid's protocol, which also improves the overall scalability.  
+the process of integrating it into Phoenix as the transaction processing backend. A central piece
+of our work is latency reduction in Omid's protocol, which also improves  scalability.  
 Under light load, the new protocol's latency is 4x to 5x smaller than the legacy Omid's, whereas 
 under increased loads it is an order of magnitude faster. We further describe an experimental 
 \emph{fast path} for single-key transactions, which enables processing them almost as fast 

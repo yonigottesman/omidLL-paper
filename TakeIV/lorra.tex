@@ -16,8 +16,7 @@ in Section~\ref{ssec:ll}.
 \label{ssec:schema}
 
 
-In many TPSs, transaction processing follows the following general schema, outlined in Algorithm~\ref{alg:schema}, 
-while systems vary in their implementations of each of the steps.
+In many TPSs, transaction processing follows the following general schema, outlined in Algorithm~\ref{alg:schema}, while systems vary in their implementations of each of the steps.
 
 \remove{
 For example, whereas most systems rely on a centralized service for timestamp allocation~\cite{OmidICDE2014,Omid2017,tephra,Percolator2010}, this is not essential~\cite{cockroach}; similarly, validation (conflict detection) can use a centralized service~\cite{OmidICDE2014,Omid2017,tephra}, per-transaction entries in a global table~\cite{cockroach}, or distributed locking and validation~\cite{Percolator2010}. 
@@ -192,6 +191,10 @@ which follows Percolator's design.
 %Furthermore, 
 %this approach does not entail any changes to the underlying data store (HBase in our implementation),
 %which can facilitate production deployment.
+\inred{
+We note that unlike our approach, this variant \emph{does} necessitate changes in the 
+underlying data store to allow transaction validation using check\&mutate for each written key. 
+}
 %Using check\&mutate for all updates makes data store writes slower,
 
 \mypara{Distributed commit entry updates with  multi-tenancy.}
@@ -213,20 +216,20 @@ by up to an order of magnitude on small transactions.
 
 \inred{
 We note that commit table updates are distributed also in CockroachDB and Percolator. 
-Percolator takes this approach one step further, and distributes not only the commit table updates 
-but also the actual commit entries. There, commit entries reside in user data tables, where the first table 
-accessed in a given transaction holds the commit entry for that transaction.
+The latter takes this approach one step further, and distributes not only the commit table updates 
+but also the actual commit entries. There, commit entries reside in user data tables, 
+where the first row written in a given transaction holds the commit entry for that transaction.
 The problem with this approach is that it assumes that all clients have permissions to access all 
-data tables -- a transaction attempting to read from  table $A$ may encounter a write intent 
+tables -- e.g., a transaction attempting to read from  table $A$ may encounter a write intent 
 produced by a transaction that accessed table $B$ before table $A$, and will need to refer to 
-that transaction's commit entry in table $B$ in order to determine its status. 
-This did not pose a problem in Percolator, which was designed for use inside Google's 
-data centers, but is usually unacceptable in multi-tenant data stores.
+that transaction's commit entry in table $B$ in order to determine its status. This approach 
+did not pose a problem in Percolator, which was designed for a single-application (Google Search) 
+use case, however it is unacceptable in multi-tenant settings.   
 
 Unlike data tables, which are owned by individual applications that manage their permissions,  
-the dedicated commit table is owned by the TPS. It is not accessed directly by application code,
-but rather from transactional code that is part of the TPS.
-}
+the dedicated commit table is owned by the TPS. Since the TPS client library is not accessed 
+directly by application code but rather only internally by the database engine, the commit table
+is protected from faulty access. }
 
 \mypara{Write intent resolution.}
 As in other TPSs, reads resolve write intents via the commit entry.

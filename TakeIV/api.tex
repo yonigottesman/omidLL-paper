@@ -1,22 +1,10 @@
 A \emph{Transaction Processing System (TPS)} runs atop an underlying 
-key-value store (e.g., HBase) and allows users to bundle multiple data operations 
+key-value store and allows users to bundle multiple data operations 
 into a single atomic transaction. Section~\ref{ssec:data-model} describes the NoSQL data 
-model and the data access API, and  Section~\ref{ssec:transactions} defines transaction semantics provided 
-by the TPS. Section~\ref{ssec:schema} provides  background on the modus operandi of existing TPSs that 
-support SI,  including Omid. 
- 
-Figure~\ref{fig:components} depicts, at a high level, the primary components of the TPS architecture,  
-their API's, and interaction with the data store. 
-
-\begin{figure}
-\centerline{
-\includegraphics[width=0.45\textwidth]{FragolaComponents.jpg}
-}
-\caption{Transaction processing architecture: A client library exposes an  API for  executing transactions of data store operations. 
-A centralized Transaction Manager (TM) handles transaction begin and commit requests, while data is written directly to the 
-underlying data store. The TM has a backup for high availability.}
-\label{fig:components}
-\end{figure}
+model and the data access API, and  Section~\ref{ssec:transactions} defines transaction semantics
+provided by the TPS. Section~\ref{ssec:schema} provides  background on the modus operandi 
+of existing TPSs that support SI,  including Omid. Finally, Section~\ref{ssec:bigdata} zooms 
+in on the specifics of HBase and Phoenix. 
 
 \subsection{Data store}
 \label{ssec:data-model}
@@ -162,9 +150,21 @@ or
 \subsection{TPS operation schema}
 \label{ssec:schema}
 
+\begin{figure}
+\centerline{
+\includegraphics[width=0.45\textwidth]{FragolaComponents.jpg}
+}
+\caption{Transaction processing architecture: A client library exposes an  API for  executing transactions of data store operations. 
+A centralized Transaction Manager (TM) handles transaction begin and commit requests, while data is written directly to the 
+underlying data store. The TM has a backup for high availability.}
+\label{fig:components}
+\end{figure}
 
-In many TPSs, transaction processing follows the following general schema, outlined in Algorithm~\ref{alg:schema}, 
-while systems vary in their implementations of each of the steps.
+Figure~\ref{fig:components} depicts, at a high level, the primary components of the TPS architecture,  
+their API's, and interaction with the data store. 
+
+In many TPSs, transaction processing follows the following general schema, 
+outlined in Algorithm~\ref{alg:schema}, while systems vary in their implementations of each of the steps.
 
 \remove{
 For example, whereas most systems rely on a centralized service for timestamp allocation~\cite{OmidICDE2014,Omid2017,tephra,Percolator2010}, this is not essential~\cite{cockroach}; similarly, validation (conflict detection) can use a centralized service~\cite{OmidICDE2014,Omid2017,tephra}, per-transaction entries in a global table~\cite{cockroach}, or distributed locking and validation~\cite{Percolator2010}. 
@@ -290,6 +290,7 @@ Validation can be centralized~\cite{OmidICDE2014,Omid2017,tephra} or distributed
   transactions no longer incur this overhead for keys updated by the terminated
   transaction.}
 
-
+\subsection{Big data platforms}
+\label{ssec:bigdata}
 
 

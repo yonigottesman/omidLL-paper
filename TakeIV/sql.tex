@@ -31,7 +31,7 @@ significantly: every fence is retired after being installed beyond the maximal t
 
 Neither the bulk index population nor its incremental update require write conflict detection 
 among the index keys, for different reasons. The former does not contend with any other 
-transaction, and hence is committed automatically -- the shadow cells are created simultaneously
+transaction, and hence is committed automatically -- the commit cells are created simultaneously
 with the rest of the index data. The latter is voided by the TM detecting conflicts at the base 
 table level upon commit. Hence, there is no need to embed the affected index keys in the commit 
 request, i.e., the load on the TM does not increase in comparison with tables with no indexes. 

@@ -103,16 +103,38 @@ $k_1$ & a & 3 & 7& & 3 & 7 \\
  \Procedure{begin}{}
        \State  return TM.begin
 \EndProcedure
-%
+\Statex
   \Procedure{write}{$ts_r$, key, val}
        \State  return ds.put(key, val, $ts_r$, nil)
        \State  track key in write-set 
 \EndProcedure
 %     
+\Statex
 \Procedure{read}{$ts_r$, key} 
       \For{rec $\leftarrow$ ds.get(key, versions down from $ts_r$)}
- 			\State $ts_c \leftarrow$ {\sc checkStatus}(rec, $ts_r$)
-       			 \If{$ts_c \not=$ abort  $\wedge\ ts_c <  ts_r$}  
+% 			\State $ts_c \leftarrow$ {\sc checkStatus}(rec, $ts_r$)     			       
+			\State \Comment  set $ts_c$ to the commit timestamp associated with rec
+			\If{rec.commit $\not =$nil}  \Comment commit cell exists
+     				\State $ts_c \leftarrow$  rec.commit 
+			\Else \Comment commit cell is empty, check CT
+      				\State $ts_c  \leftarrow$ CT.get(ts)  
+      				\If{$ts_c = nil$}  \Comment no CT entry, set status to  $\bot$
+      					\State $ts_c \leftarrow$ CT.putIfAbsent(ts, $\bot$)  \Comment returns new value
+				\EndIf
+      				
+ 				 \If{$ts_c = \bot$}  
+ 				 	\State \Comment check for race: commit before $\bot$ entry  created 
+ 				 	\State re-read rec from ds
+ 				 	\If{rec.commit $\not =$nil} 
+ 				 		 $ts_c \leftarrow$  rec.commit 
+ 				 	\Else\  
+ 				 		 continue	\Comment writing transaction aborted	
+ 				 	\EndIf
+				\EndIf
+			\EndIf
+
+       			 \If{$ts_c <  ts_r$}  
+%     			 \If{$ts_c \not=$ abort  $\wedge\ ts_c <  ts_r$}  
  			 	\State return  rec.value 
 			\EndIf
       \EndFor
@@ -133,7 +155,7 @@ $k_1$ & a & 3 & 7& & 3 & 7 \\
 %				\State return  {\sc checkLeader}({leaderPtr}) \EndIf
 %			\State return abort
 %	   	\EndProcedure
-
+\remove{
       		\Procedure{checkStatus}{rec, ts} 
 	%	     	 \While{true} \Comment at most two iterations 
 			\If{rec.commit $\not =$nil}  
@@ -149,7 +171,6 @@ $k_1$ & a & 3 & 7& & 3 & 7 \\
  				 	\If{rec.commit $\not =$nil}  return rec.commit \EndIf
  				 	\State return abort 				
 				\EndIf
-
 %
  %    				 \If{$ts_c =$ nil}  \Comment{abort transaction}  
      				% 	\State ok $\leftarrow$ CT.putIfAbsent(ts, abort)
@@ -166,7 +187,8 @@ $k_1$ & a & 3 & 7& & 3 & 7 \\
 %				\EndIf 		     	 	
 %		     	 \EndWhile
 	   	\EndProcedure
-\Statex
+}
+
 
 \Procedure{commit}{$ts_r$, write-set}
       	\remove{\State ds.flush}

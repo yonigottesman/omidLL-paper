@@ -275,13 +275,12 @@ a transactional read modifies the LVC only if its $ts_r$ exceeds it. In particul
 a transaction with multiple reads in the same region server needs to bump it only once. 
 
 We implement the two required atomic methods - F\&I and bump on the LVC using atomic hardware operations (F\&I and CAS, respectively). 
-In addition, 
-HBase   natively supports  a check\&mutate operation, which holds a lock on the affected key for the duration of the operation.
-Our implementation of the singleton write uses  check\&mutate to implement the atomic block, and calls the LVC's F\&I method inside this block.
-Transactional reads and post-commits call bump from inside a check\&mutate  block where they do their read and version update, respectively. 
+The HBase coprocessor mechanism enforces atomic execution of the stored code blocks by holding  a lock on the affected key for the duration of the operation.
+Thus, putVersion executes as an atomic block, and calls the LVC's F\&I method inside this block.
+Similarly, the calls to bump from preGet and preUpdate execute inside an atomic block with the ensuing get an update, respectively. 
 
-Note that although check\&mutate only holds a lock on the affected key, the joint update of the key and the LVC is consistent
-because it uses a form of two-phase locking: when check\&mutate begins, its locks the key, then the atomic access to the LVC
+Note that although the coprocessor only holds a lock on the affected key, the joint update of the key and the LVC is consistent
+because it uses a form of two-phase locking: when the stored procedure begins, its locks the key, then the atomic access to the LVC
 effectively locks the LVC during its update; this is followed by an update of the key's record and the key's lock being released.
 
 The LVC is kept in memory, and is not persisted. Migration of region control across region servers, which HBase performs 

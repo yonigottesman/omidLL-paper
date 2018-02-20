@@ -163,35 +163,34 @@ as native HBase operations.
 
 \section{Conclusion} \label{sec:conclusions}
 
-As transaction processing services begin to be used in new application domains, low 
-transaction latency becomes an important consideration. 
-Motivated by such use cases we developed \sys, a highly scalable 
-low-latency transaction processing engine for Apache HBase. 
-We implemented \sys\ based on Omid, and 
-improved its protocol to reduce latency (by 4x to 5x under light load
-and an order of magnitude under heavy load). In contrast with 
-Omid, it scales almost perfectly on the throughput side. 
+As transaction processing services begin to be used in 
+new application domains, low transaction latency and rich SQL semantics
+become important considerations. In addition, public cloud deployments 
+necessitate solutions compatible with multi-tenancy.
+Motivated by such use cases we evolved Omid for cloud use.
 
+As part of this evolution, we
+improved Omid's protocol to reduce latency (by 4x to 5x under light load
+and an order of magnitude under heavy load) and improve throughput scalability.
+%
 We further designed a generic \emph{fast path} for single-key transactions, 
 which executes them  almost as fast as native HBase operations (in terms of 
 both throughput and latency), while preserving
 transactional semantics relative to longer transactions.
-Our fast path algorithm is not \sys-specific, and can be similarly supported in 
+Our fast path algorithm is not Omid-specific, and can be similarly supported in 
 other transaction management systems.
 Our implementation of the fast path in \sys\ can process single-key
 transactions  at a virtually unbounded rate (thanks to HBase's horizontal 
 scalability), and improves the latency of short transactions
 by another 3x--5x under high load.
 
-The \sys\ code is publicly available\footnote{\small{Omitted for blind review.}}. 
-%\footnote{\url{https://github.com/yonigottesman/incubator-omid/tree/localTransactions}}, and 
-We are working on contributing \sysll\  to the Omid production code base. 
-We believe our improvements will become instrumental for modern cloud-based, large-scale, 
-latency-sensitive services, e.g., the Phoenix OLTP engine, which are designed 
-to harness up to ten thousand nodes.
+We have extended Omid with functionalities required in SQL engines, namely 
+secondary index construction and multi-snapshot semantics. 
+We have successfully integrated it into the Apache Phoenix translytics engine. 
+
 
 \subsection*{Acknowledgments}
-We thank James Taylor for fruitful discussions. 
+We thank lead Phoenix developer James Taylor for fruitful discussions. 
 
 \bibliographystyle{acm}
 

@@ -1,72 +1,99 @@
-Comprehensive SQL support in Phoenix required multiple extensions to Omid. 
 
-\subsection{Indexes}
+
+Comprehensive SQL support in Phoenix involved multiple extensions to Omid. 
+First, Phoenix extensively employs stored procedures implemented as HBase coprocessors. 
+Such coprocessors invoke transactional reads, and so we implemented Omid's 
+transactional read -- the loop implementing read in Algorithm~\ref{fig:get-pseudocode} -- as a coprocessor as well. 
+This allowed for a smooth integration  with Phoenix and also reduced the overhead of transactional
+reads when multiple versions are present.
+
+Second, Phoenix heavily relies on secondary indexes, which are sometimes created on-the-fly. 
+In Section~\ref{ssec:indexes} we describe how we extended Omid to support the construction 
+of such indexes while transactions are ongoing. Third, Section~\ref{ssec:snapshot} describes an 
+extension of the snapshot isolation model that provides multiple read- and write-points, as required 
+in some Phoenix applications. 
+
+\subsection{Index construction}
+\label{ssec:indexes}
+
 A secondary index in SQL is an auxiliary table that provides fast access to data in a table 
 by a key that is different from the table's primary key. This need often emerges in analytics scenarios, in
-which data is accessed by multiple dimensions. Typically, the secondary key serves as the index's primary;
-it is associated with the unique reference into the base table (e.g., primary key + timestamp). SQL query 
+which data is accessed by multiple dimensions. Typically, the secondary key serves as the 
+primary key of the secondary index, and is associated with a unique reference into the base table 
+(e.g., primary key + timestamp). SQL query 
 optimizers exploit secondary indexes in order to produce efficient query execution plans. Query speed 
 is therefore at odds with update speed since every write to a table triggers writes to all its indexes. 
 
-The SQL standard allows creating indexes on demand. When the user issues the {\sc {Create Index}} 
+The SQL standard allows creating indexes on demand. When a user issues the {\sc {Create Index}} 
 command, the database (1) populates the new index table with historic data from the base table, and
 (2) installs a trigger to augment every new write to the base table with a write to the index table. 
-It is desirable to allow temporal overlap between the two, in order to avoid stalling the writes while 
+It is desirable to allow temporal overlap between the two, in order to avoid stalling  writes while 
 the index is being populated. 
 
-Transaction managers that provide SI consistency offer a simple mechanism for doing so. Index 
-population is a transaction which scans a snapshot of the base table and streams the data into the  
-index table. This way, historic data is captured without blocking the concurrent puts. Once this 
-process completes, the index can become available to queries. The index update trigger, which is 
-created is parallel with the bulk population, is also a transaction, which guarantees the atomicity of 
-all updates. 
+We exploit Omid's SI semantics in order to create such indexes. To achieve (1), Omid invokes a 
+transaction that scans a snapshot of the base table and streams the data into the  
+index table. This way, historic data is captured without blocking concurrent puts. Once this 
+process completes, the index can become available to queries. 
+To achieve (2), the database creates a trigger that augments all transactions that update the base table 
+with an additional update of the secondary index. 
+ 
+In order to guarantee the new index's consistency with respect to the base table, the snapshot creation 
+and the trigger setup must be atomic. In other words, all writes beyond the snapshot   
+timestamp must be handled by the trigger. Omid achieves this through a new {\em fence\/} API
+implemented by the TM, which is  invoked when the trigger is installed. 
+A fence call produces a new \emph{fence timestamp} by fetching-and-incrementing the TM's clock, and 
+records the fence timestamp in the TM's local state.  
+Subsequently, the TM aborts every transaction whose read timestamp precedes the fence's 
+timestamp and attempts to commit after it. 
+Note that there is at most one fence timestamp per index at a given time.
 
-In order to guarantee the new index's consistency with the base table, the snapshot creation 
-and the update trigger setup must be atomic. In other words, all writes beyond the snapshot   
-timestamp must be handled by the trigger. Omid achieve this through a new {\em fence\/} API
-implemented by the TM. Namely, the trigger installation is associated with a fence timestamp 
-allocated upon the call to fence. The TM aborts every transaction that begins before the fence 
-timestamp and tries to commit after it. Note that fence timestamps do not burden the TM state 
-significantly: every fence is retired after being installed beyond the maximal transaction lifetime. 
+
 
 Neither the bulk index population nor its incremental update require write conflict detection 
 among the index keys, for different reasons. The former does not contend with any other 
 transaction, and hence is committed automatically -- the commit cells are created simultaneously
 with the rest of the index data. The latter is voided by the TM detecting conflicts at the base 
-table level upon commit. Hence, there is no need to embed the affected index keys in the commit 
-request, i.e., the load on the TM does not increase in comparison with tables with no indexes. 
-Omid provides extensions for its put API for these scenarios. 
+table upon commit. Hence, in transactions augmented with secondary index updates,  
+there is no need to embed the added index keys in the commit 
+request, and so the load on the TM does not increase. 
+Omid provides extensions for its put API for this scenario. 
 
-Note that the above mechanism is not unique for indexes. It applies to all types of derived data, 
+Note that the above mechanism is not unique for indexes. It can be applied to additional types of derived data, 
 e.g., materialized views. 
 
 \subsection{Extended snapshot semantics}
+\label{ssec:snapshot}
 
-Some applications may prefer to avoid observing the writes made by same transaction --
+Some applications  prefer to avoid observing  writes made by the current transaction --
 a deviation from the standard SI model, which provides the ``read-your-own-writes'' 
 semantics. 
 
 For example, consider a social networking application that stores its adjacency graph 
-as table of neighbor pairs. The transitive closure computation atop this graph performs
-multiple iterations. Each iteration scans the existing data, computes new edges in the 
+as a table of neighbor pairs. The transitive closure of this graph is computed in
+multiple iterations. Each iteration scans the table, computes new edges to add to the 
 graph, and inserts them back into the table. It can be implemented by a single 
-{\sc Insert into T \ldots Select from T \ldots \/} statement, which may perform its reads and writes in parallel. 
-The desirable semantics are that the reads only see the data that existed prior to the 
+\begin{quote}
+{\sc Insert into T \ldots Select from T \ldots \/} 
+\end{quote}
+statement, which may perform its reads and writes in parallel. 
+The desirable semantics are that the reads only see  data that existed prior to the 
 statement's execution. 
 
-This behavior is provided by Omid's {\em snapshot isolation exclude-current} (SIX) 
+To support this behavior, we implement in Omid the  {\em snapshot isolation exclude-current} (SIX) 
 consistency level. To this end, the TM promotes its transaction timestamp counter $ts_r$ 
-in leaps of $\Delta > 1$ (rather than $1$, as originally presented).  The client manages 
-two distinct local timestamps for reads ($\tau_r$) and writes ($\tau_w$). By default, 
-it holds that  $\tau_r = \tau_w = ts_r$, implying the traditional SI behavior. Omid 
+in leaps of some $\Delta > 1$ (rather than $1$ as in the legacy system).  The client manages 
+two distinct local timestamps, $\tau_r$ for reads and $\tau_w$ for writes. By default, 
+it uses  $\tau_r = \tau_w = ts_r$, which achieves the traditional SI behavior. Omid 
 defines two new methods, {\em snapshot\/} and {\em checkpoint}, to increment 
 $\tau_r$ and $\tau_w$, respectively. If the consistency level is set to SIX, 
 it maintains 
 \[
 \tau_w = \tau_r+1 < ts_r+\Delta,
 \]
-thereby separating the reads from the writes. For example, the execution of 
-the above {\sc Insert into T \ldots Select from T \ldots \/} statement applies 
+thereby separating the reads from the writes. 
+
+For example, to execute  
+the above {\sc Insert into T \ldots Select from T \ldots \/} statement, Omid applies 
 {\em checkpoint\/} prior to accessing the data. If a transaction spans multiple 
 statements (e.g., computes the transitive closure in multiple iterations), 
 every statement beyond the first one applies both {\em snapshot\/} 
@@ -74,8 +101,10 @@ and {\em checkpoint}, thereby exposing the data written by the prior
 statement while maintaining the invariant. If the consistency level is
 set back to SI (e.g., in order to let a {\sc Select\/} statement read all 
 the data), Omid applies {\em snapshot\/}.  
-A transaction can generate $\Delta-1$ snapshots without affecting 
-the overall correctness. By default, Omid sets $\Delta=50$.  
+A transaction can generate $\Delta-1$ snapshots without compromising
+ correctness. By default, Omid uses $\Delta=50$.  
 
+\remove{
 \subsection{Scan performance} In many cases, Phoenix pushes computation close to data, in order
 to speed up query evaluation.
+}

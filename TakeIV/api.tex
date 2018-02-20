@@ -4,8 +4,9 @@
 A TPS runs atop an underlying data store 
 (e.g., HBase) and 
 allows users to bundle multiple data store operations into a single atomic transaction. 
-The TPS architecture considered in this paper is depicted in Figure~\ref{fig:components}.
-Section~\ref{ssec:data-model} describes the data model and API of the underlying data store, and  Section~\ref{ssec:transactions} defines transaction semantics provided by the TPS. 
+The TPS architecture considered in this paper consists of an underlying data store, a client
+library, and transactional managers, as depicted in Figure~\ref{fig:components}.
+Section~\ref{ssec:data-model} describes the data model and API of the underlying data store, and  Section~\ref{ssec:transactions} defines transaction semantics provided by the TPS client library. 
 Section~\ref{ssec:schema} provides  background on the modus operandi of existing TPSs that support SI, including Omid. 
 
 

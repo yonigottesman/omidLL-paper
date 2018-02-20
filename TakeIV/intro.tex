@@ -28,7 +28,7 @@ Public clouds  are built to  serve a multitude of applications
 with elastic resource demands, and their efficiency is achieved through  scale. 
 Thus, cloud-first data platforms are  designed to scale well beyond the limits of a single application. 
 For example, Phoenix is designed to scale to 10K query processing 
-nodes in one instance, and is expected to scale to process hundreds
+nodes in one instance, and is expected to   process hundreds
  of thousands or even millions of transactions per second ({\em tps}). 
  
 {\bf Latency.\ }
@@ -68,8 +68,8 @@ Hive~\cite{hive} and Impala~\cite{impala}), which focused on large-scale process
 of immutable data, Phoenix targets converged data ingestion and analytics~\cite{PhoenixUseCases},
 which necessitates transaction semantics. Phoenix
 applications are both latency- and throughput-sensitive. Phoenix uses HBase 
-as key-value storage layer, and Omid as transaction processing layer atop HBase\footnote{\small{Tephra 
-is supported as alternative transaction manager, however its scalability and reliability are inferior to Omid.}}. 
+as its key-value storage layer, and Omid as a transaction processing layer atop HBase\footnote{\small{Tephra 
+is supported as alternative transaction manager, however its scalability and reliability are inferior to Omid's.}}. 
 
 Omid provides a (somewhat relaxed) variant of \emph{snapshot isolation (SI)}~\cite{DBLP:conf/sigmod/BerensonBGMOO95}, similarly to other modern transaction managers~\cite{Percolator2010,Spanner2012,tephra,cockroach}. Its implementation is lock-free, 
 which makes it scale better than traditional lock-based serializability protocols.
@@ -83,11 +83,11 @@ This paper makes the following contributions:
     \setlength{\parskip}{1pt}
     \setlength{\parsep}{1pt}  
 
-\item {\em Protocol re-design for low-latency transactions} (Section~\ref{sec:ll}). 
+\item {\em Protocol re-design for low-latency} (Section~\ref{sec:ll}). 
 The new protocol,    \emph{Omid Low Latency (\sysll)}, 
 dissipates Omid's major architectural bottleneck. 
 It reduces the latency of short transactions by 5x under light load, and 
-by 10x-100x under heavy load. % compared to the legacy Omid. 
+by 10x--100x under heavy load. % compared to the legacy Omid. 
 It also scales 
 the overall system throughput to 550K tps while remaining 
 within real-time latency SLAs. In contrast to previously published protocols 

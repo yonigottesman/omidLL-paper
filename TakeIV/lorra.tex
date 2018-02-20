@@ -20,18 +20,18 @@ We are not familiar with another TPS that makes the same design choices as \sysl
 
 
 \begin{table*}[htb]
-\small
 \centerline{
-\begin{tabular}{|l|ccccc|}
+\begin{tabular}{|l|cccc|}
+% data store modification & 
 \hline
-TPS & validation & data store modification & commit  entry updates	&  multi-tenancy &
+TPS & validation & commit  entry updates	&  multi-tenancy &
  read may cause abort  \\
 \hline
-Percolator, \syspc & {\bf D}  & yes & {\bf D} & no & yes \\
-CockroachDB	& {\bf D}     & yes & {\bf D} & yes & yes \\
-Omid1, Tephra 	& {\bf C}  & no & {\bf R} & yes & no \\
-Omid  		& {\bf C}  & no & {\bf C} & yes & no \\
-{\bf \sysll }		& {\bf C}  & {\bf no} & {\bf D} & {\bf yes} & {\bf yes} \\
+Percolator, \syspc & {\bf D} & {\bf D} & no & yes \\
+CockroachDB	& {\bf D}      & {\bf D} & yes & yes \\
+Omid1, Tephra 	& {\bf C}      & {\bf R} & yes & no \\
+Omid  		& {\bf C}      & {\bf C} & yes & no \\
+{\bf \sysll }		& {\bf C}      & {\bf D} & {\bf yes} & {\bf yes} \\
 % \sys			& {\bf C} & {\bf D} & {\bf D} & yes& yes\\
 \hline
 \end{tabular}

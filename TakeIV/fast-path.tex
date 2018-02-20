@@ -102,7 +102,7 @@ Given the limited benefit and extra complexity of allowing many writes in FP tra
 \begin{algorithmic}[1]
 %\small
 \Procedure{brc}{key} \label{l:brc}
-\State rec  $\leftarrow$ ds.get(last committed record of key) 
+\State rec  $\leftarrow$ ds.get(last committed record of key)  \Comment no preGet
 \State  return rec.value
 \EndProcedure
 % \Statex
@@ -111,66 +111,69 @@ Given the limited benefit and extra complexity of allowing many writes in FP tra
 %	\If{old.commit = nil}  \Comment  tentative value -- abort 
 %		\State return abort 
 %	\EndIf
-	\State return {ds.writeVersion}($\infty$, key, value)
+	\State return {ds.putVersion}($\infty$, key, value)
 \EndProcedure
 % \Statex
 \Procedure{br}{key} 
-\State rec  $\leftarrow$ ds.get(last committed record of key) 
+\State rec  $\leftarrow$ ds.get(last committed record of key) \Comment no preGet
 \State  return \tuple{rec.version, rec.value}
 \EndProcedure
 % \Statex
 \Procedure{wc}{ver, key, value} 
-\State return {ds.writeVersion}(ver, key, value)
+\State return {ds.putVersion}(ver, key, value)
 \EndProcedure
 \Statex
 \algstore{fp}
 \end{algorithmic}
 
-\underline{Data store logic:}
+\underline{Data store (stored procedure) logic:}
 \begin{algorithmic}[1]
 \algrestore{fp}
 %\small
-\Procedure{writeVersion}{old, key, value} 
+\Procedure{putVersion}{old, key, value} 
 \Statex \Comment used by FP writes (\code{bwc} and \code{wc})
 %\Atomic 
 	\If{key has no tentative version $\wedge$\\
 		\hspace{7mm} last committed version of key $\le$ old}
 		\State ver $\leftarrow$ F\&I(key's maxVersion) $+1$   \label{l:fi}
-		\State add \tuple{key, ver} with commit = ver  
+		\State ds.put(key, value, ver, ver) 	\Comment no prePut	%  \tuple{key, ver} with commit = ver  
 		\State return commit
 	\Else 
 		\State return abort 
 	\EndIf
 %\EndAtomic
 \EndProcedure
-% \Statex
-\Procedure{txRead}{$ts_r$, key}   \label{l:txr}
-\Statex \Comment used by transactional read, once per key 
+
+\Statex
+\Procedure{preGet}{$ts_r$, key}   \label{l:txr}
+\Statex \Comment executed atomically with ds.get call, once per key 
 \State bump(key's maxVersion, $ts_r$)
-\State return get(key)
+%\State return get(key)
 \EndProcedure
 % \Statex
-\Procedure{txWrite}{$ts_r$, key}   \label{l:txw}
- \Statex \Comment used by transactional write
+\Procedure{prePut}{key, val, $ts_r$, nil}   \label{l:txw}
+ \Statex \Comment checked atomically before put (by transactional write)
  \If{key has a committed version that exceeds $ts_r$} 
  	\State abort 
  \EndIf
- \State add \tuple{key, $ts_r$} with commit = nil  
 \EndProcedure
 
-\Procedure{txUpdate}{key, ver, $ts_c$}   \label{l:txu}
-\Statex \Comment used by transactional post-commit 
+\Procedure{preUpdate}{key, ver, commit, $ts_c$}   \label{l:txu}
+\Statex \Comment executed atomically with ds.update call (by  post-commit) 
 \State bump(key's maxVersion, $ts_c$)
-\State update commit field of \tuple{key, ver} to $ts_c$
 \EndProcedure
 \end{algorithmic}
 \caption{Generic support for FP transactions; each data store operation is executed atomically.}
 \label{alg:fp}
 \end{algorithm}
 
-The generic fast  path algorithm consists of two parts: 
-client side-logic, and new atomic operations implemented in the  underlying data store.
-It is presented in pseudocode in Algorithm~\ref{alg:fp}. 
+The generic fast  path algorithm, which we present in Algorithm~\ref{alg:fp}, consists of two parts: 
+client side-logic, and logic running within the underlying data store. 
+The latter is implemented as a stored procedure, which in HBase is supported by the coprocessor mechanism. 
+Specifically, it supports a new flavor of put, \emph{putVersion}, which is used by singleton writes, 
+and it extends the put, get, and update APIs used by regular transactions with additional logic.  
+The new logic is presented in the \emph{preGet}, \emph{prePut}, and \emph{preUpdate} procedures, 
+which are  executed before, and atomically with, the corresponding data store calls.
 
 Singleton reads (line~\ref{l:brc}) simply return the value associated with the  latest committed version of the requested key they encounter.  
 They ignore tentative versions, which may lead to missing the latest commit in case its post-commit did not complete, 
@@ -178,7 +181,7 @@ but is allowed by our semantics.
 FP reads can forgo the begin call since they do not need to obtain a snapshot time a priori. 
 They can also forgo the commit call, since they perform a single read, and hence their `snapshot' is trivially valid.
 
-In case  \code{bwc} encounters a tentative version it does not try to resolve it, but rather simply aborts.
+In case  \code{bwc} encounters a tentative version, it does not try to resolve it, but rather simply aborts.
 This may cause false aborts in case the transaction that wrote the tentative version has committed and did not 
 complete post-commit, as well as in the case that it will eventually abort. 
 In general, this mechanism prioritizes regular transactions over FP ones. We choose this approach since
@@ -197,20 +200,19 @@ reserved for sequence numbers assigned by FP writes (in our implementation, $\el
 The most significant bits represent the global version set by the TM. The latter increases 
 the global clock by $2^\ell$ upon every begin and commit request.
 
-To support (1) a {\code{bwc}} transaction reads the object's latest committed version, and increments it. 
+To support (1) a {\code{bwc}} transaction reads the object's latest committed version and increments it. 
 %This is different from~\cite{mediator} which aggregates multiple timestamps in a local clock and more like~\cite{cockroach} which reads and manipulates versions at the object's level.
 The increment is done provided that it does not overflow the sequence number. 
 In the rare case when the lower $\ell$ bits are all ones, the global clock must be incremented, and so the FP transaction aborts and is retried as a regular one. 
 
 It is important to note that the singleton write needs to \emph{atomically} find the latest version and produce a new one that exceeds it, 
-to make sure that no other transaction creates a newer version in the interim. This is done by a new \emph{writeVersion} function implemented 
-at the data store level. In Section~\ref{ssec:fast-impl}
-below, we explain how we implement such atomic conditional updates in HBase as part of \sys. 
-The first parameter to writeVersion is an upper bound on the key's current committed version; since a singleton write
+to make sure that no other transaction creates a newer version in the interim. This is done by a new \emph{putVersion} function implemented in  code that resides at the data store level. In Section~\ref{ssec:fast-impl}
+below, we explain how we implement such atomic conditional updates in an HBase {coprocessor} as part of \sys. 
+The first parameter to putVersion is an upper bound on the key's current committed version; since a singleton write
 imposes no constraints on the object's current version, its upper bound is $\infty$.
 
 Next, we address (2) -- conflicts between FP and regular transactions.
-(Note that the atomic conditional write in \code{bwc} takes care of conflicts among singletons.)
+%(Note that the atomic conditional write in \code{bwc} takes care of conflicts among singletons.)
 In case an ongoing regular transaction writes to a key before \code{bwc} accesses it, 
 \code{bwc} finds the tentative write and aborts. 
 

@@ -169,7 +169,7 @@ Given the limited benefit and extra complexity of allowing many writes in FP tra
 
 The generic fast  path algorithm, which we present in Algorithm~\ref{alg:fp}, consists of two parts: 
 client side-logic, and logic running within the underlying data store. 
-The latter is implemented as a stored procedure, which in HBase is supported by the coprocessor mechanism. 
+The latter is implemented as a stored procedure, %%%%%%%%. 
 Specifically, it supports a new flavor of put, \emph{putVersion}, which is used by singleton writes, 
 and it extends the put, get, and update APIs used by regular transactions with additional logic.  
 The new logic is presented in the \emph{preGet}, \emph{prePut}, and \emph{preUpdate} procedures, 
@@ -267,9 +267,7 @@ Instead, when implementing support for \sys's fast path in HBase, we aggregate t
 which we call the \emph{Local Version Clock (LVC)}.
 %; (similar local clocks were previously used in Mediator~\cite{mediator} and CockroachDB~\cite{cockroach}).
 
-Like many state-of-the-art data stores, HBase data is \emph{sharded} (partitioned) 
-across many \emph{regions}, and is deployed on multiple  \emph{region servers}, each of which serves
-several hundreds of regions. Our solution implements one LVC in each region server. 
+Our implementation o one LVC in each region server. 
 Using a shared LVC reduces the number of updates:  
 a transactional read modifies the LVC only if its $ts_r$ exceeds it. In particular, 
 a transaction with multiple reads in the same region server needs to bump it only once. 

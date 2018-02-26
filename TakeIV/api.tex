@@ -28,6 +28,9 @@ The  data store provides the following API:
 %\item 
 The API further allows traversing (reading) earlier versions of the same key.
 % in descending order.
+\item [\code{scan (fromKey, toKey, version)}] -- a range query (extension of get). 
+Returns an iterator that supports retrieval of multiple rows. 
+%Typically, its semantics are non-atomic for the sake of implementation efficiency. 
 \item [\code{update(key, version, fields, values)}] -- 
 creates or updates an object, setting the specified fields to the specified values. 
 If the version already exists, its value is updated; otherwise, a new version is added. 

@@ -6,10 +6,10 @@ provided by the TPS. Section~\ref{ssec:schema} provides  background on the modus
 of existing TPSs that support SI,  including Omid. Finally, Section~\ref{ssec:bigdata} zooms 
 in on the specifics of HBase and Phoenix. 
 
-\subsection{Data store}
+\subsection{Data store API}
 \label{ssec:data-model}
 
-The  data store holds  \emph{objects} (often referred to as \emph{rows}) identified by unique \emph{keys}.
+The  data store holds  \emph{objects} (often referred to as \emph{rows} or {\em records}) identified by unique \emph{keys}.
 Each row can consist of multiple \emph{fields}, representing different \emph{columns}. 
 We consider multi-versioned objects, where object values are associated with \emph{version numbers}, and
 multiple versions associated with the same key may co-exist.
@@ -42,7 +42,7 @@ If field holds old, replace it with new   and return true; otherwise return fals
 %We will extend this capability below in order to implement certain atomic operations at the data store level.
 \end{description}
 
-A separate process performs garbage collection of obsolete versions.
+A background process garbage-collects obsolete versions.
 
 \subsection{Transaction semantics} \label{ssec:transactions}
 
@@ -293,4 +293,26 @@ Validation can be centralized~\cite{OmidICDE2014,Omid2017,tephra} or distributed
 \subsection{Big data platforms}
 \label{ssec:bigdata}
 
+{\inred{
 
+Apache HBase is one of the most scalable key-value storage technologies available today. 
+Like many state-of-the-art data stores, it scales through horizontal \emph{sharding} 
+(partitioning) of data across \emph{regions}. An HBase instance is deployed 
+on multiple nodes (\emph{region servers}), each of which typically serves hundreds 
+of regions. Production HBase clusters of 1K nodes and above are becoming common. 
+For example, Yahoo Japan leverages an HBase cluster of $3{,}800$ nodes 
+that collectively store $37$PB of data~\cite{yahoojapanhbase}. 
+
+Phoenix complements the HBase storage tier with a query processing (compute)
+tier. The latter scales independently (the current scalability goal is $10{,}000$ query servers). 
+Phoenix compiles every SQL statement into a plan, and executes it on one or more servers. 
+Its query processing code invokes the underlying HBase for low-level data access, and a 
+TPS (Omid or Tephra) for transaction management, through client libraries. 
+
+Wherever possible, Phoenix strives to push computation close to data (e.g., for filtering
+and aggregation), in order to minimize cross-tier communication. For this, it makes 
+extensive use of server-side stored procedures, which in HBase are supported by the 
+non-intrusive {\em coprocessor\/} mechanism. Omid uses HBase coprocessors too, either for 
+performance improvements or for specific services (e.g., garbage collection of redundant 
+data). 
+}}

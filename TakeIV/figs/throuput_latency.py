@@ -9,7 +9,7 @@ marksize=10
 my_linewidth = 5
 originalOmidLabel = 'Omid'
 lorraGenericLabel = 'Omid LL'
-lorraFPLabel = 'Fragola'
+lorraFPLabel = 'Omid FP'
 lorra2PhLabel = 'Omid 2PC'
 
 

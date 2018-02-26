@@ -28,8 +28,10 @@ The  data store provides the following API:
 %\item 
 The API further allows traversing (reading) earlier versions of the same key.
 % in descending order.
+{\inred{
 \item [\code{scan (fromKey, toKey, version)}] -- a range query (extension of get). 
-Returns an iterator that supports retrieval of multiple rows. 
+Returns an iterator that supports retrieval of multiple records. 
+}}
 %Typically, its semantics are non-atomic for the sake of implementation efficiency. 
 \item [\code{update(key, version, fields, values)}] -- 
 creates or updates an object, setting the specified fields to the specified values. 
@@ -313,7 +315,7 @@ Its query processing code invokes the underlying HBase for low-level data access
 TPS (Omid or Tephra) for transaction management, through client libraries. 
 
 Wherever possible, Phoenix strives to push computation close to data (e.g., for filtering
-and aggregation), in order to minimize cross-tier communication. For this, it makes 
+and aggregation), in order to minimize cross-tier communication. For this, it makes an
 extensive use of server-side stored procedures, which in HBase are supported by the 
 non-intrusive {\em coprocessor\/} mechanism. Omid uses HBase coprocessors too, either for 
 performance improvements or for specific services (e.g., garbage collection of redundant 

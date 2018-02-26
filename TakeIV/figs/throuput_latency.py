@@ -78,8 +78,8 @@ def breakdown(originalOmid,lorraGeneric,lorraFP,pltnum):
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
 
-    lorraGenericLabel = 'Omid LL'
-    lorraFPLabel = 'Fragola'
+    # lorraGenericLabel = 'Omid LL'
+    # lorraFPLabel = 'Fragola'
 
     p3 = ax.bar(range(len(commit_times)), commit_times, bottom=np.array(begin_times)+np.array(hbase_times),
                 label='Commit', alpha=0.5, color='g',align='center')
@@ -113,8 +113,8 @@ def breakdownHighTX(originalOmid,lorraGeneric,lorraFP,pltnum):
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
 
-    lorraGenericLabel = 'Omid LL'
-    lorraFPLabel = 'Fragola'
+    # lorraGenericLabel = 'Omid LL'
+    # lorraFPLabel = 'Fragola'
 
     p3 = ax.bar(range(len(commit_times)), commit_times, bottom=np.array(begin_times)+np.array(hbase_times),
                 label='Commit', alpha=0.5, color='g',align='center')
@@ -150,9 +150,9 @@ def singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,two_phase5,PUTori
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
 
-    lorraGenericLabel = 'Omid LL'
-    lorraFPLabel = 'Fragola'
-    twoPhaselabel = 'Omid 2PC'
+    # lorraGenericLabel = 'Omid LL'
+    # lorraFPLabel = 'Fragola'
+    # lorra2PhLabel = 'Omid 2PC'
 
     p3 = ax.bar([5,6,7,8],commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
                 label='Commit', alpha=0.5, color='g', align='center')
@@ -171,7 +171,7 @@ def singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,two_phase5,PUTori
     ax.text(4, ylimit-5, txt[0], fontsize=myfonsize)
     ax.text(0, ylimit-5, txt[1], fontsize=myfonsize)
 
-    plt.xticks([0,1,2,3,5,6,7,8], [originalOmidLabel, lorraGenericLabel,twoPhaselabel, lorraFPLabel,originalOmidLabel, lorraGenericLabel,twoPhaselabel, lorraFPLabel], fontsize=myfonsize)
+    plt.xticks([0,1,2,3,5,6,7,8], [originalOmidLabel, lorraGenericLabel,lorra2PhLabel, lorraFPLabel,originalOmidLabel, lorraGenericLabel,lorra2PhLabel, lorraFPLabel], fontsize=myfonsize)
 
     for tick in ax.get_xticklabels():
         tick.set_rotation(45)
@@ -213,9 +213,9 @@ def new_breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUT
     # lorraGenericLabel = 'Vanilla\nFragola'
     # lorraFPLabel = 'FP\nFragola'
 
-    lorraGenericLabel = 'Omid LL'
-    lorraFPLabel = 'Fragola'
-    twoPhaselabel = 'Omid 2PC'
+    # lorraGenericLabel = 'Omid LL'
+    # lorraFPLabel = 'Fragola'
+    # lorra2PhLabel = 'Omid 2PC'
 
     p3 = ax.bar([5,6,7,8],commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
                 label='Commit', alpha=0.5, color='g', align='center',hatch=commit_hatch)
@@ -246,7 +246,7 @@ def new_breakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,PUToriginalOmid,PUT
     # ax.text(4, ylimit-5, txt[0], fontsize=myfonsize)
     # ax.text(0, ylimit-5, txt[1], fontsize=myfonsize)
 
-    plt.xticks([0,1,2,3,5,6,7,8,10,11,12,13], [originalOmidLabel, lorraGenericLabel,twoPhaselabel, lorraFPLabel,originalOmidLabel, lorraGenericLabel,twoPhaselabel, lorraFPLabel,originalOmidLabel, lorraGenericLabel,twoPhaselabel, lorraFPLabel], fontsize=myfonsize-9)
+    plt.xticks([0,1,2,3,5,6,7,8,10,11,12,13], [originalOmidLabel, lorraGenericLabel,lorra2PhLabel, lorraFPLabel,originalOmidLabel, lorraGenericLabel,lorra2PhLabel, lorraFPLabel,originalOmidLabel, lorraGenericLabel,lorra2PhLabel, lorraFPLabel], fontsize=myfonsize-9)
 
 
     for tick in ax.get_xticklabels():
@@ -297,9 +297,9 @@ def singlebreakdownHigh(GETlorraGeneric,GETlorraFP,GET2phase,PUTlorraGeneric,PUT
     # lorraGenericLabel = 'Vanilla\nFragola'
     # lorraFPLabel = 'FP\nFragola'
 
-    lorraGenericLabel = 'Omid LL'
-    lorraFPLabel = 'Fragola'
-    twoPhaselabel = 'Omid 2PC'
+    # lorraGenericLabel = 'Omid LL'
+    # lorraFPLabel = 'Fragola'
+    # lorra2PhLabel = 'Omid 2PC'
 
     p3 = ax.bar([4,5,6],commit_times, bottom=np.array(begin_times) + np.array(hbase_times),
                 label='Commit', alpha=0.5, color='g', align='center')
@@ -324,7 +324,7 @@ def singlebreakdownHigh(GETlorraGeneric,GETlorraFP,GET2phase,PUTlorraGeneric,PUT
     p2 = ax.bar([8,9,10], hbase_times, bottom=begin_times, alpha=1, color='r', align='center', )
     p1 = ax.bar([8,9,10], begin_times, alpha=1, color='b', align='center')
 
-    plt.xticks([0,1,2,4,5,6,8,9,10], [lorraGenericLabel,  twoPhaselabel,lorraFPLabel,lorraGenericLabel, twoPhaselabel,lorraFPLabel,lorraGenericLabel, twoPhaselabel,lorraFPLabel], fontsize=myfonsize-9)
+    plt.xticks([0,1,2,4,5,6,8,9,10], [lorraGenericLabel,  lorra2PhLabel,lorraFPLabel,lorraGenericLabel, lorra2PhLabel,lorraFPLabel,lorraGenericLabel, lorra2PhLabel,lorraFPLabel], fontsize=myfonsize-9)
 
     for tick in ax.get_xticklabels():
         tick.set_rotation(45)

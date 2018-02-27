@@ -81,7 +81,7 @@ $k_1$ & a & 3 & 7& & 3 & 7 \\
 \Statex
 %
 \Procedure{checkRenew}{} \Comment HA support;  $\delta$ is the lease time
-\If{lease $<$ now + \inred{0.2}~$\delta$} \label{l:lease-start} \Comment extend lease
+\If{lease $<$ now + 0.8$\delta$} \label{l:lease-start} \Comment extend lease
  \State renew lease for $\delta$ time \Comment atomic operation
  \If{failed} halt \EndIf 
 \EndIf  \label{l:lease-end}
@@ -283,15 +283,14 @@ If the TM detects conflicts then the transaction aborts, and otherwise the TM pr
 \remove{Flushing before calling the TM ensures that transactions with read timestamps exceeding $ts_c$ 
 will find the committing transaction's records in the data store.}
 The client then proceeds to commit the transaction, provided that no read had forcefully aborted  it. To ensure the latter, the client uses 
-an atomic putIfAbsent to create the commit entry \inred{in the CT}.
+an atomic putIfAbsent to create the commit entry. 
 
 To avoid an extra read of the CT on every transactional read, once a transaction is committed, the post-commit stage writes 
 the transaction's $ts_c$ to the commit columns of all keys in  the transaction's write-set. 
 In case of an abort, it removes the pending records.
 Finally, it garbage-collects the transaction's CT entry. 
 
-
-\mypara{High availability.} The TM is implemented as a primary-backup process pair to ensure its high availability. 
+\subsubsection{High availability} The TM is implemented as a primary-backup process pair to ensure its high availability. 
 The backup detects the primary's failure using timeouts. When it detects a failure, it immediately begins serving new
 transactions, without any recovery procedure. Because the backup may falsely suspect the primary because of
 unexpected network or processing delays (e.g., garbage collection stalls), we take precautions to avoid correctness
@@ -307,6 +306,8 @@ exceed those returned by previous primary.
 The second shared object is a locally-checkable \emph{lease}, which is essentially a  limited-time lock.
 The lease is renewed for some parameter $\delta$  time once 80\% of this time elapses.
 As with locks, at most one TM may hold the lease at a given time (this requires the TMs' clocks to advance roughly at the same rate). 
-\inred{This ensures that no client will obtain a commit timestamp in an old epoch after the new TM has started using a new one; in particular, it preserves the invariant that once a client obtains a commit timestamp $ts_c$, all updates by transactions with commit timestamps smaller than $ts_c$ are in the data store.}
+This ensures that no client will be able to commit a transaction in an old epoch after the new TM has started 
+using a new one.
+
 
 

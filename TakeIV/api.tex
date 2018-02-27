@@ -12,7 +12,8 @@ in on the specifics of HBase and Phoenix.
 The  data store holds  \emph{objects} (often referred to as \emph{rows} or {\em records}) identified by unique \emph{keys}.
 Each row can consist of multiple \emph{fields}, representing different \emph{columns}. 
 We consider multi-versioned objects, where object values are associated with \emph{version numbers}, and
-multiple versions associated with the same key may co-exist.
+multiple versions associated with the same key may co-exist. {\inred{The store may garbage-collect 
+obsolete data versions.}}
 \remove{
 Thus, at any given time, an object holds a tuple \tuple{key,\tuple{version,value}+}, where value
 can be structured to consist of multiple columns.
@@ -46,8 +47,6 @@ If field holds old, replace it with new   and return true; otherwise return fals
 %, whereas BigTable supports row transactions. 
 %We will extend this capability below in order to implement certain atomic operations at the data store level.
 \end{description}
-
-A background process garbage-collects obsolete versions.
 
 \subsection{Transaction semantics} \label{ssec:transactions}
 

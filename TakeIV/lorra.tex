@@ -92,6 +92,10 @@ Unlike data tables, which are owned by individual applications that manage their
 the dedicated commit table is owned by the TPS; it is accessed exclusively by the 
 TPS client library, which in turn is only invoked   internally by the database engine, and not by application code. 
 
+{\inred{The commit table is a highly contended resource. While it is not very big at any given time, it is accessed
+by every single transaction that modifies data. In large clusters the update rate may become huge (see Section~\ref{sec:eval}).
+It is therefore imperative to shard this table evenly across many nodes, in order to spread the load.}}
+
 \mypara{Write intent resolution.}
 As in other TPSs, reads resolve write intents via the commit entry.
 If the transaction status is committed, the commit time is checked, and, if smaller than or equal to $ts_r$, it is taken into account;

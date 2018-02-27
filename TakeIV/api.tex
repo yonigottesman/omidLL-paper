@@ -47,6 +47,10 @@ If field holds old, replace it with new   and return true; otherwise return fals
 %We will extend this capability below in order to implement certain atomic operations at the data store level.
 \end{description}
 
+\noindent
+{\inred{Most NoSQL data store implementations guarantee atomicity (all-of-nothing semantics) 
+of all the above API's, except scan.}
+
 \subsection{Transaction semantics} \label{ssec:transactions}
 
 TPSs provide \emph{begin} and \emph{commit} APIs for delineating transactions: 

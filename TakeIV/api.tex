@@ -1,10 +1,9 @@
-A \emph{Transaction Processing System (TPS)} runs atop an underlying 
+A Transaction Processing System runs atop an underlying 
 key-value store and allows users to bundle multiple data operations 
 into a single atomic transaction. Section~\ref{ssec:data-model} describes the NoSQL data 
 model and the data access API, and  Section~\ref{ssec:transactions} defines transaction semantics
 provided by the TPS. Section~\ref{ssec:schema} provides  background on the modus operandi 
-of existing TPSs that support SI,  including Omid. Finally, Section~\ref{ssec:bigdata} zooms 
-in on the specifics of HBase and Phoenix. 
+of existing TPSs that support SI,  including Omid. Finally, Section~\ref{ssec:bigdata} overviews HBase and Phoenix. 
 
 \subsection{Data store API}
 \label{ssec:data-model}
@@ -23,23 +22,23 @@ We further assume that a write operation can specify the version number it write
 %\paragraph{API} 
 The  data store provides the following API:
 \begin{description}
-\item [\code{get(key, version)}] --  returns the requested version of key.
+\item [{get(key, version)}] --  returns the requested version of key.
 %if no version is provided, returns the latest; 
 %if no field is provided returns the entire record. 
 %\item 
 The API further allows traversing (reading) earlier versions of the same key.
 % in descending order.
 {\inred{
-\item [\code{scan (fromKey, toKey, version)}] -- a range query (extension of get). 
+\item [{scan (fromKey, toKey, version)}] -- a range query (extension of get). 
 Returns an iterator that supports retrieval of multiple records. 
 }}
 %Typically, its semantics are non-atomic for the sake of implementation efficiency. 
-\item [\code{update(key, version, fields, values)}] -- 
+\item [{update(key, version, fields, values)}] -- 
 creates or updates an object, setting the specified fields to the specified values. 
 If the version already exists, its value is updated; otherwise, a new version is added. 
 \remove{The data store may buffer the write in memory until an ensuing flush. }
-\item [\code{remove(key, version)}] -- removes an object with the given key and version.
-\item [\code{check\&mutate(key, version, field, old, new)}] -- checks the record associated with key and version. 
+\item [{remove(key, version)}] -- removes an object with the given key and version.
+\item [{check\&mutate(key, version, field, old, new)}] -- checks the record associated with key and version. 
 If field holds old, replace it with new   and return true; otherwise return false.
 \remove{ \item [\code{flush}] -- persists all previous updates to disk.}
 %data stores often provide means to atomically read and update a single object, e.g., HBase exports check\&mutate operations, which are 

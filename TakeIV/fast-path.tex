@@ -267,7 +267,7 @@ Instead, when implementing support for \sys's fast path in HBase, we aggregate t
 which we call the \emph{Local Version Clock (LVC)}.
 %; (similar local clocks were previously used in Mediator~\cite{mediator} and CockroachDB~\cite{cockroach}).
 
-Our implementation o one LVC in each region server. 
+Our implementation \inred{uses} one LVC in each region server. 
 Using a shared LVC reduces the number of updates:  
 a transactional read modifies the LVC only if its $ts_r$ exceeds it. In particular, 
 a transaction with multiple reads in the same region server needs to bump it only once. 

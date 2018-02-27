@@ -59,7 +59,7 @@ e.g., in maintaining shared persistent state.
 
 This paper describes recent functionality extensions and performance improvements 
 we made in Omid~\cite{omid}\footnote{\small{\url{https://issues.apache.org/jira/browse/OMID-82} summarizes 
-the new features in Omid.}}, an open source transaction manager for HBase, to power 
+the new features in Omid.}} to power 
 Phoenix~\cite{phoenix},  a Hadoop SQL-compliant  data analytics platform designed 
 for cloud deployment\footnote{\small{\url{https://issues.apache.org/jira/browse/PHOENIX-3623}
 summarizes the new features in Phoenix.}}. 
@@ -70,9 +70,10 @@ of immutable data, Phoenix targets converged data ingestion and analytics~\cite{
 which necessitates transaction semantics. Phoenix
 applications are both latency- and throughput-sensitive. Phoenix uses HBase 
 as its key-value storage layer, and Omid as a transaction processing layer atop HBase\footnote{\small{Tephra 
-is supported as alternative transaction manager, however its scalability and reliability are inferior to Omid's.}}. 
+is supported as alternative transaction manager, though its scalability and reliability are inferior to Omid's.}}. 
 
-Omid provides a (somewhat relaxed) variant of \emph{snapshot isolation (SI)}~\cite{DBLP:conf/sigmod/BerensonBGMOO95}, similarly to other modern transaction managers~\cite{Percolator2010,Spanner2012,tephra,cockroach}. Its implementation is lock-free, 
+Omid is an open source transaction manager for HBase. 
+It provides a (somewhat relaxed) variant of \emph{snapshot isolation (SI)}~\cite{DBLP:conf/sigmod/BerensonBGMOO95}, similarly to other modern transaction managers~\cite{Percolator2010,Spanner2012,tephra,cockroach}. Its implementation is lock-free, 
 which makes it scale better than traditional lock-based serializability protocols.
 Omid is database-neutral, i.e., it  can use any data store with a
 traditional NoSQL API (see Section~\ref{sec:api}). 
@@ -95,7 +96,7 @@ within real-time latency SLAs. In contrast to previously published protocols
 (e.g.,~\cite{Percolator2010}), our solution is amenable to multi-tenancy.
 
 \item {\em Novel fast-path (FP) algorithm} (Section~\ref{sec:alg}). 
-Our  novel (experimental) \sys\ protocol  
+Our  novel \sys\ protocol  
 maximizes the performance of  single-key transactions
 that arise in many production use cases. 
 %, which are prevalent  in latency-sensitive applications. 

@@ -158,7 +158,7 @@ Given the limited benefit and extra complexity of allowing many writes in FP tra
  \EndIf
 \EndProcedure
 
-\Procedure{preUpdate}{key, ver, commit, $ts_c$}   \label{l:txu}
+\Procedure{preUpdate}{key, \inred{$ts_r$}, commit, $ts_c$}   \label{l:txu}
 \Statex \Comment executed atomically with ds.update call (by  post-commit) 
 \State bump(key's maxVersion, $ts_c$)
 \EndProcedure

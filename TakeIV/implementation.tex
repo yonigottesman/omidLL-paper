@@ -307,6 +307,6 @@ exceed those returned by previous primary.
 The second shared object is a locally-checkable \emph{lease}, which is essentially a  limited-time lock.
 The lease is renewed for some parameter $\delta$  time once 80\% of this time elapses.
 As with locks, at most one TM may hold the lease at a given time (this requires the TMs' clocks to advance roughly at the same rate). 
-\inred{This ensures that no client will obtain a commit timestamp in an old epoch after the new TM has started using a new one; in particular, it preserves the invariant that once a new TM has started all updates by clients that obtain a commit timestamp in an old epoch are in the data store.}
+\inred{This ensures that no client will obtain a commit timestamp in an old epoch after the new TM has started using a new one; in particular, it preserves the invariant that once a client obtains a commit timestamp $ts_c$, all updates by transactions with commit timestamps smaller than $ts_c$ are in the data store.}
 
 

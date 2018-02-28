@@ -11,7 +11,7 @@
       \begin{tabular}{|c|c|c|c| c| c | c|}
 \multicolumn{4}{c}{Data Table}&  \multicolumn{3}{r}{\hspace{1mm} Commit Table}\\
 \cline{1-4} \cline{6-7}
-key & value & version & commit & & $ts_r$ & $ts_c$ \\
+key & value & version & commit & & \inred{key} & ֿ\inred{commit} \\
 \cline{1-4} \cline{6-7}
 $k_1$ & a & 3 & nil & &  &  \\
 \cline{6-7} \cline{1-4}
@@ -27,7 +27,7 @@ $k_1$ & a & 3 & nil & &  &  \\
           \begin{tabular}{|c|c|c|c| c| c | c|}
 \multicolumn{4}{c}{Data Table}&  \multicolumn{3}{r}{\hspace{1mm} Commit Table}\\
 \cline{1-4} \cline{6-7}
-key & value & version & commit & & $ts_r$ & $ts_c$ \\
+key & value & version & commit & & \inred{key} & ֿ\inred{commit} \\
 \cline{1-4} \cline{6-7}
 $k_1$ & a & 3 & nil & & 3 & 7 \\
 \cline{6-7} \cline{1-4}
@@ -42,7 +42,7 @@ $k_1$ & a & 3 & nil & & 3 & 7 \\
           \begin{tabular}{|c|c|c|c| c| c | c|}
 \multicolumn{4}{c}{Data Table}&  \multicolumn{3}{r}{\hspace{1mm} Commit Table}\\
 \cline{1-4} \cline{6-7}
-key & value & version & commit & & $ts_r$ & $ts_c$ \\
+key & value & version & commit & & \inred{key} & ֿ\inred{commit} \\
 \cline{1-4} \cline{6-7}
 $k_1$ & a & 3 & 7& & 3 & 7 \\
 \cline{6-7}
@@ -81,7 +81,7 @@ $k_1$ & a & 3 & 7& & 3 & 7 \\
 \Statex
 %
 \Procedure{checkRenew}{} \Comment HA support;  $\delta$ is the lease time
-\If{lease $<$ now + 0.8$\delta$} \label{l:lease-start} \Comment extend lease
+\If{lease $<$ now + \inred{0.2}$\delta$} \label{l:lease-start} \Comment extend lease
  \State renew lease for $\delta$ time \Comment atomic operation
  \If{failed} halt \EndIf 
 \EndIf  \label{l:lease-end}
@@ -104,9 +104,10 @@ $k_1$ & a & 3 & 7& & 3 & 7 \\
        \State  return TM.begin
 \EndProcedure
 \Statex
-  \Procedure{write}{$ts_r$, key, val}
+  \Procedure{write}{$ts_r$, key, \inred{fields, values}}
        \State  track key in write-set 
-       \State  return ds.put(key, val, $ts_r$, nil)
+       \State \inred{add commit to fields and nil to values}
+       \State    \inred{ return ds.put(key, $ts_r$, fields, \inred{values})}
 \EndProcedure
 %     
 \Statex
@@ -119,8 +120,9 @@ $k_1$ & a & 3 & 7& & 3 & 7 \\
 			\Else \Comment commit cell is empty, check CT
       				\State $ts_c  \leftarrow$ CT.get(rec.ts)  
       				\If{$ts_c =$ nil}  \Comment no CT entry, set status to  $\bot$
-      					\State $ts_c \leftarrow$ CT.putIfAbsent(rec.ts, $\bot$)  %\Comment returns new value
-      					\If{$ts_c$=nil} \Comment putIfAbsent succeeded 
+      					\State \inred{$ts_c\leftarrow$CT.check\&mutate(rec.ts,nil,commit,nil,$\bot$)}  
+      					\inred{\Comment aborts the transaction if it was not commited}
+      					\If{$ts_c$=nil}  %\Comment check\&mutate succeeded
       						\State $ts_c  \leftarrow \bot$ 
       					\EndIf
 				\EndIf
@@ -198,7 +200,7 @@ $k_1$ & a & 3 & 7& & 3 & 7 \\
       	\remove{\State ds.flush}
       	\State $ts_c \leftarrow$ TM.commit($ts_r$, write-set) \Comment may return abort
       	\If{$ts_c \not=$ abort}
-	      	\If {CT.putIfAbsent($ts_r$, $ts_c$) $=\bot$}
+	      	\inred{\If {CT.check\&mutate($ts_r$, nil, commit, nil, $ts_c$) $=\bot$}} % \Comment Set field only if field is missing and return $\bot$ if transaction $ts_r$ was aborted}
 %   		\If{$\neg$ok} 
    		 	\State $ts_c \leftarrow$ abort 
    		 \EndIf
@@ -207,7 +209,7 @@ $k_1$ & a & 3 & 7& & 3 & 7 \\
 	\ForAll{keys k $\in$ write-set}
 			\If{$ts_c =$ abort} ds.remove(k, $ts_r$)  	
 %			\Else\ update  commit field of \tuple{k, $ts_r$} to $ts_c$  in ds%  $\leftarrow ts_c$ 
-			\Else\ ds.update(k, $ts_r$, commit, $ts_c$)
+			\inred{\Else\ ds.put(k, $ts_r$, commit, $ts_c$)}
 			\EndIf
 	\EndFor
 	\State CT.remove($ts_r$) \Comment garbage-collect CT entry
@@ -262,7 +264,7 @@ it must forcefully abort it in case it is still pending, and otherwise discover 
 To this end, read first refers to the CT.
 If there is no CT entry associated with the transaction ($ts_c$=nil), 
 read attempts to create an entry with $\bot$ as the commit timestamp. 
-This is done using an atomic putIfAbsent operation (using HBase's check\&mutate API), due to a possible 
+This is done using an atomic \inred{check\&mutate} operation, due to a possible 
 race with a commit operation; if a competing commit attempt finds the   $\bot$ entry, it  aborts. 
 Note that it is possible  to wait a configurable amount of time before attempting to create a $\bot$ entry, in
 order to allow the transaction complete without aborting it.
@@ -283,7 +285,7 @@ If the TM detects conflicts then the transaction aborts, and otherwise the TM pr
 \remove{Flushing before calling the TM ensures that transactions with read timestamps exceeding $ts_c$ 
 will find the committing transaction's records in the data store.}
 The client then proceeds to commit the transaction, provided that no read had forcefully aborted  it. To ensure the latter, the client uses 
-an atomic putIfAbsent to create the commit entry. 
+an atomic \inred{check\&mutate} to create the commit entry. 
 
 To avoid an extra read of the CT on every transactional read, once a transaction is committed, the post-commit stage writes 
 the transaction's $ts_c$ to the commit columns of all keys in  the transaction's write-set. 

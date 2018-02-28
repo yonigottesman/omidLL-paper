@@ -28,18 +28,23 @@ The  data store provides the following API:
 %\item 
 The API further allows traversing (reading) earlier versions of the same key.
 % in descending order.
+\inred{\item [{put(key, version, fields, values}] -- 
+creates or updates an object, setting the specified fields to the specified values. 
+If the version already exists, its value is updated; otherwise, a new version is added. 
+}
 {\inred{
 \item [{scan (fromKey, toKey, version)}] -- a range query (extension of get). 
 Returns an iterator that supports retrieval of multiple records. 
 }}
 %Typically, its semantics are non-atomic for the sake of implementation efficiency. 
-\item [{update(key, version, fields, values)}] -- 
-creates or updates an object, setting the specified fields to the specified values. 
-If the version already exists, its value is updated; otherwise, a new version is added. 
+%\item [{update(key, version, fields, values)}] -- 
+%creates or updates an object, setting the specified fields to the specified values. 
+%If the version already exists, its value is updated; otherwise, a new version is added. 
 \remove{The data store may buffer the write in memory until an ensuing flush. }
 \item [{remove(key, version)}] -- removes an object with the given key and version.
 \item [{check\&mutate(key, version, field, old, new)}] -- checks the record associated with key and version. 
-If field holds old, replace it with new   and return true; otherwise return false.
+\inred{If field holds old, replace it with new and return old; otherwise return field value.}
+\inred{If old is nil, create field with new only if field is missing and return value accordingly.}
 \remove{ \item [\code{flush}] -- persists all previous updates to disk.}
 %data stores often provide means to atomically read and update a single object, e.g., HBase exports check\&mutate operations, which are 
 %internally implemented using a per-row RW lock.
@@ -187,9 +192,9 @@ We now overview the phases a transaction goes through, focusing on Omid's approa
 \EndProcedure
 %\Statex
 
-\Procedure{write}{$ts_r$, key, value} \Comment transactional write
+\Procedure{write}{$ts_r$, key, \inred{fields, values}} \hspace{-0.2cm} \Comment transactional write
 \State optionally check for conflicts and abort if found 
-\State indicate write intent for key with value and $ts_r$
+\State indicate write intent for key with \inred{values} and $ts_r$
 \State add key to local write-set
 \EndProcedure
 %\Statex

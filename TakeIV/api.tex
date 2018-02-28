@@ -28,14 +28,14 @@ The  data store provides the following API:
 %\item 
 The API further allows traversing (reading) earlier versions of the same key.
 % in descending order.
-\inred{\item [{put(key, version, fields, values}] -- 
-creates or updates an object, setting the specified fields to the specified values. 
-If the version already exists, its value is updated; otherwise, a new version is added. 
-}
 {\inred{
 \item [{scan (fromKey, toKey, version)}] -- a range query (extension of get). 
 Returns an iterator that supports retrieval of multiple records. 
 }}
+\inred{\item [{put(key, version, fields, values)}] -- 
+creates or updates an object, setting the specified fields to the specified values. 
+If the version already exists, its value is updated; otherwise, a new version is added. 
+}
 %Typically, its semantics are non-atomic for the sake of implementation efficiency. 
 %\item [{update(key, version, fields, values)}] -- 
 %creates or updates an object, setting the specified fields to the specified values. 
@@ -60,7 +60,9 @@ of all the above API's, except scan.}
 
 TPSs provide \emph{begin} and \emph{commit} APIs for delineating transactions: 
 a \emph{transaction} is a sequence of \emph{read} and \emph{write} operations on different objects 
-that occur between begin and commit. Note that transactional reads and writes are implemented using the 
+that occur between begin and commit. {\inred{(For simplicity, we only specify single-key operations 
+here; the semantics of multi-key range queries (scans) are identical to reads.)}}
+Note that transactional reads and writes are implemented using the 
 datastore's get and put operations.
 Two transactions are said to be \emph{concurrent} if 
 their executions overlap, i.e., one of them begins between the begin time and commit time of the other;

@@ -1,11 +1,11 @@
-
-
 We now describe \sysll, a scalable low-latency TPS algorithm 
 % on top of HBase. 
 %\sys\ is an evolution of the open-source Omid TPS, redesigned to reduce latency.
 %For clarity of the presentation, in this section we describe \sys\ without the fast-path; 
 %This protocol 
-that satisfies standard (unrelaxed) SI semantics and is amenable to multi-tenancy.
+that satisfies standard (unrelaxed) SI semantics and is amenable to multi-tenancy
+\footnote{\small{\url{https://issues.apache.org/jira/browse/OMID-90} summarizes 
+the \sysll\/ development.}}.
 We saw above that, while many TPSs follow a similar schema,  they make different design choices when implementing this schema. 
 We overview our design choices in Section~\ref{ssec:ll-txns}. 
 We then proceed to give a detailed description of the protocol

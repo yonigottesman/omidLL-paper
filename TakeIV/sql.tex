@@ -15,7 +15,7 @@ reads when multiple versions are present.
 Functionality-wise, we added support for on-the-fly construction of secondary indexes
 (see Section~\ref{ssec:indexes}) and extended 
 Omid's SI model to allow for multiple read- and write-points, as required 
-in some Phoenix applications (see Section~\ref{ssec:snapshot}). 
+in some Phoenix applications (see Section~\ref{ssec:snapshot})\footnote{\small{\url{https://issues.apache.org/jira/browse/OMID-82} summarizes the new features in Omid.}}. 
 
 \subsection{Index construction}
 \label{ssec:indexes}
@@ -34,12 +34,17 @@ command, the database (1) populates the new index table with historic data from 
 It is desirable to allow temporal overlap between the two, in order to avoid stalling  writes while 
 the index is being populated. 
 
-We exploit Omid's SI semantics in order to create such indexes. To achieve (1), Omid invokes a 
-transaction that scans a snapshot of the base table and streams the data into the  
-index table. This way, historic data is captured without blocking concurrent puts. Once this 
-process completes, the index can become available to queries. 
-To achieve (2), the database creates a trigger that augments all transactions that update the base table 
-with an additional update of the secondary index. 
+We exploit Omid's SI semantics in order to create such indexes. To achieve (1), 
+Phoenix invokes a transaction that scans a snapshot of the base table and 
+streams the data into the  index table. This way, historic data is captured without 
+blocking concurrent puts. {\inred{Phoenix has two types of indexes: global (sharded 
+independently from the base table) and local (co-sharded with the base table). 
+In the latter case, the whole transaction is pushed into a coprocessor; this 
+local distributed execution speeds up the process significantly.}}
+
+Once the bulk population completes, the index can become available to queries. 
+To achieve (2), the database creates a trigger that augments all transactions 
+that update the base table with an additional update of the secondary index. 
  
 In order to guarantee the new index's consistency with respect to the base table, the snapshot creation 
 and the trigger setup must be atomic. In other words, all writes beyond the snapshot   

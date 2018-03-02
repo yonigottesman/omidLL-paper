@@ -1,7 +1,7 @@
-A Transaction Processing System runs atop an underlying 
+A transaction processing system runs atop an underlying 
 key-value store and allows users to bundle multiple data operations 
 into a single atomic transaction. Section~\ref{ssec:data-model} describes the NoSQL data 
-model and the data access API, and  Section~\ref{ssec:transactions} defines transaction semantics
+model and the data access API of the underlying key-value store, and  Section~\ref{ssec:transactions} defines transaction semantics
 provided by the TPS. Section~\ref{ssec:schema} provides  background on the modus operandi 
 of existing TPSs that support SI,  including Omid. Finally, Section~\ref{ssec:bigdata} overviews HBase and Phoenix. 
 
@@ -11,8 +11,7 @@ of existing TPSs that support SI,  including Omid. Finally, Section~\ref{ssec:bi
 The  data store holds  \emph{objects} (often referred to as \emph{rows} or {\em records}) identified by unique \emph{keys}.
 Each row can consist of multiple \emph{fields}, representing different \emph{columns}. 
 We consider multi-versioned objects, where object values are associated with \emph{version numbers}, and
-multiple versions associated with the same key may co-exist. {\inred{The store may garbage-collect 
-obsolete data versions.}}
+multiple versions associated with the same key may co-exist.
 \remove{
 Thus, at any given time, an object holds a tuple \tuple{key,\tuple{version,value}+}, where value
 can be structured to consist of multiple columns.
@@ -22,6 +21,9 @@ We further assume that a write operation can specify the version number it write
 %\paragraph{API} 
 The  data store provides the following API:
 \begin{description}
+    \setlength{\itemsep}{0pt}
+    \setlength{\parskip}{0pt}
+    \setlength{\parsep}{2pt}  
 \item [{get(key, version)}] --  returns the requested version of key.
 %if no version is provided, returns the latest; 
 %if no field is provided returns the entire record. 
@@ -30,7 +32,7 @@ The API further allows traversing (reading) earlier versions of the same key.
 % in descending order.
 {\inred{
 \item [{scan (fromKey, toKey, version)}] -- a range query (extension of get). 
-Returns an iterator that supports retrieval of multiple records. 
+Returns an iterator that supports retrieval of multiple records using getNext() calls.
 }}
 \inred{\item [{put(key, version, fields, values)}] -- 
 creates or updates an object, setting the specified fields to the specified values. 
@@ -42,9 +44,9 @@ If the version already exists, its value is updated; otherwise, a new version is
 %If the version already exists, its value is updated; otherwise, a new version is added. 
 \remove{The data store may buffer the write in memory until an ensuing flush. }
 \item [{remove(key, version)}] -- removes an object with the given key and version.
-\item [{check\&mutate(key, version, field, old, new)}] -- checks the record associated with key and version. 
-\inred{If field holds old, replace it with new and return old; otherwise return field value.}
-\inred{If old is nil, create field with new only if field is missing and return value accordingly.}
+\item [{check\&mutate(key, field, old, new)}] -- checks the record associated with key. 
+\inred{If field holds old, replaces it with new; either way returns field's previous value.}
+\inred{If old is nil, creates field and initializes it with new only if key is missing in data store.}
 \remove{ \item [\code{flush}] -- persists all previous updates to disk.}
 %data stores often provide means to atomically read and update a single object, e.g., HBase exports check\&mutate operations, which are 
 %internally implemented using a per-row RW lock.
@@ -53,16 +55,15 @@ If the version already exists, its value is updated; otherwise, a new version is
 \end{description}
 
 \noindent
-{\inred{Most NoSQL data store implementations guarantee atomicity (all-of-nothing semantics) 
-of all the above API's, except scan.}
+{\inred{Most NoSQL data store implementations guarantee atomic execution of each of the above API's, except traversals of iterators returned by scan.}
 
 \subsection{Transaction semantics} \label{ssec:transactions}
 
 TPSs provide \emph{begin} and \emph{commit} APIs for delineating transactions: 
 a \emph{transaction} is a sequence of \emph{read} and \emph{write} operations on different objects 
-that occur between begin and commit. {\inred{(For simplicity, we only specify single-key operations 
-here; the semantics of multi-key range queries (scans) are identical to reads.)}}
-Note that transactional reads and writes are implemented using the 
+that occur between begin and commit. {\inred{For simplicity, we only describe single-key operations 
+here; multi-key range queries (scans) are treated as sequences of reads.}}
+Thus, transactional reads and writes are implemented using the 
 datastore's get and put operations.
 Two transactions are said to be \emph{concurrent} if 
 their executions overlap, i.e., one of them begins between the begin time and commit time of the other;
@@ -102,25 +103,25 @@ though $FP_2$ occurs after $FP_1$.
 } % remove
 Specifically, %our correctness condition stipulates that
 the system enforces a total order ${\cal T}$ on all committed transactions, so that
-\begin{enumerate}
-    \setlength{\itemsep}{0pt}
-    \setlength{\parskip}{0pt}
-    \setlength{\parsep}{2pt}  
+%\begin{enumerate}
+%   \setlength{\itemsep}{0pt}
+%   \setlength{\parskip}{0pt}
+%   \setlength{\parsep}{2pt}  
 %\item
 %regular transactions (though not FP ones) are ordered in ${\cal T}$  according to their commit times;
-\item
-non-overlapping transactions 
+%item
+(i) non-overlapping transactions 
 %(regular and FP) 
 that update the same key occur in ${\cal T}$  in order of their commit times;
-\item
-each  transaction's read operations see a consistent snapshot of the database reflecting 
+%\item
+(ii) each  transaction's read operations see a consistent snapshot of the database reflecting 
 a prefix of  ${\cal T}$; 
 %and  
 %that includes at least all regular transactions committed prior to its start time; and 
-\item
- a transaction commits only if none of the items it updates is modified by a transaction ordered in ${\cal T}$ after
+%\item
+ and (iii) a transaction commits only if none of the items it updates is modified by a transaction ordered in ${\cal T}$ after
  its snapshot time and before its commit time.
- \end{enumerate}
+% \end{enumerate}
 
 \remove{ % OLD SI definition - no relaxation of RTO
 More precisely, 
@@ -166,16 +167,16 @@ or
 
 \begin{figure}
 \centerline{
-\includegraphics[width=0.45\textwidth]{FragolaComponents.jpg}
+\includegraphics[width=0.40\textwidth]{FragolaComponents.jpg}
 }
-\caption{Transaction processing architecture: A client library exposes an  API for  executing transactions of data store operations. 
+\caption{\small Transaction processing architecture: A client library exposes an  API for  executing transactions of data store operations. 
 A centralized Transaction Manager (TM) handles transaction begin and commit requests, while data is written directly to the 
 underlying data store. The TM has a backup for high availability.}
 \label{fig:components}
 \end{figure}
 
 Figure~\ref{fig:components} depicts, at a high level, the primary components of the TPS architecture,  
-their API's, and interaction with the data store. 
+their APIs, and interaction with the data store. 
 
 In many TPSs, transaction processing follows the following general schema, 
 outlined in Algorithm~\ref{alg:schema}, while systems vary in their implementations of each of the steps.
@@ -188,13 +189,14 @@ We now overview the phases a transaction goes through, focusing on Omid's approa
 
 \begin{algorithm}[tb]
 \begin{algorithmic}[1]
-%\small
+\small
 \Procedure{begin}{}
 \State obtain read timestamp $ts_r$ 
 \EndProcedure
 %\Statex
 
-\Procedure{write}{$ts_r$, key, \inred{fields, values}} \hspace{-0.2cm} \Comment transactional write
+\Procedure{write}{$ts_r$, key, \inred{fields, values}} 
+\\ \Comment transactional write
 \State optionally check for conflicts and abort if found 
 \State indicate write intent for key with \inred{values} and $ts_r$
 \State add key to local write-set
@@ -225,6 +227,7 @@ We now overview the phases a transaction goes through, focusing on Omid's approa
 \end{algorithmic}
 \caption{TPS operation schema.} 
 \label{alg:schema}
+
 \end{algorithm} 
 
 Most of the systems employ a centralized \emph{transaction manager (TM)\/} service~\cite{Percolator2010,OmidICDE2014,Omid2017,tephra},
@@ -268,7 +271,7 @@ it by updating the commit entry accordingly, as explained below.
 %Similarly, the solution we implement in \sys\ forces the transaction with the pending write intent to abort. 
 
   \mypara{Commit.} 
-  Commit occurs in four steps:
+  Commit occurs in four steps: \vspace{-0.3cm}
   \begin{enumerate}
     \setlength{\itemsep}{0pt}
     \setlength{\parskip}{0pt}
@@ -324,9 +327,9 @@ Its query processing code invokes the underlying HBase for low-level data access
 TPS (Omid or Tephra) for transaction management, through client libraries. 
 
 Wherever possible, Phoenix strives to push computation close to data (e.g., for filtering
-and aggregation), in order to minimize cross-tier communication. For this, it makes an
+and aggregation), in order to minimize cross-tier communication. For this, it makes 
 extensive use of server-side stored procedures, which in HBase are supported by the 
-non-intrusive {\em coprocessor\/} mechanism. Omid uses HBase coprocessors too, either for 
-performance improvements or for specific services (e.g., garbage collection of redundant 
-data). 
+non-intrusive {\em coprocessor\/} mechanism. Omid uses HBase coprocessors too, both for 
+performance improvements and for specific services, such as garbage collection of redundant 
+data. 
 }}

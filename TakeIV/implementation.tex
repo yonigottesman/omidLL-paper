@@ -2,6 +2,7 @@
 \label{ssec:ll}
 
 \begin{figure}[!t]
+\small
   \centering
   
   \begin{subfigure}[tb]{\columnwidth}
@@ -11,7 +12,7 @@
       \begin{tabular}{|c|c|c|c| c| c | c|}
 \multicolumn{4}{c}{Data Table}&  \multicolumn{3}{r}{\hspace{1mm} Commit Table}\\
 \cline{1-4} \cline{6-7}
-key & value & version & commit & & \inred{key} & ֿ\inred{commit} \\
+key & value & version & commit & & \inred{$ts_r$} & ֿ\inred{commit} \\
 \cline{1-4} \cline{6-7}
 $k_1$ & a & 3 & nil & &  &  \\
 \cline{6-7} \cline{1-4}
@@ -27,7 +28,7 @@ $k_1$ & a & 3 & nil & &  &  \\
           \begin{tabular}{|c|c|c|c| c| c | c|}
 \multicolumn{4}{c}{Data Table}&  \multicolumn{3}{r}{\hspace{1mm} Commit Table}\\
 \cline{1-4} \cline{6-7}
-key & value & version & commit & & \inred{key} & ֿ\inred{commit} \\
+key & value & version & commit & & \inred{$ts_r$} & ֿ\inred{commit} \\
 \cline{1-4} \cline{6-7}
 $k_1$ & a & 3 & nil & & 3 & 7 \\
 \cline{6-7} \cline{1-4}
@@ -42,7 +43,7 @@ $k_1$ & a & 3 & nil & & 3 & 7 \\
           \begin{tabular}{|c|c|c|c| c| c | c|}
 \multicolumn{4}{c}{Data Table}&  \multicolumn{3}{r}{\hspace{1mm} Commit Table}\\
 \cline{1-4} \cline{6-7}
-key & value & version & commit & & \inred{key} & ֿ\inred{commit} \\
+key & value & version & commit & & \inred{$ts_r$} & ֿ\inred{commit} \\
 \cline{1-4} \cline{6-7}
 $k_1$ & a & 3 & 7& & 3 & 7 \\
 \cline{6-7}
@@ -54,7 +55,7 @@ $k_1$ & a & 3 & 7& & 3 & 7 \\
   \end{subfigure}
 
   
-  \caption{Evolution of \sysll\ metadata during a transaction. The transaction receives $ts_r=3$ in the begin stage 
+  \caption{\small Evolution of \sysll\ metadata during a transaction. The transaction receives $ts_r=3$ in the begin stage 
   and uses this as the version number for tentative writes. It receives a commit timestamp $ts_c=7$ when committing.}
   \label{fig:model}
 \end{figure}
@@ -63,12 +64,12 @@ $k_1$ & a & 3 & 7& & 3 & 7 \\
 
 \begin{algorithm}[htb]
 \begin{algorithmic}[1]
-%\small
+\small
 \Procedure{begin}{}
 \State checkRenew()
 \State return Clock.fetchAndIncrement()
 \EndProcedure
-\Statex
+%\Statex
 \Procedure{commit}{$txid$, write-set}
 \State checkRenew()
 \State $ts_c \leftarrow$ Clock.fetchAndIncrement()
@@ -78,7 +79,7 @@ $k_1$ & a & 3 & 7& & 3 & 7 \\
  \State return {\sc abort}
 \EndIf
 \EndProcedure
-\Statex
+%\Statex
 %
 \Procedure{checkRenew}{} \Comment HA support;  $\delta$ is the lease time
 \If{lease $<$ now + \inred{0.2}$\delta$} \label{l:lease-start} \Comment extend lease
@@ -99,7 +100,7 @@ $k_1$ & a & 3 & 7& & 3 & 7 \\
 
 \begin{algorithm}[t]
   \begin{algorithmic}
- %   \small
+ \small
  \Procedure{begin}{}
        \State  return TM.begin
 \EndProcedure
@@ -107,7 +108,7 @@ $k_1$ & a & 3 & 7& & 3 & 7 \\
   \Procedure{write}{$ts_r$, key, \inred{fields, values}}
        \State  track key in write-set 
        \State \inred{add commit to fields and nil to values}
-       \State    \inred{ return ds.put(key, $ts_r$, fields, \inred{values})}
+       \State    \inred{return ds.put(key, $ts_r$, fields, \inred{values})}
 \EndProcedure
 %     
 \Statex
@@ -120,9 +121,8 @@ $k_1$ & a & 3 & 7& & 3 & 7 \\
 			\Else \Comment commit cell is empty, check CT
       				\State $ts_c  \leftarrow$ CT.get(rec.ts)  
       				\If{$ts_c =$ nil}  \Comment no CT entry, set status to  $\bot$
-      					\State \inred{$ts_c\leftarrow$CT.check\&mutate(rec.ts,nil,commit,nil,$\bot$)}  
-      					\inred{\Comment aborts the transaction if it was not commited}
-      					\If{$ts_c$=nil}  %\Comment check\&mutate succeeded
+      					\State \inred{$ts_c\leftarrow$CT.check\&mutate(rec.ts, commit, nil, $\bot$)}  
+      					\If{$ts_c$=nil}  \Comment forced abort successful 
       						\State $ts_c  \leftarrow \bot$ 
       					\EndIf
 				\EndIf
@@ -130,7 +130,7 @@ $k_1$ & a & 3 & 7& & 3 & 7 \\
  				 \If{$ts_c = \bot$}  
  				 	\State \Comment check for race: commit before $\bot$ entry  created 
  				 	\State re-read rec from ds
- 				 	\If{rec.commit $\not =$nil} 
+ 				 	\If{rec.commit $\not =$nil}
  				 		 \State $ts_c \leftarrow$  rec.commit 
  				 		 \State CT.remove(rec.ts)
  				 	\Else\  
@@ -200,9 +200,9 @@ $k_1$ & a & 3 & 7& & 3 & 7 \\
       	\remove{\State ds.flush}
       	\State $ts_c \leftarrow$ TM.commit($ts_r$, write-set) \Comment may return abort
       	\If{$ts_c \not=$ abort}
-	      	\inred{\If {CT.check\&mutate($ts_r$, nil, commit, nil, $ts_c$) $=\bot$}} % \Comment Set field only if field is missing and return $\bot$ if transaction $ts_r$ was aborted}
+	      	\inred{\If {CT.check\&mutate($ts_r$, commit, nil, $ts_c$) $=\bot$}} % \Comment Set field only if field is missing and return $\bot$ if transaction $ts_r$ was aborted}
 %   		\If{$\neg$ok} 
-   		 	\State $ts_c \leftarrow$ abort 
+   		 	\State $ts_c \leftarrow$ abort  %\Comment transaction forcefully aborted
    		 \EndIf
 	\EndIf
 	\State \Comment post-commit
@@ -291,6 +291,7 @@ To avoid an extra read of the CT on every transactional read, once a transaction
 the transaction's $ts_c$ to the commit columns of all keys in  the transaction's write-set. 
 In case of an abort, it removes the pending records.
 Finally, it garbage-collects the transaction's CT entry. 
+
 
 \subsubsection{High availability} The TM is implemented as a primary-backup process pair to ensure its high availability. 
 The backup detects the primary's failure using timeouts. When it detects a failure, it immediately begins serving new

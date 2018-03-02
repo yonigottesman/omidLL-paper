@@ -107,8 +107,8 @@ occur in our random mix, which uses random key selection with billions of keys.
 
 \begin{figure}[ht]
 	\centering
-      	\includegraphics[width=0.48\textwidth]{figs/throughputlatency1.pdf}
-	    \caption{Throughput vs.\ latency, transaction size = 1.}
+      	\includegraphics[width=0.38\textwidth]{figs/throughputlatency1.pdf}
+	    \caption{\small Throughput vs.\ latency, transaction size = 1.}
         \label{fig:tl-1}      
 \end{figure}
 
@@ -119,27 +119,27 @@ occur in our random mix, which uses random key selection with billions of keys.
 \begin{figure*}[hbt]
 \centering
 \begin{tabular}{ccc}
-      \begin{subfigure}[t]{0.48\textwidth}
+      \begin{subfigure}[t]{0.38\textwidth}
          \includegraphics[width=\textwidth]{figs/latency_allPUTGET.pdf}
         \caption[]{Low load (100K tps).}
         \label{fig:stack-brc}
 
-      \end{subfigure} 
-    
-& 
-      \begin{subfigure}[t]{0.48\textwidth}
+      \end{subfigure}  
+&
+      \begin{subfigure}[t]{0.38\textwidth}
       	\includegraphics[width=\textwidth]{figs/latencyHighThrough_PUTGETRMW.pdf}
 	\caption{High load (500K tps).}
 	\label{fig:hightx}
       \end{subfigure}  & 
 
 \end{tabular}
-       \caption{Latency breakdown  for single-key transactions under  random mix workload. }
+       \caption{\small Latency breakdown  for single-key transactions under  random mix workload. }
+       \vspace{-0.5cm}
 \end{figure*}
 
 \mypara{Throughput and latency of short transactions.} 
 %
-\sys\ is motivated by the prevalence of short transactions in production, and is designed with
+\\ \sys\ is motivated by the prevalence of short transactions in production, and is designed with
 the goal of accelerating such transactions.
 Its advantage is less pronounced for long transactions, where the cost of begin and commit is amortized
 across many reads and writes.
@@ -204,21 +204,22 @@ but this is offset by a shorter read/write execution time.
 \centering{
 \begin{tabular}{cc}
 
-    \begin{subfigure}[t]{0.48\textwidth}
+    \begin{subfigure}[t]{0.35\textwidth}
 	\includegraphics[width=\textwidth]{figs/throughputlatency10.pdf}
-	\caption[]{Throughput versus latency, transaction size = 10}
+	\caption[]{\small Throughput versus latency, transaction size=10}
     \label{fig:tl-10}
   \end{subfigure} & 
 
 
-  \begin{subfigure}[t]{0.48\textwidth}
+  \begin{subfigure}[t]{0.35\textwidth}
 	\includegraphics[width=\textwidth]{figs/latency_5_10.pdf}
-	\caption[]{Latency breakdown, transaction size = 5, 10}
+	\caption[]{\small Latency breakdown, transaction size = 5, 10}
     \label{fig:stack-tx10}
   \end{subfigure} 
 \end{tabular}  	
 }		
-  \caption{Latency vs.\ throughput  and latency breakdown  for long transactions in random mix workload. }
+  \caption{\small Latency vs.\ throughput  and latency breakdown  for long transactions in random mix workload. }
+  \vspace{-0.3cm}
   \label{fig:throughput-latency}
 \end{figure*}
 
@@ -234,21 +235,22 @@ because it also uses check\&mutate operations during the commit validation phase
 
 \begin{figure*}
 \centering
-\begin{subfigure}[t]{0.48\textwidth}
+\begin{subfigure}[t]{0.35\textwidth}
 \centerline{
 \includegraphics[width=.85\textwidth]{figs/low_speedup.pdf}
 }
-\caption{Low load (100 tps)} 
+\caption{\small Low load (100 tps)} 
 \label{fig:slowdown-low}
 \end{subfigure} 
-\begin{subfigure}[t]{0.48\textwidth}
+\begin{subfigure}[t]{0.35\textwidth}
 \centerline{
 \includegraphics[width=.85\textwidth]{figs/high_speedup.pdf}
 }
-\caption{High load (500 tps)} 
+\caption{\small High load (500 tps)} 
 \label{fig:slowdown-high}
 \end{subfigure} 
-\caption{Latency speedup with  fast path API in {\sys}.}
+\caption{\small Latency speedup with  fast path API in {\sys}.}
+\vspace{-0.7cm}
 \label{fig:fp-tradeoff}
 \end{figure*}
 
@@ -276,5 +278,4 @@ of the transactions versus  \sysll's $0.08\%$,
  \syspc's $0.08\%$ 
 and Omid's $0.07\%$. 
 %(the latter  is in line with production abort rates reported in Omid~\cite{Omid2017}).  
-
 

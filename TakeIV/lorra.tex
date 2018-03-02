@@ -4,8 +4,8 @@ We now describe \sysll, a scalable low-latency TPS algorithm
 %For clarity of the presentation, in this section we describe \sys\ without the fast-path; 
 %This protocol 
 that satisfies standard (unrelaxed) SI semantics and is amenable to multi-tenancy
-\footnote{\small{\url{https://issues.apache.org/jira/browse/OMID-90} summarizes 
-the \sysll\/ development.}}.
+ summarizes 
+ \sysll\/'s development.
 We saw above that, while many TPSs follow a similar schema,  they make different design choices when implementing this schema. 
 We overview our design choices in Section~\ref{ssec:ll-txns}. 
 We then proceed to give a detailed description of the protocol
@@ -19,15 +19,20 @@ Table~\ref{table:design-space} compares them with choices made in other TPSs.
 We are not familiar with another TPS that makes the same design choices as \sysll. 
 
 
-\begin{table*}[htb]
+\begin{table}[htb]
+\small
 \centerline{
 \begin{tabular}{|l|cccc|}
 % data store modification & 
 \hline
-TPS & validation & commit  entry updates	&  multi-tenancy &
- read may cause abort  \\
+TPS & validation & commit &  multi &
+ read  \\
+  &  &   entry &  tenancy &
+ force  \\
+  &  &  updates	&   &
+  abort  \\
 \hline
-Percolator, \syspc & {\bf D} & {\bf D} & no & yes \\
+Percolator,\syspc & {\bf D} & {\bf D} & no & yes \\
 CockroachDB	& {\bf D}      & {\bf D} & yes & yes \\
 Omid1, Tephra 	& {\bf C}      & {\bf R} & yes & no \\
 Omid  		& {\bf C}      & {\bf C} & yes & no \\
@@ -38,7 +43,8 @@ Omid  		& {\bf C}      & {\bf C} & yes & no \\
 }
 \caption{Design choices  in TPSs. {\bf C} -- centralized,  {\bf D} -- distributed, {\bf R} -- replicated.}
 \label{table:design-space}
-\end{table*}
+\vspace{-0.5cm}
+\end{table}
 
 
 
@@ -65,7 +71,7 @@ which follows Percolator's design.
 The early generation of Omid~\cite{OmidICDE2014} (referred to as Omid1) and Tephra replicate commit entries 
 of pending transactions among all active clients, which consumes high bandwidth and does not scale. Omid 
 %and CockroachDB 
-instead uses a dedicated table, and 
+instead uses a dedicated {\emph commit table}, and 
 %CockroachDB updates the table in a distributed manner, while Omid 
 has the centralized TM persist all commits to this table. 
 Our experiments show that the centralized access to commit entries is Omid's main scalability bottleneck, 
@@ -93,8 +99,8 @@ the dedicated commit table is owned by the TPS; it is accessed exclusively by th
 TPS client library, which in turn is only invoked   internally by the database engine, and not by application code. 
 
 {\inred{The commit table is a highly contended resource. While it is not very big at any given time, it is accessed
-by every single transaction that modifies data. In large clusters the update rate may become huge (see Section~\ref{sec:eval}).
-It is therefore imperative to shard this table evenly across many nodes, in order to spread the load.}}
+by every transaction that modifies data. In large clusters, the update rate may become huge (see Section~\ref{sec:eval}).
+We therefore imperative to shard this table evenly across many nodes in order to spread the load.}}
 
 \mypara{Write intent resolution.}
 As in other TPSs, reads resolve write intents via the commit entry.

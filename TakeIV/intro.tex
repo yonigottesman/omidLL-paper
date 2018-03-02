@@ -41,7 +41,7 @@ of transactions as bottlenecks arise, rather than always coding around the lack 
 %\end{quote}
 Yet the expectation for low latency is rapidly picking up. 
 Whereas early applications of big data transaction processing systems were 
-mostly throughput-sensitive~\cite{Percolator2010, Omid2017}, 
+mostly throughput-sensitive\\ \cite{Percolator2010, Omid2017}, 
 with the thrust into new interactive domains like social networks~\cite{chatter},  
 messaging~\cite{Borthakur:2011} and algorithmic trading~\cite{opentsdb} latency becomes essential.  
 SLAs for interactive user experience mandate that simple updates and point queries  complete within 
@@ -60,14 +60,13 @@ e.g., in maintaining shared persistent state.
 This paper describes recent functionality extensions and performance improvements 
 we made in Omid~\cite{omid} to power Phoenix~\cite{phoenix},  
 a Hadoop SQL-compliant  data analytics platform designed 
-for cloud deployment\footnote{\small{\url{https://issues.apache.org/jira/browse/PHOENIX-3623}
-summarizes the new features in Phoenix.}}. 
+for cloud deployment. 
 
 In contrast to earlier SQL query engines for Hadoop (e.g., 
-Hive~\cite{hive} and Impala~\cite{impala}), which focused on large-scale processing
+Hive\cite{hive} and Impala~\cite{impala}), which focused on large-scale processing
 of immutable data, Phoenix targets converged data ingestion and analytics~\cite{PhoenixUseCases},
 which necessitates transaction semantics. Phoenix
-applications are both latency- and throughput-sensitive. Phoenix uses HBase 
+applications are both latency and throughput sensitive. Phoenix uses HBase 
 as its key-value storage layer, and Omid as a transaction processing layer atop HBase\footnote{\small{Tephra 
 is supported as alternative transaction manager, though its scalability and reliability are inferior to Omid's.}}. 
 
@@ -93,6 +92,7 @@ It also scales
 the overall system throughput to 550K tps while remaining 
 within real-time latency SLAs. In contrast to previously published protocols 
 (e.g.,~\cite{Percolator2010}), our solution is amenable to multi-tenancy.
+The development of this new feature is reported in~\cite{OMID-90}.
 
 \item {\em Novel fast-path (FP) algorithm} (Section~\ref{sec:alg}). 
 Our  novel \sys\ protocol  
@@ -116,6 +116,7 @@ a decentralized \emph{two-phase commit (2PC)}-based approach, as
 We add support for creating secondary indexes on-demand, 
 without impeding concurrent database operations or sacrificing consistency. 
 We further extend the traditional SI model, which provides single-read-point-single-write-point semantics, with multiple read and write points. This functionality is used to avoid recursive read-your-own-writes scenarios in complex queries. 
+The development of these new features in Omid and Phoenix is reported in~\cite{OMID-82} and~\cite{PHOENIX-3623}, respectively.
 
 \end{enumerate}
 

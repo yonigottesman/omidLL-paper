@@ -15,7 +15,7 @@
 %\usepackage[tight,footnotesize]{subfigure}
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}
-\usepackage{times}
+%\usepackage{times}
 \usepackage[outercaption]{sidecap}    
 
 
@@ -46,7 +46,8 @@
 
 \newcommand{\code}[1]{\textsf{\fontsize{9}{11}\selectfont #1}}
 
-\newcommand{\inred}[1]{{\color{red}{#1}}}
+%\newcommand{\inred}[1]{{\color{red}{#1}}}
+\newcommand{\inred}[1]{#1}
 \newcommand{\remove}[1]{}
 \newcommand{\Idit}[1]{[[\inred{Idit: #1}]]}
 \newcommand{\Yoni}[1]{[\inred{Yoni: #1}]}
@@ -101,11 +102,13 @@ Idit Keidar\\
 
 \maketitle
 
+
 %=========================================================================
 %  Abstract
 %=========================================================================
 
 \begin{abstract}
+
 
 We describe how we evolve Omid, a transaction processing system for Apache HBase, 
 to power Apache Phoenix, a cloud-grade real-time SQL analytics engine.  
@@ -130,8 +133,8 @@ as part of
 the process of integrating it into Phoenix as the transaction processing backend. A central piece
 of our work is latency reduction in Omid's protocol, which also improves  scalability.  
 Under light load, the new protocol's latency is 4x to 5x smaller than the legacy Omid's, whereas 
-under increased loads it is an order of magnitude faster. We further describe a \emph{fast path} f
-protocol or single-key transactions, which enables processing them almost as fast 
+under increased loads it is an order of magnitude faster. We further describe a \emph{fast path} 
+protocol for single-key transactions, which enables processing them almost as fast 
 as native HBase operations.
 
 \end{abstract}
@@ -155,12 +158,13 @@ as native HBase operations.
 \section{Evaluation} \label{sec:eval}
 \input{evaluation}
 
+\vspace{-0.3cm}
 \section{SQL Oriented Features} \label{sec:sql}
 \input{sql}
 
 \section{Related Work} \label{sec:related}
 \input{related}
-
+\vspace{-0.4cm}
 \section{Conclusion} \label{sec:conclusions}
 
 As transaction processing services begin to be used in 
@@ -170,8 +174,7 @@ necessitate solutions compatible with multi-tenancy.
 Motivated by such use cases we evolved Omid for cloud use.
 
 As part of this evolution, we
-improved Omid's protocol to reduce latency (by 4x to 5x under light load
-and an order of magnitude under heavy load) and improve throughput scalability.
+improved Omid's protocol to reduce latency (by up to an order of magnitude) and improve throughput scalability.
 %
 We further designed a generic \emph{fast path} for single-key transactions, 
 which executes them  almost as fast as native HBase operations (in terms of 
@@ -180,8 +183,7 @@ transactional semantics relative to longer transactions.
 Our fast path algorithm is not Omid-specific, and can be similarly supported in 
 other transaction management systems.
 Our implementation of the fast path in \sys\ can process single-key
-transactions  at a virtually unbounded rate (thanks to HBase's horizontal 
-scalability), and improves the latency of short transactions
+transactions  at a virtually unbounded rate, and improves the latency of short transactions
 by another 3x--5x under high load.
 
 We have extended Omid with functionalities required in SQL engines, namely 

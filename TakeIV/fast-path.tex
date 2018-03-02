@@ -21,12 +21,18 @@ we combine them to allow fast processing.
 The basic FP transactions are singletons, i.e., transactions that perform a single
 read or write. These are supported by the APIs: 
 \begin{description}
+\setlength{\itemsep}{0pt}
+    \setlength{\parskip}{0pt}
+    \setlength{\parsep}{2pt}  
 \item[brc(key)] -- begins an FP transaction, reads key within it, and commits.
 \item[bwc(key,val)] -- begins an FP transaction,  writes val into a new version of key that exceeds all existing ones, and commits.
 \end{description}
 
 We further support a fast path transaction consisting of a read and a dependent write, via a pair of API calls:
 \begin{description}
+\setlength{\itemsep}{0pt}
+    \setlength{\parskip}{0pt}
+    \setlength{\parsep}{2pt}  
 \item[br(key)] -- begins an FP transaction and  reads the latest version of key. 
 Returns the read value along with a version ver.
 \item[wc(ver, key,val)] -- 	validates that key has not been written since the  \code{br} call that returned ver, writes val into a new version of key, and commits.
@@ -95,7 +101,7 @@ Given the limited benefit and extra complexity of allowing many writes in FP tra
 
 
 \begin{algorithm}[htb]
-%\small
+\small
 %\hspace{10mm}\\
 
 \underline{Client-side logic:}
@@ -143,8 +149,7 @@ Given the limited benefit and extra complexity of allowing many writes in FP tra
 	\EndIf
 %\EndAtomic
 \EndProcedure
-
-\Statex
+%\Statex
 \Procedure{preGet}{$ts_r$, key}   \label{l:txr}
 \Statex \Comment executed atomically with ds.get call, once per key 
 \State bump(key's maxVersion, $ts_r$)
@@ -224,7 +229,7 @@ Note that in this scenario it is not possible to move $FP_1$ to `the past' becau
 
 \begin{figure}[htb]
 \includegraphics[width=\columnwidth]{figs/FP-why-bump}
-\caption{Conflict between FP transaction $FP_1$ and regular transaction $T_1$.}
+\caption{\small Conflict between FP transaction $FP_1$ and regular transaction $T_1$.}
 \label{fig:why-bump}
 \end{figure}
 
@@ -287,7 +292,7 @@ In both cases, we need to ensure that the monotonicity of the LVC associated wit
 region is preserved. To this end, when a region is started in a new server (following migration or recovery), 
 we force the first operation accessing it
 in the new server to accesses the TM to increment the global clock, and then 
-bumps the local clock to the value of the global clock.
+bump the local clock to the value of the global clock.
 Since the LVC value can never exceed the global clock's value, this bootstrapping procedure maintains its monotonicity.
 
 

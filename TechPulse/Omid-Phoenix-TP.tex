@@ -1,0 +1,205 @@
+\documentclass[twocolumn,10pt]{article}
+%\documentclass[sigconf,10pt]{acmart}
+\usepackage{times}
+\usepackage{epsfig,endnotes}
+
+\oddsidemargin 4.5pc
+\evensidemargin 4.5pc
+\advance\oddsidemargin by -1in  % Correct for LaTeX gratuitousness
+\advance\evensidemargin by -1in % Correct for LaTeX gratuitousness
+\marginparwidth 0pt             % Margin pars are not allowed.
+\marginparsep 11pt              % Horizontal space between outer margin and
+                                % marginal note
+
+                                % Top of page:
+\topmargin 4.5pc                % Nominal distance from top of page to top of
+                                % box containing running head.
+\advance\topmargin by -1in      % Correct for LaTeX gratuitousness
+\headheight 0pt                 % Height of box containing running head.
+\headsep 0pt                    % Space between running head and text.
+                                % Bottom of page:
+\footskip 30pt                  % Distance from baseline of box containing foot
+                                % to baseline of last line of text.
+\advance\topmargin by -37pt     % Leave 37pt above text for headers
+\headheight 12pt                % Height of box containing running head.
+\headsep 25pt                   % Space between running head and text.
+
+\textheight 666pt       % 9 1/4 column height
+\textwidth 42pc         % Width of text line.
+                        % For two-column mode:
+\columnsep 2pc          %    Space between columns
+\columnseprule 0pt      %    Width of rule between columns.
+\hfuzz 1pt              % Allow some variation in column width, otherwise it's
+                        % too hard to typeset in narrow columns.
+
+
+
+%\setcopyright{none}
+%\settopmatter{printacmref=false, printccs=true, printfolios=true}
+%\acmDOI{}
+% \acmISBN{}
+%\acmConference[TechPulse18]{}{}{}
+%\renewcommand{\shortauthors}{Shacham et al.}
+
+
+
+%========================
+%  Packages
+%========================
+
+\usepackage{graphicx,url,color}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}  %<---- for a different "look" in theorems (theorem word in bold, etc.) %ACM conflict with proof definition?
+%\usepackage{subfigure}
+%\usepackage[tight,footnotesize]{subfigure}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage[outercaption]{sidecap}    
+
+
+%\usepackage{todonotes}
+%\usepackage[normalem]{ulem} %strikethrough: \sout{Hello World}
+%\usepackage{lastpage} %for number of pages
+%\usepackage{xspace}
+%\usepackage{multirow}
+%\usepackage{balance}
+%\usepackage[colorlinks=true,allcolors=blue,breaklinks]{hyperref}   % hyperlinks, including DOIs and URLs in bibliography
+\usepackage{subcaption}
+%\usepackage{caption}
+%\usepackage{float}
+%\usepackage{floatrow}
+
+\usepackage{balance}  % for  \balance command ON LAST PAGE  (only there!)
+
+
+
+
+%========================
+%  Macros
+%========================
+
+\newcommand{\code}[1]{\textsf{\fontsize{9}{11}\selectfont #1}}
+
+\newcommand{\inred}[1]{{\color{red}{#1}}}
+%\newcommand{\inred}[1]{#1}
+\newcommand{\remove}[1]{}
+\newcommand{\Idit}[1]{[[\inred{Idit: #1}]]}
+\newcommand{\Yoni}[1]{[\inred{Yoni: #1}]}
+\newcommand{\tb}{\hspace{10mm}}
+
+\newcommand{\sys}{Omid~FP}
+\newcommand{\sysll}{Omid~LL}
+\newcommand{\syspc}{Omid~2PC}
+
+\newcommand{\speedup}[1]{#1$\times$}
+\newcommand{\tuple}[1]{\ensuremath{\langle \mbox{#1} \rangle}}
+
+\newcommand{\mypara}[1]{ \vspace{8pt} \noindent{\bf #1}\hspace{6pt}}
+
+%========================
+\begin{document}
+
+\date{}
+
+\title{Taking Omid to the Clouds: \\ 
+Fast,  Scalable Transactions for Real-Time  Analytics }
+
+
+\author{
+Ohad Shacham\ \ 
+Yonatan Gottesman\ \ 
+Edward Bortnikov\ \ 
+Eshcar Hillel\\ 
+Yahoo Research, Oath 
+\and
+Idit Keidar\\
+Yahoo Research, Oath and Technion 
+} % end author
+
+
+\maketitle
+
+
+%=========================================================================
+%  Abstract
+%=========================================================================
+
+\begin{abstract}
+
+
+We describe how we evolve Omid, a transaction processing system for Apache HBase, 
+to power Apache Phoenix, a cloud-grade real-time SQL analytics engine.  
+
+Omid was originally designed for data processing pipelines at Yahoo, which are, by and large, 
+%huge-scale 
+throughput-oriented monolithic NoSQL applications. 
+%Evolving Omid into 
+Providing a platform 
+to support 
+%a variety of 
+converged real-time transaction processing and analytics applications --
+dubbed {\em translytics} --  
+introduces new functional and performance requirements. For example, SQL 
+support is key for developer productivity, multi-tenancy is essential for cloud deployment, 
+and latency is cardinal for just-in-time data ingestion and analytics insights.
+% in a variety of applications. 
+
+We discuss our efforts to adapt Omid to these new domains, 
+as part of 
+%which emerged in 
+the process of integrating it into Phoenix as the transaction processing backend. A central piece
+of our work is latency reduction in Omid's protocol, which also improves  scalability.  
+Under light load, the new protocol's latency is 4x to 5x smaller than the legacy Omid's, whereas 
+under increased loads it is an order of magnitude faster. 
+\end{abstract}
+
+%========================
+
+\section{Introduction} \label{sec:intro}
+\input{intro} 
+
+\section{Background} \label{sec:api}
+\input{api}
+
+\section{Low-Latency Transactions} \label{sec:ll}
+\input{lorra}
+\input{implementation}
+
+%\section{Fast-Path Transactions}
+%\label{sec:alg}
+%\input{fast-path}
+
+%\section{Evaluation} \label{sec:eval}
+%\input{evaluation}
+
+\vspace{-0.3cm}
+\section{SQL Oriented Features} \label{sec:sql}
+\input{sql}
+
+%\section{Related Work} \label{sec:related} \input{related}
+\vspace{-0.4cm}
+\section{Conclusion} \label{sec:conclusions}
+
+As transaction processing services begin to be used in 
+new application domains, low transaction latency and rich SQL semantics
+become important considerations. In addition, public cloud deployments 
+necessitate solutions compatible with multi-tenancy.
+Motivated by such use cases we evolved Omid for cloud use.
+As part of this evolution, we
+improved Omid's protocol to reduce latency (by up to an order of magnitude) and improve throughput scalability.
+%
+
+
+We have extended Omid with functionalities required in SQL engines, namely 
+secondary index construction and multi-snapshot semantics. 
+We have successfully integrated it into the Apache Phoenix translytics engine. 
+
+\subsection*{Acknowledgments}
+We thank James Taylor for fruitful discussions. 
+
+\bibliographystyle{abbrv}
+
+\bibliography{refs}
+
+\end{document}

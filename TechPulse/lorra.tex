@@ -1,0 +1,88 @@
+We present \sysll, a scalable low-latency TPS algorithm 
+% on top of HBase. 
+%\sys\ is an evolution of the open-source Omid TPS, redesigned to reduce latency.
+%For clarity of the presentation, in this section we describe \sys\ without the fast-path; 
+%This protocol 
+that satisfies standard SI semantics and is amenable to multi-tenancy.
+%We saw above that, while many TPSs follow a similar schema,  they make different design choices when implementing this schema. 
+We overview our design choices in Section~\ref{ssec:ll-txns} 
+and give a detailed description of the protocol
+in Section~\ref{ssec:ll}.
+Section~\ref{ssec:ll-graphs} presents performance results showing the advantage of \sysll\ over Omid. 
+
+\subsection{\sysll\ design choices}
+\label{ssec:ll-txns}
+
+Our design choices  are geared towards high performance without sacrificing cloud deployability.
+Table~\ref{table:design-space} compares our  choices with ones made in other TPSs. 
+%We are not familiar with another TPS that makes the same design choices as \sysll. 
+
+
+\begin{table}[htb]
+\small
+\centerline{
+\begin{tabular}{|l|ccc|}
+% data store modification & 
+\hline
+TPS & validation & commit entry &  multi \\
+  &  &  updates  &  tenancy   \\
+\hline
+Percolator,\syspc & {\bf D} & {\bf D} & no  \\
+CockroachDB	& {\bf D}      & {\bf D} & yes  \\
+Omid1, Tephra 	& {\bf C}      & {\bf R} & yes  \\
+Omid  		& {\bf C}      & {\bf C} & yes \\
+{\bf \sysll }		& {\bf C}      & {\bf D} & {\bf yes}  \\
+% \sys			& {\bf C} & {\bf D} & {\bf D} & yes& yes\\
+\hline
+\end{tabular}
+}
+\caption{Design choices  in TPSs. {\bf C} -- centralized,  {\bf D} -- distributed, {\bf R} -- replicated.}
+\label{table:design-space}
+\vspace{-0.5cm}
+\end{table}
+
+
+
+\mypara{Centralized validation.}
+\sysll\ adopts Omid's centralized conflict detection mechanism, which eliminates the need for locking objects
+in the data store, and is extremely scalable~\cite{Omid2017}. 
+
+Other TPSs (like Percolator and  CockroachDB~\cite{cockroach}) instead use a distributed 2PC-like protocol that locks all written objects during validation (either at commit time or during the write). To this end, they use atomic check\&mutate operations on the underlying data store. This slows down either commits (in case of commit-time validation) or transactional writes (in case of write-time validation), which takes a toll on long transactions, where validation time is substantial. 
+
+\mypara{Distributed commit entry updates with  multi-tenancy.}
+%
+The early generation of Omid~\cite{OmidICDE2014} (referred to as Omid1) and Tephra replicate commit entries 
+of pending transactions among all active clients, which consumes high bandwidth and does not scale. Omid 
+%and CockroachDB 
+instead uses a dedicated {\emph commit table}, and 
+%CockroachDB updates the table in a distributed manner, while Omid 
+has the centralized TM persist all commits to this table. 
+Our experiments show that the centralized access to commit entries is Omid's main scalability bottleneck, 
+and while this bottleneck is mitigated via batching, this also increases latency.
+Omid chose this  option as it was designed for high throughput. 
+
+Here, on the other hand, we target  low latency. 
+We therefore distribute the commit entry updates, and allow commit entries of different transactions to be 
+updated in parallel by independent clients. We will see below that this modification reduces latency
+by up to an order of magnitude for small transactions.
+
+We note that commit table updates are distributed also in CockroachDB and Percolator. 
+The latter takes this approach one step further, and distributes not only the commit table updates 
+but also the actual commit entries. There, commit entries reside in user data tables, 
+where the first row written in a given transaction holds the commit entry for that transaction.
+The problem with this approach is that it assumes that all clients have permissions to access all 
+tables. For example, a transaction attempting to read from  table $A$ may encounter a write intent 
+produced by a transaction that accessed table $B$ before table $A$, and will need to refer to 
+that transaction's commit entry in table $B$ in order to determine its status. This approach 
+did not pose a problem in Percolator, which was designed for use in a single application (Google Search), 
+but is unacceptable in multi-tenant settings.   
+
+Unlike data tables, which are owned by individual applications that manage their permissions,  
+the dedicated commit table is owned by the TPS; it is accessed exclusively by the 
+TPS client library, which in turn is only invoked   internally by the database engine, and not by application code. 
+
+{\inred{The commit table is a highly contended resource. While it is not very big at any given time, it is accessed
+by every transaction that modifies data. In large clusters, the update rate may become huge (see Section~\ref{sec:eval}).
+We therefore imperative to shard this table evenly across many nodes in order to spread the load.}}
+
+

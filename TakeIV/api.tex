@@ -161,6 +161,7 @@ or
 %%%\emph{Local transactions} are ones that access a single region.
 
 
+\newpage
 
 \subsection{TPS operation schema}
 \label{ssec:schema}
@@ -169,6 +170,7 @@ or
 \centerline{
 \includegraphics[width=0.40\textwidth]{FragolaComponents.jpg}
 }
+\vspace{-0.3cm}
 \caption{\small Transaction processing architecture: A client library exposes an  API for  executing transactions of data store operations. 
 A centralized Transaction Manager (TM) handles transaction begin and commit requests, while data is written directly to the 
 underlying data store. The TM has a backup for high availability.}
@@ -278,7 +280,7 @@ it by updating the commit entry accordingly, as explained below.
     \setlength{\parsep}{2pt}  
   \item
   Obtain a commit timestamp, $ts_c$. 
-  In most cases, e.g.,~\cite{Percolator2010,OmidICDE2014,Omid2017,tephra}, 
+  In most cases, e.g., \cite{Percolator2010,OmidICDE2014,Omid2017,tephra}, 
   this is the value of some global clock maintained by a centralized entity. 
   \item \emph{Validate} that the transaction does not conflict with any concurrent transaction that has committed since it 
 had begun.  For SI, we need to check for write-write conflicts only. 

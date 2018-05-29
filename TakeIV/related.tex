@@ -15,7 +15,7 @@ Production systems commonly develop transaction processing engines on top of exi
 highly-available data stores: for example, Megastore is layered on top of
 Bigtable~\cite{Chang2008}, Warp~\cite{Warp} uses HyperDex~\cite{Escriva2012}, 
 and CockroachDB~\cite{cockroach} uses RocksDB~\cite{rocksdb}.
-Similarly to Omid, \sys\ is layered atop Apache HBase~\cite{hbase}.
+Similarly to Omid, \sys\ is layered atop HBase~\cite{hbase}.
 
 As discussed in Section~\ref{sec:ll}, a number of these systems follow a common paradigm
 with different design choices, and we choose a new operation point in 
@@ -41,7 +41,7 @@ of contention with native operations.
 
 Our implementation of the fast path uses a local version clock. Similar mechanisms
 were used in Mediator and in CockroachDB, which uses 
-per-region Hybrid Logical Clocks~\cite{Kulkarni2014LogicalPC} for distributed timestamp allocation. 
+per-region Hybrid Logical Clocks \cite{Kulkarni2014LogicalPC} for distributed timestamp allocation. 
 
 \remove{
 

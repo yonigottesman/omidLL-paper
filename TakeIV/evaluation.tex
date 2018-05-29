@@ -34,11 +34,13 @@ their protocols.
 Direct comparison with the actual systems is not feasible because Percolator is proprietary and 
 CockroachDB supports SQL transactions over a multi-tier
 architecture using various components that are incompatible with HBase. 
-We also do no compare \sys\ to Omid1 (and the similarly-designed Tephra), since Omid significantly
+We also do no compare \sys\ to Omid1 and Tephra, since both significantly
 outperforms Omid1~\cite{Omid2017}.
 
 To reduce latency, we configure the TPSs to perform the post-commit phase asynchronously, 
 by a separate thread, after the transaction completes.
+
+Note that Translytics requires many short transactions and long scans. In this paper we improve the performance of short transactions, while incurring few aborts. The latter implies that scans do not spend much time forcing aborts, and therefore, their performance is the same as in the vanilla Omid.
 
 \remove{
 In Omid and Vanilla \sys, all transactions use the standard API, namely 
@@ -46,7 +48,7 @@ delineating transactions with begin and commit calls.
 In FP \sys, transactions that can use the FP API (specifically, singleton reads, singleton writes, 
 and single-key read-writes) do so, whereas other transactions use the standard API.
 }
-
+\newpage
 \subsubsection{Experiment setup}
 
 Our experiment testbed consists of nine 12-core Intel Xeon 5 machines with 46GB RAM and 4TB 
@@ -108,7 +110,9 @@ occur in our random mix, which uses random key selection with billions of keys.
 \begin{figure}[ht]
 	\centering
       	\includegraphics[width=0.38\textwidth]{figs/throughputlatency1.pdf}
+      	\vspace{-0.3cm}
 	    \caption{\small Throughput vs.\ latency, transaction size = 1.}
+	    \vspace{-0.5cm}
         \label{fig:tl-1}      
 \end{figure}
 
@@ -133,8 +137,9 @@ occur in our random mix, which uses random key selection with billions of keys.
       \end{subfigure}  & 
 
 \end{tabular}
+\vspace{-0.3cm}
        \caption{\small Latency breakdown  for single-key transactions under  random mix workload. }
-       \vspace{-0.5cm}
+       \vspace{-0.7cm}
 \end{figure*}
 
 \mypara{Throughput and latency of short transactions.} 
@@ -206,7 +211,7 @@ but this is offset by a shorter read/write execution time.
 
     \begin{subfigure}[t]{0.35\textwidth}
 	\includegraphics[width=\textwidth]{figs/throughputlatency10.pdf}
-	\caption[]{\small Throughput versus latency, transaction size=10}
+	\caption[]{\small Throughput vs latency, transaction size=10}
     \label{fig:tl-10}
   \end{subfigure} & 
 
@@ -217,7 +222,8 @@ but this is offset by a shorter read/write execution time.
     \label{fig:stack-tx10}
   \end{subfigure} 
 \end{tabular}  	
-}		
+}
+\vspace{-0.3cm}
   \caption{\small Latency vs.\ throughput  and latency breakdown  for long transactions in random mix workload. }
   \vspace{-0.3cm}
   \label{fig:throughput-latency}
@@ -249,6 +255,7 @@ because it also uses check\&mutate operations during the commit validation phase
 \caption{\small High load (500 tps)} 
 \label{fig:slowdown-high}
 \end{subfigure} 
+\vspace{-0.3cm}
 \caption{\small Latency speedup with  fast path API in {\sys}.}
 \vspace{-0.7cm}
 \label{fig:fp-tradeoff}

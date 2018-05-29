@@ -53,8 +53,7 @@ $k_1$ & a & 3 & 7& & 3 & 7 \\
 	\caption[]{Post-committed transaction}
     \label{fig:model:postcommit}
   \end{subfigure}
-
-  
+  \vspace{-0.3cm}
   \caption{\small Evolution of \sysll\ metadata during a transaction. The transaction receives $ts_r=3$ in the begin stage 
   and uses this as the version number for tentative writes. It receives a commit timestamp $ts_c=7$ when committing.}
   \label{fig:model}
@@ -296,8 +295,8 @@ Finally, it garbage-collects the transaction's CT entry.
 \subsubsection{High availability} The TM is implemented as a primary-backup process pair to ensure its high availability. 
 The backup detects the primary's failure using timeouts. When it detects a failure, it immediately begins serving new
 transactions, without any recovery procedure. Because the backup may falsely suspect the primary because of
-unexpected network or processing delays (e.g., garbage collection stalls), we take precautions to avoid correctness
-violations in (rare) cases when both primaries are active at the same time.
+unexpected network or processing delays we take precautions to avoid correctness
+violations in cases when both primaries are active at the same time.
 
 To this end, we maintain two shared objects, managed in Apache Zookeeper and accessed infrequently.
 The first is \emph{maxTS}, which is the maximum timestamp an active TM is allowed to return to its clients.
@@ -308,7 +307,7 @@ exceed those returned by previous primary.
 
 The second shared object is a locally-checkable \emph{lease}, which is essentially a  limited-time lock.
 The lease is renewed for some parameter $\delta$  time once 80\% of this time elapses.
-As with locks, at most one TM may hold the lease at a given time (this requires the TMs' clocks to advance roughly at the same rate). 
+As with locks, at most one TM may hold the lease at a given time. 
 This ensures that no client will be able to commit a transaction in an old epoch after the new TM has started 
 using a new one.
 

@@ -5,7 +5,7 @@ Modern industrial \emph{transaction processing systems (TPSs)}~\cite{Percolator2
 existing underlying NoSQL key-value storage with {\em atomicity}, {\em consistency}, {\em isolation\/} and {\em durability} (ACID) semantics that enable programmers to perform complex data manipulation without over-complicating their applications. Google's Percolator~\cite{Percolator2010} pioneered a transaction API atop the Bigtable storage. Apache 
 Incubator projects Tephra~\cite{tephra} and Omid~\cite{Omid2017} followed suit with Apache HBase~\cite{hbase}. 
 
-Such technologies must  evolve  in  light of the recent paradigm shift towards massive deployment of  
+Such technologies must evolve in light of the recent shift towards massive deployment of  
 big data services in public clouds; 
 for example,  the AWS cloud can run HBase as part of  Elastic MapReduce~\cite{emr}, 
 and SQL engines like Apache Phoenix increasingly  target public cloud deployment.
@@ -57,8 +57,9 @@ e.g., in maintaining shared persistent state.
 % Drum roll
 \subsection{Evolving Omid for public clouds}
 
-This paper describes recent functionality extensions and performance improvements 
-we made in Omid~\cite{omid} to power Phoenix~\cite{phoenix},  
+The motivation of this work is to improve scalability, latency and functionality of Omid~\cite{omid} to the scale needed in large, multi-tenant clouds.
+The paper describes recent functionality extensions and performance improvements 
+we made in Omid to power Phoenix~\cite{phoenix},  
 a Hadoop SQL-compliant  data analytics platform designed 
 for cloud deployment. 
 
@@ -105,8 +106,9 @@ latency of native HBase operations regardless of system load.
 %(thanks to HBase's near perfect horizontal scalability). 
 They run twice as fast as \sysll\/ transactions, and complete within 2--4 ms on mid-range hardware. 
 This comes at the cost of a minor (15--25\%) negative impact on long (latency-insensitive) transactions.  
+Note that  \sysll~and \sys\ are complementary latency-oriented improvements.
 
-\item \emph{Evaluation and comparison with alternative designs} (Section~\ref{sec:eval}).
+\item \emph{Evaluation and comparison with alternative designs} \\ (Section~\ref{sec:eval}).
 We extensively evaluate the new algorithms. %%% (as reported above). 
 We further compare Omid's  centralized architecture  to 
 a decentralized \emph{two-phase commit (2PC)}-based approach, as 

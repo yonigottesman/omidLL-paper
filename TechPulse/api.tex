@@ -1,41 +1,42 @@
-A transaction processing system runs atop an underlying 
-key-value store and allows users to bundle multiple data operations 
-into a single atomic transaction, as described in 
-Section~\ref{ssec:data-model}. Section~\ref{ssec:schema} provides  background on the modus operandi 
-of existing TPSs,  including Omid. Finally, Section~\ref{ssec:bigdata} overviews HBase and Phoenix. 
 
-\subsection{API and semantics}
-\label{ssec:data-model}
+Omid is 
+a transaction processing system that runs atop an underlying 
+key-value store such as HBase and allows bundling multiple data operations 
+into a single atomic transaction. 
+%, as described in  Section~\ref{ssec:data-model}. 
+%Section~\ref{ssec:schema} provides  background on the modus operandi of existing TPSs,  including Omid. Finally, 
+%Section~\ref{ssec:bigdata} overviews the HBase and Phoenix technologies. 
+
+\paragraph{API and semantics.}
+
 
 The  data store holds  \emph{objects} (often referred to as \emph{rows} or {\em records}) identified by unique \emph{keys}.
 Each row can consist of multiple \emph{fields}, representing different \emph{columns}. 
 We consider multi-versioned objects, where object values are associated with \emph{version numbers}, and
 multiple versions associated with the same key may co-exist.
-We further assume that a write operation can specify the version number it writes to.
+%We further assume that a write operation can specify the version number it writes to.
 %monotonically increasing ??
 %\paragraph{API} 
 The  data store provides the following API calls: get, scan, put, remove, and check\&mutate. 
 
 TPSs provide \emph{begin} and \emph{commit} APIs for delineating transactions: 
 a \emph{transaction} is a sequence of \emph{read} and \emph{write} operations on different objects 
-that occur between begin and commit. {\inred{For simplicity, we only describe single-key operations 
+that occur between begin and commit. {{For simplicity, we only describe single-key (get and put) operations 
 here; multi-key range queries (scans) are treated as sequences of reads.}}
-Thus, transactional reads and writes are implemented using the 
-datastore's get and put operations.
 
 A TPS  ensures the ACID properties for transactions:
 \emph{atomicity} (all-or-nothing), \emph{consistency} (preserving each object's semantics), 
 \emph{isolation} (in that concurrent transactions do not see each other's partial updates), and 
 \emph{durability} (whereby updates survive crashes).
 
-Different isolation levels can be considered for the third property. Omid, like other popular DBMSs,  
+Different isolation levels can be considered for the third property. Omid, like other popular DBMSs and TPSs 
+(e.g., Oracle, PostgreSQL, and SQL Server,  Percolator, and  CockroachDB)  
 satisfies SI. Intuitively, this means that every transaction sees a 
 consistent ``snapshot'' of the  database. For example, if a transaction updates the values of two stocks, 
-then no other transaction may observe the old value of one of these stocks and the new value of the other.
+then no  transaction may observe the old value of one of them and the new value of the other.
 Under SI, two concurrent transactions conflict only if they both {update} the same item.  
 % In contrast, under serializability, a transaction that updates an item also conflicts with transactions that \emph{read} that item. 
-SI is provided by popular database technologies such as Oracle, PostgreSQL, and SQL Server,
-and TPSs such as Percolator, Omid, and  CockroachDB.
+
 
 Following a commit call, the transaction may successfully \emph{commit}, whereby all of its operations take effect, 
 or 
@@ -53,7 +54,7 @@ or
 %%%\emph{Local transactions} are ones that access a single region.
 
 
-
+\remove{
 \subsection{TPS operation schema}
 \label{ssec:schema}
 
@@ -86,10 +87,10 @@ We now overview the phases a transaction goes through, focusing on Omid's approa
 \EndProcedure
 %\Statex
 
-\Procedure{write}{$ts_r$, key, \inred{fields, values}} 
+\Procedure{write}{$ts_r$, key, {fields, values}} 
 \\ \Comment transactional write
 \State optionally check for conflicts and abort if found 
-\State indicate write intent for key with \inred{values} and $ts_r$
+\State indicate write intent for key with {values} and $ts_r$
 \State add key to local write-set
 \EndProcedure
 %\Statex
@@ -190,28 +191,30 @@ had begun.  For SI, checks for write-write conflicts only.
   %and to garbage collect   obsolete information. 
  \end{enumerate}
  
+ }
+ 
   \remove{Note that whenever a transaction encounters a write
   indication in the collect phase it must access the commit entry in order to
   check the transaction's commit status. Once the post-commit phase is over, future
   transactions no longer incur this overhead for keys updated by the terminated
   transaction.}
 
-\subsection{Big data platforms}
-\label{ssec:bigdata}
+\paragraph{Big data platforms.}
 
-{\inred{
+
+
 
 Apache HBase is one of the most scalable key-value storage technologies available today. 
 Phoenix complements the HBase storage tier with a query processing (compute)
 tier. The latter scales independently (the current scalability goal is $10{,}000$ query servers). 
 Phoenix compiles every SQL statement into a plan, and executes it on one or more servers. 
 Its query processing code invokes the underlying HBase for low-level data access, and a 
-TPS (Omid or Tephra) for transaction management, through client libraries. 
+TPS (Omid or Tephra) for transaction management. 
 
 Wherever possible, Phoenix strives to push computation close to data (e.g., for filtering
 and aggregation), in order to minimize cross-tier communication. For this, it makes 
 extensive use of server-side stored procedures, which in HBase are supported by the 
-non-intrusive {\em coprocessor\/} mechanism. Omid uses HBase coprocessors too, both for 
-performance improvements and for specific services, such as garbage collection of redundant 
-data. 
-}}
+non-intrusive {\em coprocessor\/} mechanism. 
+%Omid uses HBase coprocessors too, both for 
+%performance improvements and for specific services, such as garbage collection of redundant 
+%data. 

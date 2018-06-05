@@ -13,9 +13,9 @@ This allowed for a smooth integration  with Phoenix and also reduced the overhea
 reads when multiple versions are present.
 
 Functionality-wise, we added support for on-the-fly construction of secondary indexes
-(see Section~\ref{ssec:indexes}) and extended 
-Omid's SI model to allow for multiple read- and write-points, as required 
-in some Phoenix applications (see Section~\ref{ssec:snapshot}). 
+(Section~\ref{ssec:indexes}) and extended 
+Omid's SI model to allow  multiple read- and write-points, as required 
+in some Phoenix applications (Section~\ref{ssec:snapshot}). 
 
 \subsection{Index construction}
 \label{ssec:indexes}
@@ -28,20 +28,21 @@ primary key of the secondary index, and is associated with a unique reference in
 optimizers exploit secondary indexes in order to produce efficient query execution plans. Query speed 
 is therefore at odds with update speed since every write to a table triggers writes to all its indexes. 
 
-The SQL standard allows creating indexes on demand. When a user issues the {\sc {Create Index}} 
-command, the database (1) populates the new index table with historic data from the base table, and
+The SQL standard allows creating indexes on demand. When a user issues a {\sc {Create Index}} 
+command, the database (1) populates the new index table with  data from the base table, and
 (2) installs a trigger to augment every new write to the base table with a write to the index table. 
-It is desirable to allow temporal overlap between the two, in order to avoid stalling  writes while 
-the index is being populated. 
+%It is desirable to allow temporal overlap between the two, in order to avoid stalling  writes while 
+%the index is being populated. 
 
 We exploit Omid's SI semantics in order to create such indexes. To achieve (1), 
 Phoenix invokes a transaction that scans a snapshot of the base table and 
-streams the data into the  index table. This way, historic data is captured without 
-blocking concurrent puts. {\inred{Phoenix has two types of indexes: global (sharded 
+streams the data into the  index table, without 
+blocking concurrent puts. 
+\remove{{Phoenix has two types of indexes: global (sharded 
 independently of the base table) and local (co-sharded with the base table). 
-In the latter case, the index building transaction is pushed into a coprocessor; this 
-local distributed execution speeds up the process significantly.}}
-
+In the latter case, the index building transaction is pushed into a coprocessor for
+local  execution.}}
+%
 Once the bulk population completes, the index can become available to queries. 
 To achieve (2), the database creates a trigger that augments all transactions 
 that update the base table with an additional update of the secondary index. 
@@ -62,9 +63,9 @@ among the index keys, for different reasons. The former does not contend with an
 transaction, and hence is committed automatically -- the commit cells are created simultaneously
 with the rest of the index data. The latter is voided by the TM detecting conflicts at the base 
 table upon commit. Hence, in transactions augmented with secondary index updates,  
-there is no need to embed the added index keys in the commit 
-request, and so the load on the TM does not increase. 
-Omid provides extensions for its put API for this scenario. 
+there is no need to add the secondary index keys to the transaction's
+write-set, and so the load on the TM does not increase. 
+Omid extends its put API for this scenario. 
 
 %Note that the above mechanism is not unique for secondary indexes. 
 %It can be applied to additional types of derived data, e.g., materialized views. 
@@ -86,7 +87,7 @@ graph, and inserts them back into the table. Other functions like PageRank are i
 similarly. Such programs give rise to the pattern given in Figure~\ref{alg:six}. 
 
 Note that the SQL statement loops over entries of $T$ (in other words, the program is a nested loop). 
-{\inred{Normally, the SI model enforces read-your-own-writes semantics. However, in this case}}
+{{Normally, the SI model enforces read-your-own-writes semantics. However, in this case}}
 the desirable semantics are that the reads only see  data that existed prior to the 
 current statement's execution. This isolation level is called 
 \emph{snapshot isolation exclude-current (SIX)}.

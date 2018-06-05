@@ -5,7 +5,7 @@
 
 @misc{PHOENIX-3623,
  title = {PHOENIX-3623},
- howpublished={\url{https://issues.apache.org/jira/browse/PHOENIX-3623}},
+ howpublished={phoenix},
  }
 
 @misc{OMID-90,
@@ -59,11 +59,19 @@ howpublished = {\url{https://yahoohelpcommunity.tumblr.com/post/118485031125/}}
 @inproceedings{Omid2017,
 	author = {O. Shacham and F. Perez-Sorrosal and E. Bortnikov and E. Hillel and I. Keidar and I. Kelly and M. Morel and S. Paranjpye},
 	title = {Omid, Reloaded: Scalable and Highly-Available Transaction Processing}, 
-	booktitle = {15th USENIX Conference on File and Storage Technologies (FAST)},
+	booktitle = {FAST 17},
 	year = 2017,
 	location = {Santa Clara, CA} 
 }
 
+
+@inproceedings{OmidVLDB,
+	author = {O. Shacham and Y. Gottesman and A. Bergman and E. Bortnikov and E. Hillel and I. Keidar}, 
+        Title = {Taking Omid to the Clouds: Fast, Scalable Transactions for Real-Time Cloud Analytics},
+	booktitle={VLDB 18, Industry Track}, 
+	year = 2018, 
+	location = {Rio De Janeiro, Brazil}
+}
 
 @inproceedings{Kulkarni2014LogicalPC,
   title={Logical Physical Clocks and Consistent Snapshots in Globally Distributed Databases},
@@ -90,7 +98,7 @@ howpublished = {\url{https://yahoohelpcommunity.tumblr.com/post/118485031125/}}
 } 
 
 @inproceedings{F1-2013,
-title = {F1: A Distributed SQL Database That Scales},
+title = {F1: A Distributed {SQL} Database That Scales},
 author  = {Jeff Shute and Radek Vingralek and Bart Samwel and Ben Handy and Chad Whipkey and Eric Rollins and Mircea Oancea and Kyle Littleﬁeld and David Menestrina and Stephan Ellner and John Cieslewicz and Ian Rae and Traian Stancescu and Himani Apte},
 year  = 2013,
 booktitle = {VLDB}
@@ -314,7 +322,7 @@ pages = {401--414},
 title = {Large-scale Incremental Processing Using Distributed Transactions and Notifications},
 author  = {Daniel Peng and Frank Dabek},
 year  = 2010,
-booktitle = {9th USENIX Symposium on Operating Systems Design and Implementation (OSDI 10)}
+booktitle = {OSDI 10}
 }
 
 %Calvin
@@ -329,12 +337,15 @@ booktitle = {9th USENIX Symposium on Operating Systems Design and Implementation
  
 %Spanner
 @inproceedings {Spanner2012,
-author = {James C. Corbett and Jeffrey Dean and Michael Epstein and Andrew Fikes and Christopher Frost and JJ Furman and Sanjay Ghemawat and Andrey Gubarev and Christopher Heiser and Peter Hochschild and Wilson Hsieh and Sebastian Kanthak and Eugene Kogan and Hongyi Li and Alexander Lloyd and Sergey Melnik and David Mwaura and David Nagle and Sean Quinlan and Rajesh Rao and Lindsay Rolig and Yasushi Saito and Michal Szymaniak and Christopher Taylor and Ruth Wang and Dale Woodford},
+author = {James C. Corbett and et al.},
 title = {Spanner: Google{\textquoteright}s Globally-Distributed Database},
-booktitle = {10th USENIX Symposium on Operating Systems Design and Implementation (OSDI 12)},
+booktitle = {OSDI 12},
 year = {2012},
-pages = {261--264},
+%pages = {261--264},
 }
+
+%and Jeffrey Dean and Michael Epstein and Andrew Fikes and Christopher Frost and JJ Furman and Sanjay Ghemawat and Andrey Gubarev and Christopher Heiser and Peter Hochschild and Wilson  %Hsieh and Sebastian Kanthak and Eugene Kogan and Hongyi Li and Alexander Lloyd and Sergey Melnik and David Mwaura and David Nagle and Sean Quinlan and Rajesh Rao and Lindsay Rolig and %Yasushi Saito and Michal Szymaniak and Christopher Taylor and Ruth Wang and Dale Woodford},
+
 
 %Megastore
 @inproceedings{Megastore,
@@ -411,9 +422,9 @@ pages = {223--234}
                Benjamin Reed and
                Maysam Yabandeh},
   title     = {Omid: Lock-free transactional support for distributed data stores},
-  booktitle = {{IEEE} 30th International Conference on Data Engineering, Chicago,
-               {ICDE} 2014, IL, USA, March 31 - April 4, 2014},
-  pages     = {676--687},
+  booktitle = {%{IEEE} 30th International Conference on Data Engineering, 
+               ICDE 14},
+  % pages     = {676--687},
   year      = {2014},
   url       = {http://dx.doi.org/10.1109/ICDE.2014.6816691},
   doi       = {10.1109/ICDE.2014.6816691},

@@ -128,10 +128,10 @@ Yahoo Research, Oath and Technion
 \begin{abstract}
 
 
-We describe how we evolve Omid, a transaction processing system for Apache HBase, 
-to power Apache Phoenix, a cloud-grade real-time SQL analytics engine.  
+%We describe how we evolve Omid, a transaction processing system for Apache HBase, 
+%to power Apache Phoenix, a cloud-grade real-time SQL analytics engine.  
 
-Omid was originally designed for data processing pipelines at Yahoo, which are, by and large, 
+Omid is a transaction processing system for Apache HBase, originally designed for data processing pipelines at Yahoo, which are, by and large, 
 %huge-scale 
 throughput-oriented monolithic NoSQL applications. 
 %Evolving Omid into 
@@ -159,7 +159,7 @@ under increased loads it is an order of magnitude faster.
 \section{Introduction} \label{sec:intro}
 \input{intro} 
 
-\section{Background} \label{sec:api}
+\section{API and Context} \label{sec:api}
 \input{api}
 
 \section{Low-Latency Transactions} \label{sec:ll}
@@ -189,14 +189,12 @@ Motivated by such use cases we evolved Omid for cloud use.
 As part of this evolution, we
 improved Omid's protocol to reduce latency (by up to an order of magnitude) and improve throughput scalability.
 %
-
-
-We have extended Omid with functionalities required in SQL engines, namely 
+We have further extended Omid with functionalities required in SQL engines, namely 
 secondary index construction and multi-snapshot semantics. 
 We have successfully integrated it into the Apache Phoenix translytics engine. 
 
 \subsection*{Acknowledgments}
-We thank James Taylor for fruitful discussions. 
+We thank Aran Bergman and James Taylor for fruitful discussions. 
 
 \bibliographystyle{abbrv}
 

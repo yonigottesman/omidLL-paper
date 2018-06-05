@@ -1,5 +1,5 @@
 % Transactions in big-data platforms
-In recent years, transaction processing~\cite{Gray:1992:TPC:573304} technologies have paved their way into multi-petabyte big data platforms~\cite{Percolator2010,Spanner2012,Omid2017}. 
+In recent years, transaction processing technologies have paved their way into multi-petabyte big data platforms~\cite{Percolator2010,Spanner2012,Omid2017}. 
 %In some cases, they are built into the storage system itself~\cite{Spanner2012} whereas in the others they are standalone services~\cite{Omid2017}. 
 Modern industrial \emph{transaction processing systems (TPSs)}~\cite{Percolator2010, Omid2017, tephra, cockroach} complement 
 existing underlying NoSQL key-value storage with {\em atomicity}, {\em consistency}, {\em isolation\/} and {\em durability} (ACID) semantics that enable programmers to perform complex data manipulation without over-complicating their applications. 
@@ -8,7 +8,7 @@ existing underlying NoSQL key-value storage with {\em atomicity}, {\em consisten
 
 Such technologies must  evolve  in  light of the recent paradigm shift towards massive deployment of  
 big data services in public clouds; 
-for example,  the AWS cloud can run HBase as part of  Elastic MapReduce~\cite{emr}, 
+for example,  the AWS cloud can run HBase as part of  Elastic MapReduce, 
 and SQL engines like Apache Phoenix increasingly  target public cloud deployment.
 Yet adapting TPS  technology for cloud use is not without challenges, as we now highlight.  
 
@@ -22,7 +22,7 @@ a single data platform, to avoid lengthy and error-prone extract-transform-load 
 A Forrester report~\cite{Forrester2017} coins the notion of {\em translytics}  as ``a unified and integrated data platform that supports multi-workloads such as transactional, operational, and analytical simultaneously in real-time, ... and ensures full transactional integrity and data consistency''. 
 
 As use cases become more complex, application developers tend to prefer high-level SQL abstractions to 
-crude NoSQL data access methods. Indeed, scalable data management platforms (e.g., Google Spanner~\cite{Spanner2012}, Apache Phoenix~\cite{phoenix}, and CockroachDB~\cite{cockroach}) now provide full-fledged SQL interfaces  allowing complex query semantics  with strong data guarantees. SQL APIs raise new requirements for transaction management, e.g., in the context of maintaining secondary indexes for accelerated analytics. 
+crude NoSQL data access methods. Indeed, scalable data management platforms (e.g., Google Spanner~\cite{Spanner2012}, Apache Phoenix, and CockroachDB~\cite{cockroach}) now provide full-fledged SQL interfaces  allowing complex query semantics  with strong data guarantees. SQL APIs raise new requirements for transaction management, e.g., in the context of maintaining secondary indexes for accelerated analytics. 
 
 {\bf Scale.\ } 
 Public clouds  are built to  serve a multitude of applications 
@@ -34,9 +34,11 @@ nodes in one instance, and is expected to   process hundreds
  
 {\bf Latency.\ }
 Whereas early applications of big data transaction processing systems were 
-mostly throughput-sensitive\\ \cite{Percolator2010, Omid2017}, 
-with the thrust into new interactive domains like social networks~\cite{chatter},  
-messaging~\cite{Borthakur:2011} and algorithmic trading~\cite{opentsdb} latency becomes essential.  
+mostly throughput-sensitive \cite{Percolator2010, Omid2017}, 
+with the thrust into new interactive domains like social networks,%~\cite{chatter},  
+messaging %~\cite{Borthakur:2011}
+ and algorithmic trading%~\cite{opentsdb} 
+latency becomes essential.  
 SLAs for interactive user experience mandate that simple updates and point queries  complete within 
 single-digit milliseconds. The early experience with Phoenix shows that programmers  often
 refrain from using transaction semantics altogether for fear of high latency, 
@@ -50,20 +52,18 @@ e.g., in maintaining shared persistent state.
 \subsection{Evolving Omid for public clouds}
 
 This paper describes recent functionality extensions and performance improvements 
-we made in Omid~\cite{omid} to power Phoenix~\cite{phoenix},  
+we made in Omid -- an open source transaction manager for HBase -- to power Phoenix\footnote{\url{https://phoenix.apache.org}},  
 a Hadoop SQL-compliant  data analytics platform designed 
 for cloud deployment. 
 
-In contrast to earlier SQL query engines for Hadoop (e.g., 
-Hive\cite{hive} and Impala~\cite{impala}), which focused on large-scale processing
-of immutable data, Phoenix targets converged data ingestion and analytics~\cite{PhoenixUseCases},
-which necessitates transaction, and its  
+In contrast to earlier SQL  engines for Hadoop (e.g., 
+Hive and Impala), which focused on immutable data, Phoenix targets converged data ingestion and analytics~\cite{PhoenixUseCases},
+which necessitates transactions, and its  
 applications are both latency and throughput sensitive. Phoenix uses HBase 
-as its key-value storage layer, and Omid as a transaction processing layer atop HBase\footnote{\small{Tephra 
-is supported as alternative transaction manager, though its scalability and reliability are inferior to Omid's.}}; 
-Omid is an open source transaction manager for HBase. 
+as its key-value storage layer, and Omid for transaction processing\footnote{{Tephra 
+is supported as alternative transaction manager, though its scalability and reliability are inferior to Omid's.}}.
 
-This paper describes two concrete contributions to Omid and Phoenix/ 
+This paper describes two concrete contributions to Omid and Phoenix. 
 First, Section~\ref{sec:ll} describes the 
 protocol's re-design for low-latency.  
 The new protocol,    \emph{Omid Low Latency (\sysll)}, 
@@ -74,13 +74,18 @@ It also scales
 the overall system throughput to 550K tps while remaining 
 within real-time latency SLAs. In contrast to previously published protocols 
 (e.g.,~\cite{Percolator2010}), our solution is amenable to multi-tenancy.
-The development of this new feature is reported in~\cite{OMID-90}.
+The development of this new feature is reported in \url{https://issues.apache.org/jira/browse/OMID-90}.
+%~\cite{OMID-90}.
 
 Second, Section~\ref{sec:sql} discusses our {\em SQL compliance}. 
 We add support for creating secondary indexes on-demand, 
 without impeding concurrent database operations or sacrificing consistency. 
 We further extend the traditional SI model, which provides single-read-point-single-write-point semantics, with multiple read and write points. This functionality is used to avoid recursive read-your-own-writes scenarios in complex queries. 
-The development of these new features in Omid and Phoenix is reported in~\cite{OMID-82} and~\cite{PHOENIX-3623}, respectively.
+The development of these new features in Omid and Phoenix is reported in
+\url{https://issues.apache.org/jira/browse/OMID-82} and 
+\url{https://issues.apache.org/jira/browse/PHOENIX-3623},
+%~\cite{OMID-82} and~\cite{PHOENIX-3623}, 
+respectively.
 
 
 % Finally, Section~\ref{sec:related} reviews related work, and  Section~\ref{sec:conclusions} concludes. % the paper.

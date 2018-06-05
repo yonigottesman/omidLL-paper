@@ -99,7 +99,7 @@ TPS client library, which in turn is only invoked   internally by the database e
 
 {\inred{The commit table is a highly contended resource. While it is not very big at any given time, it is accessed
 by every transaction that modifies data. In large clusters, the update rate may become huge (see Section~\ref{sec:eval}).
-We therefore imperative to shard this table evenly across many nodes in order to spread the load.}}
+We therefore shard this table evenly across many nodes in order to spread the load.}}
 
 \mypara{Write intent resolution.}
 As in other TPSs, reads resolve write intents via the commit entry.

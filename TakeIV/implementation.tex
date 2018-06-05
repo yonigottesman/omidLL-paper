@@ -266,7 +266,7 @@ read attempts to create an entry with $\bot$ as the commit timestamp.
 This is done using an atomic \inred{check\&mutate} operation, due to a possible 
 race with a commit operation; if a competing commit attempt finds the   $\bot$ entry, it  aborts. 
 Note that it is possible  to wait a configurable amount of time before attempting to create a $\bot$ entry, in
-order to allow the transaction complete without aborting it.
+order to allow the transaction to complete without aborting it.
 
 There is, however, a subtle race to consider in case the commit record is set to $\bot$ by a read operation. 
 Consider a slow read operation that reads the data record rec when its writing transaction is still pending, and then stalls

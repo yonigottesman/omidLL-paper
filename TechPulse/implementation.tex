@@ -162,7 +162,7 @@ The client sends a begin request to the TM, which assigns it a read timestamp $t
 The version is the transaction's $ts_r$, which exceeds all versions written by transactions that committed before it  began. 
 A dedicated \emph{commit} column is initialized to nil to indicate that the write is still tentative (not committed); 
 after the transaction commits successfully, the value of the commit field is set to the writing transaction's commit timestamp.
-The write further tracks key in its local write-set.
+The write further tracks the key in its local write-set.
 
 \mypara{Read.}
 The algorithm traverses data  records (using the data store's ds.get API) pertaining
@@ -249,7 +249,7 @@ Additional experiments are reported in~\cite{OmidVLDB}.
   \end{subfigure}  
  \end{tabular} 
  
-  \caption{\small Latency vs.\ throughput  in Omid and \sysll. \inred{Yoni: please create the graphs with only Omid and Omid-LL, thanks!} }
+  \caption{\small Latency vs.\ throughput  in Omid and \sysll.}
   \vspace{-0.3cm}
   \label{fig:throughput-latency}
 \end{figure*}

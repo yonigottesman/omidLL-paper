@@ -40,11 +40,11 @@ def draw_throughput_latency(originalOmid,lorraGeneric,lorraFP,lorra2phase,pltnum
     plt.plot(throughputs, lorraGeneric, marker='o', linestyle='-', color=tableau20[0], label=lorraGenericLabel,
              linewidth=my_linewidth, markersize=marksize, markeredgewidth=2)
 
-    plt.plot(throughputs, lorra2phase, label=lorra2PhLabel, marker='x', linestyle='-', color=tableau20[4],
-             linewidth=my_linewidth-1, markersize=marksize, markeredgewidth=1)
+    # plt.plot(throughputs, lorra2phase, label=lorra2PhLabel, marker='x', linestyle='-', color=tableau20[4],
+    #          linewidth=my_linewidth-1, markersize=marksize, markeredgewidth=1)
 
-    plt.plot(throughputs, lorraFP, label=lorraFPLabel, marker='s', linestyle='-', color=tableau20[2], linewidth=my_linewidth,
-             markersize=marksize, markeredgewidth=2)
+    # plt.plot(throughputs, lorraFP, label=lorraFPLabel, marker='s', linestyle='-', color=tableau20[2], linewidth=my_linewidth,
+    #          markersize=marksize, markeredgewidth=2)
 
 
 

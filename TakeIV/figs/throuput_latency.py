@@ -1,9 +1,11 @@
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import sys
 from matplotlib.ticker import FuncFormatter
 import datetime
 
+matplotlib.rc('pdf', fonttype=42)
 
 marksize=10
 my_linewidth = 5
@@ -40,11 +42,11 @@ def draw_throughput_latency(originalOmid,lorraGeneric,lorraFP,lorra2phase,pltnum
     plt.plot(throughputs, lorraGeneric, marker='o', linestyle='-', color=tableau20[0], label=lorraGenericLabel,
              linewidth=my_linewidth, markersize=marksize, markeredgewidth=2)
 
-    plt.plot(throughputs, lorra2phase, label=lorra2PhLabel, marker='x', linestyle='-', color=tableau20[4],
-             linewidth=my_linewidth-1, markersize=marksize, markeredgewidth=1)
+    # plt.plot(throughputs, lorra2phase, label=lorra2PhLabel, marker='x', linestyle='-', color=tableau20[4],
+    #          linewidth=my_linewidth-1, markersize=marksize, markeredgewidth=1)
 
-    plt.plot(throughputs, lorraFP, label=lorraFPLabel, marker='s', linestyle='-', color=tableau20[2], linewidth=my_linewidth,
-             markersize=marksize, markeredgewidth=2)
+    # plt.plot(throughputs, lorraFP, label=lorraFPLabel, marker='s', linestyle='-', color=tableau20[2], linewidth=my_linewidth,
+    #          markersize=marksize, markeredgewidth=2)
 
 
 
@@ -143,9 +145,9 @@ def breakdownHighTX(originalOmid,lorraGeneric,lorraFP,pltnum):
 
 def singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,two_phase5,PUToriginalOmid,PUTlorraGeneric,PUTlorraFP,two_phase10,ylimit,txt):
 
-    begin_times = [GEToriginalOmid[0], GETlorraGeneric[0],two_phase5[0], GETlorraFP[0]]
-    hbase_times = [GEToriginalOmid[1], GETlorraGeneric[1],two_phase5[1], GETlorraFP[1]]
-    commit_times = [GEToriginalOmid[2], GETlorraGeneric[2],two_phase5[2], GETlorraFP[2]]
+    begin_times = [GEToriginalOmid[0], GETlorraGeneric[0],0, GETlorraFP[0]]
+    hbase_times = [GEToriginalOmid[1], GEToriginalOmid[1],GETlorraGeneric[1], GETlorraFP[1]]
+    commit_times = [GEToriginalOmid[2], GETlorraGeneric[2],0, GETlorraFP[2]]
 
     plt.figure(figsize=(10, 7))
     ax = plt.subplot(1, 1, 1)
@@ -160,9 +162,9 @@ def singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,two_phase5,PUTori
                 color='r', align='center', )
     p1 = ax.bar([5,6,7,8], begin_times, label='Begin', alpha=1, color='b', align='center')
 
-    begin_times = [PUToriginalOmid[0], PUTlorraGeneric[0],two_phase10[0], PUTlorraFP[0]]
-    hbase_times = [PUToriginalOmid[1], PUTlorraGeneric[1],two_phase10[1], PUTlorraFP[1]]
-    commit_times = [PUToriginalOmid[2], PUTlorraGeneric[2],two_phase10[2], PUTlorraFP[2]]
+    begin_times = [PUToriginalOmid[0], PUTlorraGeneric[0],0, PUTlorraFP[0]]
+    hbase_times = [PUToriginalOmid[1], PUTlorraGeneric[1],PUToriginalOmid[1], PUTlorraFP[1]]
+    commit_times = [PUToriginalOmid[2], PUTlorraGeneric[2],0, PUTlorraFP[2]]
 
     p3 = ax.bar([0, 1, 2,3], commit_times, bottom=np.array(begin_times) + np.array(hbase_times), alpha=0.5, color='g', align='center')
     p2 = ax.bar([0, 1, 2,3], hbase_times, bottom=begin_times,  alpha=1, color='r', align='center', )
@@ -171,7 +173,7 @@ def singlebreakdown(GEToriginalOmid,GETlorraGeneric,GETlorraFP,two_phase5,PUTori
     ax.text(4, ylimit-5, txt[0], fontsize=myfonsize)
     ax.text(0, ylimit-5, txt[1], fontsize=myfonsize)
 
-    plt.xticks([0,1,2,3,5,6,7,8], [originalOmidLabel, lorraGenericLabel,lorra2PhLabel, lorraFPLabel,originalOmidLabel, lorraGenericLabel,lorra2PhLabel, lorraFPLabel], fontsize=myfonsize)
+    plt.xticks([0,1,2,3,5,6,7,8], [originalOmidLabel, lorraGenericLabel,'hbase', lorraFPLabel,originalOmidLabel, lorraGenericLabel,'hbase', lorraFPLabel], fontsize=myfonsize)
 
     for tick in ax.get_xticklabels():
         tick.set_rotation(45)

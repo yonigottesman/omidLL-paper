@@ -1395,9 +1395,9 @@
 \def\vldbAuthors#1{\def\@vldbAuthors{#1}}
 \def\vldbTitle#1{\def\@vldbTitle{#1}}
 \def\vldbDOI#1{\def\@vldbDOI{#1}}
-%\def\vldbVolume#1{\def\@vldbVolume{#1}}
-%\def\vldbNumber#1{\def\@vldbNumber{#1}}
-%\def\vldbYear#1{\def\@vldbYear{#1}}
+\def\vldbVolume#1{\def\@vldbVolume{#1}}
+\def\vldbNumber#1{\def\@vldbNumber{#1}}
+\def\vldbYear#1{\def\@vldbYear{#1}}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1406,15 +1406,15 @@
    \par\medskip\small\noindent{\bfseries PVLDB Reference Format:}\par\nobreak
    \noindent \@vldbAuthors.
    \noindent \@vldbTitle.
-   \noindent {\em PVLDB}, 11 (5): xxxx-yyyy, 2018.\par
+   \noindent {\em PVLDB}, \@vldbVolume (\@vldbNumber): xxxx-yyyy, \@vldbYear.\par
    \noindent DOI: \@vldbDOI
 \par\egroup}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \global\conf{Proceedings of the VLDB Endowment,}
-\global\confinfo{Vol. 11, No. 5}
+\global\confinfo{Vol. \@vldbVolume, No. \@vldbNumber}
 \newtoks\copyrightetc
-\global\copyrightetc{Copyright 2018 VLDB Endowment 2150-8097/18/1}
+\global\copyrightetc{Copyright 2018 VLDB Endowment 2150-8097/18/08... \$ 10.00}
 
 
 \toappear{\the\boilerplate\par

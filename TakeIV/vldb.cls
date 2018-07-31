@@ -335,7 +335,7 @@
 \def\email#1{{{\eaddfnt{\vskip 4pt#1}}}}
 
 \def\addauthorsection{\ifnum\originalaucount>3
-    \section{Additional Authors}\the\addauthors
+%    \section{Additional Authors}\the\addauthors
   \fi}
 
 \newcount\savesection
@@ -1367,7 +1367,7 @@
 \baselineskip=11pt
 \let\thepage\relax % For NO page numbers - GM Nov. 30th. 1999 and July 2000
 \def\setpagenumber#1{\global\setcounter{page}{#1}}
-\pagenumbering{arabic}  % Arabic page numbers GM July 2000
+%\pagenumbering{arabic}  % Arabic page numbers GM July 2000
 \twocolumn             % Double column.
 \flushbottom           % Even bottom -- alas, does not balance columns at end of document
 \pagestyle{plain}
@@ -1389,7 +1389,7 @@
 
 % Future proceedings chair, please update the following: 1) conference sequence number, 2) date,
 % 3) location, 4) volume number, 5) Copyright year.
-\global\boilerplate={Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page. To copy otherwise, to republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee.  Articles from this volume were invited to present their results at The 44th International Conference on Very Large Data Bases, August 2018, Rio de Janeiro, Brazil.}
+\global\boilerplate={This work is licensed under the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License.  To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-nd/4.0/.  For any use beyond those covered by this license, obtain permission by emailing info@vldb.org.}
 
 
 \def\vldbAuthors#1{\def\@vldbAuthors{#1}}
@@ -1406,15 +1406,15 @@
    \par\medskip\small\noindent{\bfseries PVLDB Reference Format:}\par\nobreak
    \noindent \@vldbAuthors.
    \noindent \@vldbTitle.
-   \noindent {\em PVLDB}, \@vldbVolume (\@vldbNumber): xxxx-yyyy, \@vldbYear.\par
+   \noindent {\em PVLDB}, 11 (12): 1795 - 1808, 2018.\par
    \noindent DOI: \@vldbDOI
 \par\egroup}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \global\conf{Proceedings of the VLDB Endowment,}
-\global\confinfo{Vol. \@vldbVolume, No. \@vldbNumber}
+\global\confinfo{Vol. 11, No. 12}
 \newtoks\copyrightetc
-\global\copyrightetc{Copyright 2018 VLDB Endowment 2150-8097/18/08... \$ 10.00}
+\global\copyrightetc{Copyright 2018 VLDB Endowment 2150-8097/18/8}
 
 
 \toappear{\the\boilerplate\par

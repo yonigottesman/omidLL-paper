@@ -1,0 +1,163 @@
+\documentclass[sigconf,10pt, nonacm]{acmart}
+
+
+\setcopyright{rightsretained}
+
+% DOI
+\acmDOI{10.475/123_4}
+
+% ISBN
+\acmISBN{123-4567-24-567/08/06}
+
+%Conference
+\acmConference[SYSTOR'19]{ACM International Systems and Storage Conference}{June 2019}{Haifa, Israel}
+\acmYear{2019}
+\copyrightyear{2019}
+
+%========================
+%  Macros
+%========================
+
+\newcommand{\code}[1]{\textsf{\fontsize{9}{11}\selectfont #1}}
+
+%\newcommand{\inred}[1]{{\color{red}{#1}}}
+\newcommand{\inred}[1]{#1}
+\newcommand{\remove}[1]{}
+\newcommand{\Idit}[1]{[[\inred{Idit: #1}]]}
+\newcommand{\Yoni}[1]{[\inred{Yoni: #1}]}
+%\newcommand{\Ohad}[1]{{[\color{red}{Ohad: #1}]}}
+\newcommand{\tb}{\hspace{10mm}}
+
+\newcommand{\sys}{Omid~FP}
+\newcommand{\sysll}{Omid~LL}
+\newcommand{\syspc}{Omid~2PC}
+
+\newcommand{\speedup}[1]{#1$\times$}
+\newcommand{\tuple}[1]{\ensuremath{\langle \mbox{#1} \rangle}}
+
+\newcommand{\mypara}[1]{ \vspace{8pt} \noindent{\bf #1}\hspace{6pt}}
+
+%========================
+\begin{document}
+
+
+
+
+
+
+\title{Taking Omid to the Clouds: \\ 
+Fast,  Scalable Transactions for Real-Time Cloud Analytics }
+
+%\numberofauthors{6} 
+\author{Ohad Shacham}
+\affiliation{\institution{Yahoo Research}}
+\email{ohads@oath.com}
+
+\author{Yonatan Gottesman} %\footnotemark[1]
+       \affiliation{\institution{Yahoo Research}}
+       \email{yonatang@oath.com}
+
+\author{Aran Bergman}
+       \affiliation{\institution{Technion}}
+       \email{aranb@campus.technion.ac.il}
+
+\author{Edward Bortnikov}
+       \affiliation{\institution{Yahoo Research}}
+       \email{ebortnik@oath.com}
+
+\author{Eshcar Hillel}
+       \affiliation{\institution{Yahoo Research}}
+       \email{eshcar@oath.com}
+
+\author{Idit Keidar}
+       \affiliation{\institution{Technion and Yahoo Research}}
+       \email{idish@ee.technion.ac.il}
+       
+\renewcommand{\shortauthors}{O. Shacham et al.}
+
+
+
+
+%=========================================================================
+%  Abstract
+%=========================================================================
+
+\begin{abstract}
+
+
+We describe how we evolve Omid, a transaction processing system for Apache HBase, 
+to power Apache Phoenix, a cloud-grade real-time SQL analytics engine.  
+
+Omid was originally designed for data processing pipelines at Yahoo, which are, by and large, 
+%huge-scale 
+throughput-oriented monolithic NoSQL applications. 
+%Evolving Omid into 
+Providing a platform 
+to support 
+%a variety of 
+converged real-time transaction processing and analytics applications --
+dubbed {\em translytics} --  
+introduces new functional and performance requirements. For example, SQL 
+support is key for developer productivity, multi-tenancy is essential for cloud deployment, 
+and latency is cardinal for just-in-time data ingestion and analytics insights.
+% in a variety of applications. 
+
+We discuss our efforts to adapt Omid to these new domains, 
+as part of 
+%which emerged in 
+the process of integrating it into Phoenix as the transaction processing backend. A central piece
+of our work is latency reduction in Omid's protocol, which also improves  scalability.  
+Under light load, the new protocol's latency is 4x to 5x smaller than the legacy Omid's, whereas 
+under increased loads it is an order of magnitude faster. We further describe a \emph{fast path} 
+protocol for single-key transactions, which enables processing them almost as fast 
+as native HBase operations.
+
+\end{abstract}
+\maketitle
+
+\section{Bibliographic Reference} 
+
+
+
+\emph{
+Ohad Shacham, Yonatan Gottesman, Aran Bergman, 
+Edward Bortnikov, Eshcar Hillel, and Idit Keidar:}
+{\bf Taking omid to the clouds: fast, scalable transactions for real-time cloud analytics}. 
+Published in 
+Proceedings of the VLDB Endowment,  
+Volume 11 Issue 12, August 2018, Pages 1795-1808. 
+\noindent
+\url{https://dl.acm.org/citation.cfm?id=3275548}
+
+\newpage
+
+\section{Key Aspects of the Solution}
+
+\begin{itemize}
+\item 
+Optimizing Omid for low latency.
+\item 
+Redesigning Omid to eliminate its principal bottleneck.
+\item
+Novel fast-path API for single-key transactions.
+\item
+Integrating Omid as the transactional layer in Phoenix SQL engine.
+\end{itemize} 
+
+\section{Why a Highlight Presentation?}
+
+
+\begin{itemize}
+\item 
+Real-world solution: used in production in a popular platform, as part of an Apache incubator project. 
+\item 
+Pushes the state-of-the-practice in transaction processing systems. 
+\item
+Addresses challenges that arise in modern use cases. 
+\end{itemize} 
+
+
+
+
+
+\end{document}
